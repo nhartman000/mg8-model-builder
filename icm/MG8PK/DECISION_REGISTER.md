@@ -15,9 +15,9 @@ Reply with “accept recommended defaults except D#…” or specify replacement
 | ID | Choice | Recommended default | Status |
 |---|---|---|---|
 | D0 | Model objective | Deterministic NYCH encoder plus tiny decoder-only causal LM predicting the next NYCH token/symbol sequence. Keep symbolic assurance results distinct from probabilistic output. | Pending |
-| D1 | Language and context | English V1; 1,024 tokenizer tokens per window; split longer accepted inputs into ordered windows, never silently truncate. | Pending |
+| D1 | Language and context | English-only V1; 1,024 tokenizer tokens per window; split longer accepted inputs into ordered windows, never silently truncate. | English-only approved; context pending |
 | D2 / B2 | Tokenization | Byte-level BPE; 8,192 vocabulary; no normalization; preserve byte offsets; explicit special-token registry and versioned tokenizer artifact. | Pending |
-| D3 / B3 | Trace identity | SHA-256 per word occurrence, followed by a vowel-stripped consonant skeleton with adjacent repeated consonants collapsed. Domain remains a separate B4 field. Decide exact vowel set, case, delimiters, and occurrence identity inputs. | Pending |
+| D3 / B3 | Trace identity | Per-word occurrence identity plus the consonant-skeleton suffix from the supplied example. English V1 only; accent-fold the derived suffix while preserving original source text. Runtime emoji must come from the approved inventory; domain stays a separate B4 field. | Partial: English and suffix accent-fold approved; exact hash inputs, y/vowel rule, separators, and domain binding pending |
 | D4 / B4 | Domain lexicon | Versioned local associative lexicon only; no LLM calls; return ranked multi-label evidence and UNKNOWN when evidence is insufficient. Owner supplies or approves seed lexicon and tie/threshold policy. | Pending |
 | D5 / B5 | NYCH symbolization | Apply canonical NYCH operators; preserve negation, modality, quantifiers, pronouns, predicate/argument roles, and observation/belief/intention/action distinctions. Unsupported claims remain UNKNOWN. | Pending |
 | D6 / B6 | Embeddings and position | d_model 128, learned token/symbol embeddings, RoPE, 1,024 position limit, float32 reference implementation. | Pending |
