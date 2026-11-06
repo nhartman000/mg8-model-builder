@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://americanmilestone.example/schemas/experimental-vst-control-binding.schema.json",
+  "title": "Experimental Builder VST Control Binding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "module_id",
+    "parameter_path",
+    "source_id",
+    "source_range",
+    "target_range",
+    "max_slew_per_second"
+  ],
+  "properties": {
+    "module_id": { "type": "string", "minLength": 1 },
+    "parameter_path": { "type": "string", "minLength": 1 },
+    "source_id": { "type": "string", "minLength": 1 },
+    "source_range": {
+      "type": "array",
+      "prefixItems": [{ "type": "number" }, { "type": "number" }],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "target_range": {
+      "type": "array",
+      "prefixItems": [{ "type": "number" }, { "type": "number" }],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "max_slew_per_second": { "type": "number", "exclusiveMinimum": 0 },
+    "prediction_horizon_ms": { "type": "number", "minimum": 0, "default": 20 },
+    "max_history_frames": { "type": "integer", "minimum": 2, "maximum": 32, "default": 8 },
+    "beat_aware": { "type": "boolean", "default": false }
+  }
+}
