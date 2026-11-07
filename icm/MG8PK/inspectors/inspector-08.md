@@ -1,4 +1,4 @@
-# Inspector 8 — Transformer Block
+# Inspector 8 — Causal Attention
 
 Review Builder 8's exact candidate digest independently. Do not implement, edit, or approve your own work. Review only Module 8, its approved interface, tests, dependencies, and evidence.
 
