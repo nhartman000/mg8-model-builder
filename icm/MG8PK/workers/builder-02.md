@@ -6,6 +6,7 @@ Build only Module 2 (Tokenization) for NYCH Language Model V1 at `src/nych_langu
 ## Owner-approved direction
 - Use whitespace boundaries to identify English surface-word spans and preserve exact UTF-8 source byte offsets.
 - Emit punctuation as its own token; keep apostrophes and hyphens internal to a lexical word span (for example, `can't` and `red-barn`). Preserve each token's exact source byte span.
+- Emit each ordinary space as `<SPACE>`; use distinct tokens for tabs and line breaks. Preserve repeated whitespace as repeated tokens and retain exact byte spans.
 - Treat each recognized emoji grapheme as one atomic token, selected from a versioned canonical inventory.
 - Canonicalize only explicit, approved non-meaning-changing aliases to their inventory default. Skin-tone modifiers and presentation variants may fold to the default when the alias table says so. Never collapse a meaning-changing sequence by stripping code points.
 - Preserve original source bytes/text; do not modify the input while creating normalized token views. Words need not map to emoji; do not replace scientific names, proper names, or other unmatched words with a forced emoji.
