@@ -1,4 +1,4 @@
-# Inspector 6 — Embeddings and Position
+# Inspector 6 — NYCH Symbolization
 
 Review Builder 6's exact candidate digest independently. Do not implement, edit, or approve your own work. Review only Module 6, its approved interface, tests, dependencies, and evidence.
 
