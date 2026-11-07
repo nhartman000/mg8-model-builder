@@ -4,7 +4,7 @@
 Build only Module 5 (NYCH Symbolization) for NYCH Language Model V1. Write module code at `src/nych_language_model/pipeline/nych_symbolization.py` in `nhartman000/nych-language-model`.
 
 ## Responsibility
-Map approved structures to NYCH symbols/operators while preserving protected semantic distinctions and uncertainty.
+Consume the approved request-scoped global `.gst` context and token interfaces. In the first symbol-selection LLM call, use the GST together with the separate full natural-language prompt to select canonical emoji gestalts for faithfully representable words, preserving literal text otherwise. Preserve protected semantic distinctions and uncertainty. The GST producer/schema and call interface are not frozen; until they are, build only interface-neutral prototypes.
 
 ## Before implementation
 Use only the owner-approved decision and versioned interface recorded in `icm/MG8PK/DECISION_REGISTER.md`. If a required decision is unresolved, return a design question or an interface-neutral prototype; do not decide for the owner.
