@@ -50,7 +50,7 @@ The values `N`, `T`, and `P` come from the approved corpus; this example does no
 4. Correct only when the statistical/context evidence is clear and keyboard evidence is compatible for a keyboard typo. If the original token is a valid term and the thought remains coherent, keep it literal. If no clear candidate emerges, keep it literal and unresolved.
 5. Preserve correction as a separate hypothesis with evidence and confidence. Never overwrite the input text or silently force an emoji.
 
-Confidence thresholds and acceptable score margins must be calibrated on held-out, representative typo examples before implementation is marked complete.
+Calibrate the correction cutoff and score margin on held-out, representative typo and coherent-word cases. Automatic internal correction is allowed only if its measured precision is at least 99%; otherwise preserve tokens literally and leave them unresolved. Report precision and false-correction rates for proper names, scientific terms, coherent rare words, ambiguous candidates, and each keyboard layout.
 
 ## Data and audit boundaries
 
