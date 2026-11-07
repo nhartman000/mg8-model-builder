@@ -1,4 +1,3 @@
-## Purpose
 
 Provide deterministic, local statistical evidence for word continuation and typo interpretation. The compendium is an aggregate index built from a versioned, licensed corpus. It is not a runtime LLM and does not retain user prompts.
 
@@ -9,6 +8,10 @@ Use a versioned SQLite database for runtime lookup, with a small JSON manifest a
 ### Candidate lexicon composition
 
 The owner approved a general English candidate-lexicon seed derived from the same `enwiki-20261001` snapshot: article text vocabulary plus page titles and redirects. Keep proper-name and technical/scientific lexicons as separate versioned layers; their exact source sets and inclusion rules remain pending. This candidate lexicon is not claimed to be a complete dictionary. Missing entries remain representable through the approved internal UTF-8 byte fallback. Apply the same corpus provenance and license review controls before extracting vocabulary candidates.
+
+### D2 page-level evaluation split
+
+Before building n-grams, partition article-namespace pages in the snapshot by stable page ID using `bucket = int(SHA256("NYCH-D2-SPLIT-v1\\0" + snapshot_id + "\\0" + page_id), big_endian) mod 100`. Assign buckets 0–89 to train, 90–94 to validation, and 95–99 to test. Build n-gram weights from train pages only; use validation pages for correction-cutoff calibration; reserve test pages, unseen during construction and calibration, for final evaluation. Record page IDs/revisions and partition assignments in the build manifest. This split applies to the D2 statistical compendium and correction evaluation only; it does not decide the D10 neural model-training corpus split.
 
 ### Manifest fields
 
