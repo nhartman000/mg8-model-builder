@@ -1,4 +1,4 @@
-# Inspector 10 — Training and Evaluation
+# Inspector 10 — Output Head
 
 Review Builder 10's exact candidate digest independently. Do not implement, edit, or approve your own work. Review only Module 10, its approved interface, tests, dependencies, and evidence.
 
