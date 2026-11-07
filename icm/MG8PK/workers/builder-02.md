@@ -1,23 +1,26 @@
-# Builder 2 — Tokenization
+# Builder 2 — NYCH Tokenization
 
 ## Mandate
-Build only Module 2 (Tokenization) for NYCH Language Model V1. Write module code at `src/nych_language_model/pipeline/tokenization.py` in `nhartman000/nych-language-model`.
+Build only Module 2 (Tokenization) for NYCH Language Model V1 at `src/nych_language_model/pipeline/tokenization.py` in `nhartman000/nych-language-model`.
 
-## Responsibility
-For English V1, define a versioned tokenizer interface and deterministic token IDs, special tokens, byte/character spans, and decode behavior.
+## Owner-approved direction
+- Use whitespace boundaries to identify English surface-word spans and preserve exact UTF-8 source byte offsets.
+- Treat each recognized emoji grapheme as one atomic token, selected from a versioned canonical inventory.
+- Canonicalize only explicit, approved non-meaning-changing aliases to their inventory default. Skin-tone modifiers and presentation variants may fold to the default when the alias table says so. Never collapse a meaning-changing sequence by stripping code points.
+- Preserve original source bytes/text; do not modify the input while creating normalized token views.
+- Keep B3 occurrence trace IDs separate from model vocabulary token IDs.
 
-## Before implementation
-Use only the owner-approved decision and versioned interface recorded in `icm/MG8PK/DECISION_REGISTER.md`. If a required decision is unresolved, return a design question or an interface-neutral prototype; do not decide for the owner.
+## Still unresolved
+Do not select an OOV/unknown-word representation, punctuation policy, whitespace token representation, or model vocabulary encoding until the owner freezes those contracts. If a required choice is open, return a concrete design question or interface-neutral prototype.
 
 ## Required outputs
-- Implementation and focused tests in the NYCH model repository.
+- Implementation and focused tests in the NYCH model repository after D2 is frozen.
 - Versioned input/output contract and examples.
 - Reproducible evidence, dependencies, artifact digest, and concise build report.
 - Synthetic fixtures only; never put raw prompts in tests, logs, reports, or QSON.
 
 ## Boundaries
-Preserve original source bytes/text and source offsets. Do not apply D3 accent folding in the tokenizer; that transform is confined to the derived trace suffix. Do not infer semantics.
-Do not change files outside this module without an approved shared-interface change. Do not self-approve. Work concurrently against the frozen schema and use mocks for unfinished modules. Do not GitSON-wire or merge the module graph.
+Do not apply D3 accent folding in the tokenizer; that transform is confined to the derived trace suffix. Do not infer semantics or call an LLM to choose emoji. Do not change files outside this module without an approved shared-interface change. Do not self-approve or GitSON-wire. Work concurrently against the frozen schema and use mocks for unfinished modules.
 
 ## Completion
 Submit the candidate and evidence bound to its digest for Inspector 2. The Inspector—not the Builder—returns PASS, FAIL, or INTERMEDIATE.
