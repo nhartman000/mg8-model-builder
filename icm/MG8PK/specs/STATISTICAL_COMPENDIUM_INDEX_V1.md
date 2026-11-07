@@ -6,7 +6,7 @@ Provide deterministic, local statistical evidence for word continuation and typo
 
 ## Recommended storage
 
-Use a versioned SQLite database for runtime lookup, with a small JSON manifest alongside it. SQLite provides indexed key lookups and deterministic local access; the manifest binds the weights to their source and build procedure.
+Use a versioned SQLite database for runtime lookup, with a small JSON manifest alongside it. Owner-approved corpus composition: a general English corpus plus separate technical/scientific and name lexicons; never use prompt logs. Specific sources remain pending license and provenance review. SQLite provides indexed key lookups and deterministic local access; the manifest binds the weights to their source and build procedure.
 
 ### Manifest fields
 
