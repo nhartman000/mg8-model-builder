@@ -1,4 +1,3 @@
-Provide deterministic, local statistical evidence for word continuation and typo interpretation. The compendium is an aggregate index built from a versioned, licensed corpus. It is not a runtime LLM and does not retain user prompts.
 
 ## Recommended storage
 
@@ -10,7 +9,7 @@ The owner approved a general English candidate-lexicon seed derived from the sam
 
 ### D2 page-level evaluation split
 
-Before building n-grams, partition article-namespace pages in the snapshot by stable page ID using compute SHA-256 over the UTF-8 encoding of `NYCH-D2-SPLIT-v1`, a NUL byte, the snapshot ID, a NUL byte, and the decimal page ID; interpret the digest as an unsigned big-endian integer and take modulo 100. Assign buckets 0–89 to train, 90–94 to validation, and 95–99 to test. Build n-gram weights from train pages only; use validation pages for correction-cutoff calibration; reserve test pages, unseen during construction and calibration, for final evaluation. Record page IDs/revisions and partition assignments in the build manifest. This split applies to the D2 statistical compendium and correction evaluation only; it does not decide the D10 neural model-training corpus split.
+Before building n-grams, partition article-namespace pages in the snapshot by stable page ID by computing SHA-256 over the UTF-8 encoding of `NYCH-D2-SPLIT-v1`, a NUL byte, the snapshot ID, a NUL byte, and the decimal page ID; interpret the digest as an unsigned big-endian integer and take modulo 100. Assign buckets 0–89 to train, 90–94 to validation, and 95–99 to test. Build n-gram weights from train pages only; use validation pages for correction-cutoff calibration; reserve test pages, unseen during construction and calibration, for final evaluation. Record page IDs/revisions and partition assignments in the build manifest. This split applies to the D2 statistical compendium and correction evaluation only; it does not decide the D10 neural model-training corpus split.
 
 ### Manifest fields
 
