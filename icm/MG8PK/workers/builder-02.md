@@ -7,7 +7,7 @@ Build only Module 2 (Tokenization) for NYCH Language Model V1 at `src/nych_langu
 - Use whitespace boundaries to identify English surface-word spans and preserve exact UTF-8 source byte offsets.
 - Treat each recognized emoji grapheme as one atomic token, selected from a versioned canonical inventory.
 - Canonicalize only explicit, approved non-meaning-changing aliases to their inventory default. Skin-tone modifiers and presentation variants may fold to the default when the alias table says so. Never collapse a meaning-changing sequence by stripping code points.
-- Preserve original source bytes/text; do not modify the input while creating normalized token views.
+- Preserve original source bytes/text; do not modify the input while creating normalized token views. Words need not map to emoji; do not replace scientific names, proper names, or other unmatched words with a forced emoji.
 - Keep B3 occurrence trace IDs separate from model vocabulary token IDs.
 
 ## Still unresolved
