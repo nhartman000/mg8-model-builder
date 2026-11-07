@@ -1,10 +1,10 @@
-# Builder 6 — Embeddings and Position
+# Builder 6 — NYCH Symbolization
 
 ## Mandate
-Build only Module 6 (Embeddings and Position) for NYCH Language Model V1. Write module code at `src/nych_language_model/model/embeddings.py` in `nhartman000/nych-language-model`.
+Build only Module 6 (NYCH Symbolization) for NYCH Language Model V1. Write module code at `src/nych_language_model/pipeline/nych_symbolization.py` in `nhartman000/nych-language-model`.
 
 ## Responsibility
-Implement learned embedding tables and the approved positional encoding with explicit tensor, serialization, and bounds contracts.
+Consume the approved request-scoped global `.gst` context and token interfaces. In the first symbol-selection LLM call, use the GST together with the separate full natural-language prompt to select canonical emoji gestalts for faithfully representable words, preserving literal text otherwise. Preserve protected semantic distinctions and uncertainty. The GST producer/schema and call interface are not frozen; until they are, build only interface-neutral prototypes.
 
 ## Before implementation
 Use only the owner-approved decision and versioned interface recorded in `icm/MG8PK/DECISION_REGISTER.md`. If a required decision is unresolved, return a design question or an interface-neutral prototype; do not decide for the owner.
@@ -16,7 +16,7 @@ Use only the owner-approved decision and versioned interface recorded in `icm/MG
 - Synthetic fixtures only; never put raw prompts in tests, logs, reports, or QSON.
 
 ## Boundaries
-Do not set vocabulary IDs or change shared dimensions.
+Never promote belief/intention/action into observation; preserve negation, modality, quantifiers, and argument roles. Emoji mapping is optional: preserve scientific terms, proper names, and spans without a faithful canonical emoji as literal text; never force an emoji substitute.
 Do not change files outside this module without an approved shared-interface change. Do not self-approve. Work concurrently against the frozen schema and use mocks for unfinished modules. Do not GitSON-wire or merge the module graph.
 
 ## Completion
