@@ -12,7 +12,9 @@ Build only Module 2 (Tokenization) for NYCH Language Model V1 at `src/nych_langu
 - Preserve original source bytes/text; do not modify the input while creating normalized token views. Words need not map to emoji; do not replace scientific names, proper names, or other unmatched words with a forced emoji.
 - Keep B3 occurrence trace IDs separate from model vocabulary token IDs.
 - Use a layered, versioned lexicon for common English plus approved technical/scientific and proper-name terms.
-- For likely typos, rank candidate words using weighted edit distance, keyboard-neighbor costs from a versioned layout, lexical frequency, and neighboring-word context. Emit the best candidate with evidence/confidence; preserve the original surface spelling and byte span.
+- Resolve likely typos in this order: rank candidates statistically from a versioned local n-gram compendium using the previous two or three words (and right context when available), then check top candidates against configured keyboard-layout maps as secondary evidence. Preserve the original surface spelling and byte span; emit a separate candidate hypothesis with evidence/confidence.
+- If the original word is a valid term and the thought remains coherent, do not correct it. If no clear candidate emerges, leave it literal and unresolved.
+- Follow the index design in `icm/MG8PK/specs/STATISTICAL_COMPENDIUM_INDEX_V1.md`.
 - Do not force a correction when candidates are ambiguous or weak. Keep the token literal/unknown; do not substitute an emoji.
 
 ## Still unresolved
