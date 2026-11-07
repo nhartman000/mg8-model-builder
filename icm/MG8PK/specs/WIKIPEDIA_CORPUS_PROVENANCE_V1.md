@@ -29,7 +29,7 @@
 
 ## License and release controls
 
-Wikimedia reports that most text is under CC BY-SA 4.0 and GFDL; individual pages can have imported material and additional attribution notices. Preserve page-level title/revision/URL provenance, exclude content with incompatible or unclear notices when identifiable, and include attribution and license notices with any shared source-derived artifacts as required.
+Wikimedia's official reuse guidance says most Wikimedia text is under CC BY-SA 4.0 and GFDL, with page-level exceptions and possible imported-material notices. See https://foundation.wikimedia.org/wiki/Legal:Wikimedia_Developer_App_Guidelines/Frequently_asked_questions and https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use. The official dump page is https://dumps.wikimedia.org/enwiki/20261001/. Preserve page-level title/revision/URL provenance, exclude content with incompatible or unclear notices when identifiable, and include attribution and license notices with any shared source-derived artifacts as required.
 
 The exact obligations for aggregated n-gram counts, model weights, or generated output are not determined by this source record. Keep the statistical compendium and derived model private until a qualified license review clears their intended distribution. This is a release gate, not a claim that a particular artifact is or is not an adaptation.
 
