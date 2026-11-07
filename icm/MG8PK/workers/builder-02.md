@@ -21,7 +21,7 @@ Build only Module 2 (Tokenization) for NYCH Language Model V1 at `src/nych_langu
 - Do not force a correction when candidates are ambiguous or weak. Keep the token literal/unknown; do not substitute an emoji.
 
 ## Still unresolved
-Do not select an OOV/unknown-word representation or model vocabulary encoding until the owner freezes those contracts. Punctuation and whitespace token rules are already owner-approved. Wikipedia import must pass the documented provenance/license controls before weights are built. If a required choice is open, return a concrete design question or interface-neutral prototype.
+Words missing from the learned vocabulary use reserved UTF-8 byte tokens internally; preserve each original surface word span, source offsets, and B3 occurrence trace identity. Canonical emoji remain atomic inventory tokens. Punctuation and whitespace token rules are already owner-approved. Wikipedia import must pass the documented provenance/license controls before weights are built. If a required choice is open, return a concrete design question or interface-neutral prototype.
 
 ## Required outputs
 - Implementation and focused tests in the NYCH model repository after D2 is frozen.
