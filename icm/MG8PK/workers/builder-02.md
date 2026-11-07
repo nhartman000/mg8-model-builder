@@ -9,6 +9,9 @@ Build only Module 2 (Tokenization) for NYCH Language Model V1 at `src/nych_langu
 - Canonicalize only explicit, approved non-meaning-changing aliases to their inventory default. Skin-tone modifiers and presentation variants may fold to the default when the alias table says so. Never collapse a meaning-changing sequence by stripping code points.
 - Preserve original source bytes/text; do not modify the input while creating normalized token views. Words need not map to emoji; do not replace scientific names, proper names, or other unmatched words with a forced emoji.
 - Keep B3 occurrence trace IDs separate from model vocabulary token IDs.
+- Use a layered, versioned lexicon for common English plus approved technical/scientific and proper-name terms.
+- For likely typos, rank candidate words using weighted edit distance, keyboard-neighbor costs from a versioned layout, lexical frequency, and neighboring-word context. Emit the best candidate with evidence/confidence; preserve the original surface spelling and byte span.
+- Do not force a correction when candidates are ambiguous or weak. Keep the token literal/unknown; do not substitute an emoji.
 
 ## Still unresolved
 Do not select an OOV/unknown-word representation, punctuation policy, whitespace token representation, or model vocabulary encoding until the owner freezes those contracts. If a required choice is open, return a concrete design question or interface-neutral prototype.
