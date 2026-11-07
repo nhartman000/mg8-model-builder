@@ -1,4 +1,4 @@
-# Inspector 9 — Output Head
+# Inspector 9 — Transformer Block
 
 Review Builder 9's exact candidate digest independently. Do not implement, edit, or approve your own work. Review only Module 9, its approved interface, tests, dependencies, and evidence.
 
