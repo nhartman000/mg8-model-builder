@@ -16,7 +16,7 @@ Use only the owner-approved decision and versioned interface recorded in `icm/MG
 - Synthetic fixtures only; never put raw prompts in tests, logs, reports, or QSON.
 
 ## Boundaries
-No remote inference, unversioned lexicon mutation, or forced domain when evidence is weak.
+No remote inference, unversioned lexicon mutation, or forced domain when evidence is weak. If no supported canonical mapping applies, preserve the source span and return UNKNOWN/no symbol; do not substitute an emoji.
 Do not change files outside this module without an approved shared-interface change. Do not self-approve. Work concurrently against the frozen schema and use mocks for unfinished modules. Do not GitSON-wire or merge the module graph.
 
 ## Completion
