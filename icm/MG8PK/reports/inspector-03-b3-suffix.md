@@ -1,30 +1,21 @@
-# Inspector 3 report — D3 suffix candidate
+# Inspector 3 report — D3 suffix candidate (re-inspection)
 
 - **Module:** Builder 3 / word-skeleton suffix component
-- **Candidate source blob:** `564bfe320d2fa364491a9551de803d0d7d9a93fc`
-- **Candidate test blob:** `9dcf0a8eee84a17e71147281cef4ebcb770ca650`
-- **Review verdict:** **INTERMEDIATE** for the complete Builder 3 module; the implemented suffix component passes the checked cases.
-- **Review basis:** inspected the exact GitHub blobs above and ran `PYTHONPATH=src python -m unittest discover -s tests -p 'test_trace_identity.py' -v` in the NYCH model project; **7/7 tests passed**.
+- **Candidate source blob:** `9d2224fce8df9180324dff71dbd443ccc04c1c44`
+- **Candidate test blob:** `2eca43b69104b156e26d343f933053f66dd5d47b`
+- **Review verdict:** **PASS for the bounded suffix component; INTERMEDIATE for complete Builder 3 trace identity.**
+- **Review basis:** independently fetched and inspected the exact GitHub blobs above. Ran `PYTHONPATH=src python -m unittest discover -s tests -p 'test_trace_identity.py' -v`; **9/9 tests passed**.
 
 ## Findings
 
-1. The candidate preserves its input string, applies NFKD plus combining-mark removal only to the derived suffix, removes a/e/i/o/u, retains y, and collapses adjacent repeated consonants. The supplied Chinchilla and Attacking examples match.
-2. Exact inventory membership rejects an unlisted multi-emoji string and skin-tone-modified variant in the tested inventory. Runtime code does not call an LLM to pick the emoji.
-3. The code intentionally does not construct the SHA/occurrence/domain trace ID. It does not claim that this suffix helper is the complete trace identity.
+1. The implementation applies NFKD and removes combining marks only in the derived suffix; original input text and source offsets are not modified.
+2. It removes a/e/i/o/u, retains y, and collapses adjacent repeated consonants. Chinchilla and Attacking match the owner's examples.
+3. It now fails closed on residual non-ASCII letters that do not accent-fold to ASCII instead of silently discarding them.
+4. An all-vowel input keeps an empty structured skeleton; the display function renders it visibly as `∅`.
+5. Emoji selection requires an exact match to the caller-provided inventory. Runtime code does not call an LLM to select a domain emoji.
 
-## Blocking issue
+## Remaining boundary
 
-The post-fold ASCII filter silently discards letters that do not decompose to ASCII under NFKD (for example, æ/œ/ø/ł). Distinct inputs can therefore collapse to the same suffix, and some words can lose information without an error. The owner-approved “accent fold” policy does not yet specify transliteration for these letters. Before accepting the suffix component, either:
-- define and test a transliteration table, or
-- reject unsupported residual letters explicitly rather than silently dropping them.
+The suffix/display component passes its stated bounded contract. Builder 3 is **not complete**: SHA-256 input material, per-occurrence identity, final serialization/separators, and domain binding remain unresolved. The current candidate correctly does not claim to implement those decisions. Inspector 3 does not authorize GitSON wiring or full-module PASS.
 
-Also define the expected result when a word contains only vowels and therefore produces an empty suffix. The current implementation returns the empty string.
-
-## Decision boundaries still open
-
-- SHA-256 input material and how word occurrence identity is made unique.
-- Final serialized trace-ID separators/order and domain binding.
-- Handling policy for unsupported Latin letters and empty suffixes.
-- Inventory artifact schema/version and the required guarantee that each member is exactly one approved emoji grapheme.
-
-Do not wire this component or mark the complete Builder 3 module PASS until the blocking suffix behavior and remaining trace-ID contract are resolved.
+The emoji inventory must still be curated/versioned as an approved artifact. Its contents are trusted input; this module validates selected value membership, not the semantic correctness of each inventory entry.
