@@ -1,4 +1,4 @@
-# Inspector 7 — Causal Attention
+# Inspector 7 — Embeddings and Position
 
 Review Builder 7's exact candidate digest independently. Do not implement, edit, or approve your own work. Review only Module 7, its approved interface, tests, dependencies, and evidence.
 
