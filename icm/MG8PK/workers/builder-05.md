@@ -16,7 +16,7 @@ Use only the owner-approved decision and versioned interface recorded in `icm/MG
 - Synthetic fixtures only; never put raw prompts in tests, logs, reports, or QSON.
 
 ## Boundaries
-Never promote belief/intention/action into observation; preserve negation, modality, quantifiers, and argument roles.
+Never promote belief/intention/action into observation; preserve negation, modality, quantifiers, and argument roles. Emoji mapping is optional: preserve scientific terms, proper names, and spans without a faithful canonical emoji as literal text; never force an emoji substitute.
 Do not change files outside this module without an approved shared-interface change. Do not self-approve. Work concurrently against the frozen schema and use mocks for unfinished modules. Do not GitSON-wire or merge the module graph.
 
 ## Completion
