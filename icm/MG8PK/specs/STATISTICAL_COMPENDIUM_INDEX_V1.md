@@ -1,9 +1,16 @@
+# Statistical Compendium Index — V1 Design
+
+## Purpose
+
+Provide deterministic, local statistical evidence for word continuation and typo interpretation. The compendium is an aggregate index built from a versioned, licensed corpus. It is not a runtime LLM and does not retain user prompts.
+
+## Recommended storage
 
 Use a versioned SQLite database for runtime lookup, with a small JSON manifest alongside it. Owner-approved corpus composition: a general English corpus plus separate technical/scientific and name lexicons; never use prompt logs. Owner-selected source: the complete English Wikipedia dump `enwiki-20261001` for general English weights. This was the latest complete dump identified on 2026-11-07; the `20261101` dump was still in progress. Use article namespace only, preserve snapshot/page/revision provenance, and follow applicable attribution/share-alike conditions. Keep derived artifacts private until license review clears intended distribution. Technical/name lexicons remain separate and versioned. No prompt logs are permitted. See `WIKIPEDIA_CORPUS_PROVENANCE_V1.md` for the source record and controls. SQLite provides indexed key lookups and deterministic local access; the manifest binds the weights to their source and build procedure.
 
 ### Candidate lexicon composition
 
-The owner approved a general English candidate-lexicon seed derived from the same `enwiki-20261001` snapshot: article text vocabulary plus page titles and redirects. Keep proper-name and technical/scientific lexicons as separate versioned layers. The proper-name lexicon covers people, places, organizations, and similar entities, and must derive from a dedicated owner-approved master list of names. Wikipedia article titles and redirects alone do not establish proper-name membership. Its master-list source and the technical/scientific lexicon source remain pending, as do their inclusion rules. This candidate lexicon is not claimed to be a complete dictionary. Missing entries remain representable through the approved internal UTF-8 byte fallback. Apply the same corpus provenance and license review controls before extracting vocabulary candidates.
+The owner approved a general English candidate-lexicon seed derived from the same `enwiki-20261001` snapshot: article text vocabulary plus page titles and redirects. Keep proper-name and technical/scientific lexicons as separate versioned layers. The proper-name lexicon covers people, places, organizations, and similar entities. Wikidata is the approved versioned master candidate source: extract English labels and aliases from a dated weekly JSON entity dump, filter with a versioned entity-type policy, and retain QID, entity type, dump date, and source provenance. Wikidata structured data is CC0. Candidate matches do not establish identity and the lexicon is not claimed to be exhaustive. Wikipedia article titles and redirects alone do not establish proper-name membership. Exact entity-type inclusion rules and the technical/scientific lexicon source remain pending. This candidate lexicon is not claimed to be a complete dictionary. Missing entries remain representable through the approved internal UTF-8 byte fallback. Apply the same corpus provenance and license review controls before extracting vocabulary candidates.
 
 ### D2 page-level evaluation split
 
