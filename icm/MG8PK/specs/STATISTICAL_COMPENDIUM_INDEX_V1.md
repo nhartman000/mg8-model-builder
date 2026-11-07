@@ -16,7 +16,7 @@ Use a versioned SQLite database for runtime lookup, with a small JSON manifest a
 - tokenizer/normalizer version
 - n-gram order and smoothing method/version
 - build code version and artifact digest
-- keyboard-layout map IDs and versions, stored as separate resources
+- keyboard-layout map IDs and versions, stored as separate resources. Initial registry: US QWERTY, UK QWERTY, AZERTY, and QWERTZ. Use device/user layout when available; if unknown, keyboard corroboration requires agreement across enabled layouts.
 
 ### Statistical tables
 
@@ -46,7 +46,7 @@ The values `N`, `T`, and `P` come from the approved corpus; this example does no
 
 1. Preserve the exact observed surface token and byte span.
 2. Query the statistical compendium first. Rank lexical candidates from the previous two or three words, with shorter-context backoff when necessary. Where available, include right-context evidence to distinguish alternatives.
-3. Check the top statistical candidates against the configured keyboard-layout map. Neighboring-key substitutions and other plausible key errors provide secondary evidence; they do not replace context statistics.
+3. Check the top statistical candidates against the versioned keyboard-layout maps. Neighboring-key substitutions and other plausible key errors provide secondary evidence; they do not replace context statistics.
 4. Correct only when the statistical/context evidence is clear and keyboard evidence is compatible for a keyboard typo. If the original token is a valid term and the thought remains coherent, keep it literal. If no clear candidate emerges, keep it literal and unresolved.
 5. Preserve correction as a separate hypothesis with evidence and confidence. Never overwrite the input text or silently force an emoji.
 
