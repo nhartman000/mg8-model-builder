@@ -1,0 +1,61 @@
+# Statistical Compendium Index — V1 Design
+
+## Purpose
+
+Provide deterministic, local statistical evidence for word continuation and typo interpretation. The compendium is an aggregate index built from a versioned, licensed corpus. It is not a runtime LLM and does not retain user prompts.
+
+## Recommended storage
+
+Use a versioned SQLite database for runtime lookup, with a small JSON manifest alongside it. SQLite provides indexed key lookups and deterministic local access; the manifest binds the weights to their source and build procedure.
+
+### Manifest fields
+
+- `schema_version`
+- `compendium_id`
+- `corpus_id`, license/reference, and corpus SHA-256
+- tokenizer/normalizer version
+- n-gram order and smoothing method/version
+- build code version and artifact digest
+- keyboard-layout map IDs and versions, stored as separate resources
+
+### Statistical tables
+
+**`ngram_counts`**
+
+| Column | Meaning |
+|---|---|
+| `order_n` | Context length, initially 1–3 |
+| `context_key` | Canonically serialized ordered prior-token sequence |
+| `candidate_token` | Candidate next word/token |
+| `count` | Observed count in the approved corpus |
+| `context_total` | Total continuations observed for that context |
+| `probability` | Smoothed conditional probability |
+| `log_probability` | Stable additive score used for sequence ranking |
+
+Keep integer counts as evidence and smoothed probabilities/log probabilities for comparable scoring. Use explicit backoff/interpolation for contexts with sparse counts; record its algorithm/version in the manifest.
+
+### Example entry
+
+For the sequence “water-shed moment”, an index row can represent:
+
+`order_n=1, context_key=["water-shed"], candidate_token="moment", count=N, context_total=T, probability=P, log_probability=log(P)`
+
+The values `N`, `T`, and `P` come from the approved corpus; this example does not assign invented counts.
+
+## Deterministic correction order
+
+1. Preserve the exact observed surface token and byte span.
+2. Query the statistical compendium first. Rank lexical candidates from the previous two or three words, with shorter-context backoff when necessary. Where available, include right-context evidence to distinguish alternatives.
+3. Check the top statistical candidates against the configured keyboard-layout map. Neighboring-key substitutions and other plausible key errors provide secondary evidence; they do not replace context statistics.
+4. Correct only when the statistical/context evidence is clear and keyboard evidence is compatible for a keyboard typo. If the original token is a valid term and the thought remains coherent, keep it literal. If no clear candidate emerges, keep it literal and unresolved.
+5. Preserve correction as a separate hypothesis with evidence and confidence. Never overwrite the input text or silently force an emoji.
+
+Confidence thresholds and acceptable score margins must be calibrated on held-out, representative typo examples before implementation is marked complete.
+
+## Data and audit boundaries
+
+- Build weights only from owner-approved, license-cleared corpora.
+- Store aggregate counts and weights, not raw prompts.
+- Record corpus, tokenizer, normalization, smoothing, keyboard-layout, and build-artifact versions.
+- Report correction accuracy and false-correction rate separately, including names, scientific terms, and coherent rare-word cases.
+- If the needed corpus or layout evidence is absent, preserve the literal token rather than guessing.
