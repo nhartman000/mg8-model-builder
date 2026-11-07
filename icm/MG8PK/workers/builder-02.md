@@ -1,4 +1,3 @@
-## Mandate
 Build only Module 2 (Tokenization) for NYCH Language Model V1 at `src/nych_language_model/pipeline/tokenization.py` in `nhartman000/nych-language-model`.
 
 ## Owner-approved direction
@@ -14,7 +13,7 @@ Build only Module 2 (Tokenization) for NYCH Language Model V1 at `src/nych_langu
 - If the original word is a valid term and the thought remains coherent, do not correct it. If no clear candidate emerges, leave it literal and unresolved.
 - Select the correction cutoff on held-out examples. Automatic internal correction is allowed only when the one-sided 95% exact-binomial (Clopper–Pearson) lower confidence bound for held-out precision is at least 99%; if the bound does not meet that target, leave tokens literal/unresolved. Report precision and false-correction rates separately for proper names, scientific terms, coherent rare words, ambiguous candidates, and each keyboard layout. Keep source text unchanged.
 - Evaluate typos, coherent valid words, proper names, scientific terms, ambiguous candidates, and configured keyboard layouts separately; use no user prompts as training or evaluation data.
-- Build general n-gram weights from the complete English Wikipedia snapshot `enwiki-20261001`, article namespace only. Preserve dump checksum and per-page/revision provenance; follow applicable attribution/share-alike terms. Keep the dump and extracted text out of the NYCH repo. Keep derived artifacts private pending license review.
+- For the D2 statistical compendium, split `enwiki-20261001` article-namespace pages by stable page ID into 90% train, 5% validation, and 5% test before building n-grams. Use only train pages to build weights, validation pages to tune correction cutoffs, and untouched test pages for final evaluation. Make the partition reproducible with `bucket = int(SHA256("NYCH-D2-SPLIT-v1\\0" + snapshot_id + "\\0" + page_id), big_endian) mod 100`, assigning buckets 0–89 to train, 90–94 to validation, and 95–99 to test. Preserve dump checksum and per-page/revision provenance; follow applicable attribution/share-alike terms. Keep the dump and extracted text out of the NYCH repo. Keep derived artifacts private pending license review. This split applies to D2 compendium and correction evaluation only; D10 model-training data remains separately pending.
 - Follow `icm/MG8PK/specs/STATISTICAL_COMPENDIUM_INDEX_V1.md` and `icm/MG8PK/specs/WIKIPEDIA_CORPUS_PROVENANCE_V1.md`.
 - Do not force a correction when candidates are ambiguous or weak. Keep the token literal/unknown; do not substitute an emoji.
 
