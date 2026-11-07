@@ -1,5 +1,7 @@
 # Per-Work Corpus Provenance Record — V1
 
+> **Superseded for the B2 statistical compendium.** The owner selected the complete English Wikipedia snapshot `enwiki-20261001`; use `WIKIPEDIA_CORPUS_PROVENANCE_V1.md` for B2. This per-work schema remains a reference only for any separately approved work-level corpus.
+
 Create one record for every text considered for the B2 statistical compendium. Inclusion requires an item-level rights review and a reproducible content hash.
 
 ## Required fields
