@@ -1,4 +1,3 @@
-
 ## Purpose
 
 Provide deterministic, local statistical evidence for word continuation and typo interpretation. The compendium is an aggregate index built from a versioned, licensed corpus. It is not a runtime LLM and does not retain user prompts.
@@ -53,7 +52,7 @@ The values `N`, `T`, and `P` come from the approved corpus; this example does no
 4. Correct only when the statistical/context evidence is clear and keyboard evidence is compatible for a keyboard typo. If the original token is a valid term and the thought remains coherent, keep it literal. If no clear candidate emerges, keep it literal and unresolved.
 5. Preserve correction as a separate hypothesis with evidence and confidence. Never overwrite the input text or silently force an emoji.
 
-Calibrate the correction cutoff and score margin on held-out, representative typo and coherent-word cases. Automatic internal correction is allowed only if its measured precision is at least 99%; otherwise preserve tokens literally and leave them unresolved. Report precision and false-correction rates for proper names, scientific terms, coherent rare words, ambiguous candidates, and each keyboard layout.
+Calibrate the correction cutoff and score margin on held-out, representative typo and coherent-word cases. Enable automatic internal correction only when the one-sided 95% exact-binomial (Clopper–Pearson) lower confidence bound for held-out precision is at least 99%; otherwise preserve tokens literally and leave them unresolved. Report precision and false-correction rates separately for proper names, scientific terms, coherent rare words, ambiguous candidates, and each keyboard layout.
 
 ## Data and audit boundaries
 
