@@ -1,6 +1,6 @@
 # Owner Decision Register (generated projection, OFFLINE PROTOTYPE)
 
-Decision-set digest: `sha256:fc74876e390d4b1ec1d8f7997b446c87166a76c99c0aff08b377dc013e78aca4`
+Decision-set digest: `sha256:32c704e1333027f827b14f647fd29a30b4acf61e640b0c56e6583d4bf709d3a6`
 
 Generated from the decision event log. Do not edit by hand. Readiness below is advisory, not authoritative.
 
