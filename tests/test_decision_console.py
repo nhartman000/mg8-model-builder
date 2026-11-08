@@ -216,7 +216,7 @@ class RealFixture(unittest.TestCase):
         l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37)], REAL_EVENTS)
         st = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         approved = {i for i, d in st.items() if d["state"] == "APPROVED"}
-        self.assertEqual(approved, {"D0", "D1-context", "D4", "D5"})
+        self.assertEqual(approved, {"D0", "D1-context", "D4", "D5", "D6"})
         for i in approved:
             self.assertTrue(st[i]["recorded_against_current_definition"])
             self.assertEqual(st[i]["value"], st[i]["recommended"])
@@ -517,9 +517,9 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(REAL_EVENTS[0]["catalog_digest"], D5_V2_DIGEST)
         self.assertEqual(sha256_hex(REAL), D5_V2_DIGEST)
         self.assertNotEqual(sha256_hex(REAL3), D5_V2_DIGEST)
-        self.assertEqual([e["decision_id"] for e in REAL_EVENTS], ["D5", "D0", "D1-context", "D5", "D4"])
+        self.assertEqual([e["decision_id"] for e in REAL_EVENTS], ["D5", "D0", "D1-context", "D5", "D4", "D6"])
         self.assertEqual([e["action"] for e in REAL_EVENTS],
-                         ["HISTORICAL_APPROVAL", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION"])
+                         ["HISTORICAL_APPROVAL", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION"])
         old = next(d for d in REAL["decisions"] if d["id"] == "D5")["historical_approval"]["value"]
         new = next(d for d in REAL3["decisions"] if d["id"] == "D5")
         self.assertIsNone(new["historical_approval"])
@@ -539,13 +539,13 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D5"]["recommended"], rec)
         self.assertEqual(p["D0"]["state"], "APPROVED")
         self.assertEqual(p["D1-context"]["value"]["window_tokens"], 1024)
-        for did in ("D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "D16"):
+        for did in ("D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "D16"):
             self.assertEqual(p[did]["state"], "PENDING", did)
         self.assertNotIn("D5", l.readiness()["blocked"]["B5"])
         self.assertFalse(l.readiness()["readiness_authoritative"])
         with self.assertRaises(DecisionError):
             l.import_historical("D5", timestamp=T, rationale="do not mint")
-        self.assertEqual(len(l.events), 5)
+        self.assertEqual(len(l.events), 6)
         with self.assertRaises(DecisionError):
             DecisionLog.load(copy.deepcopy(REAL3), REAL_EVENTS)
         with self.assertRaises(DecisionError):
@@ -598,11 +598,11 @@ class CrossBoundsAndD5(unittest.TestCase):
                        "grammatical invariants"):
             self.assertIn(phrase, text)
         l = _stack()
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6"])
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D6"]["state"], "PENDING")
+        self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertTrue(p["D6"]["contract_complete"])
-        self.assertIsNone(p["D6"]["value"])
+        self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
         self.assertEqual(p["D6"]["owner_input_required"], [])
         for did in ("D0", "D1-context", "D5"):
             self.assertEqual(p[did]["state"], "APPROVED")
@@ -611,11 +611,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         for name in ("seed_lexicon", "confidence_threshold", "tie_policy"):
             self.assertIsNone(d4["contract"][name]["recommended"])
             self.assertTrue(d4["contract"][name]["owner_input_required"])
-        self.assertEqual(len(l.events), 5)
-        self.assertNotIn("D6", [e["decision_id"] for e in l.events])
+        self.assertEqual(len(l.events), 6)
+        self.assertIn("D6", [e["decision_id"] for e in l.events])
         md = project_register_md(l)
         row = [x for x in md.splitlines() if x.startswith("| D6 ")][0]
-        self.assertIn("Recommended—awaiting owner approval", row)
+        self.assertIn("| APPROVED |", row)
+        self.assertNotIn("awaiting owner approval", row)
         self.assertIn("| complete |", row)
         self.assertNotIn("INCOMPLETE", row)
         self.assertNotIn("FbncSqnc", json.dumps(project_qson_events(l)))
@@ -652,7 +653,7 @@ class CrossBoundsAndD5(unittest.TestCase):
             self.assertIsNone(new["contract"][name]["recommended"])
             self.assertTrue(new["contract"][name]["owner_input_required"])
         l = _stack()
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6"])
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         self.assertEqual(p["D4"]["state"], "APPROVED")
         self.assertTrue(p["D4"]["contract_complete"])
@@ -662,7 +663,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         for did in ("D0", "D1-context", "D5"):
             self.assertEqual(p[did]["state"], "APPROVED")
             self.assertTrue(p[did]["recorded_against_current_definition"])
-        self.assertEqual(len(l.events), 5)
+        self.assertEqual(len(l.events), 6)
         row = [x for x in project_register_md(l).splitlines() if x.startswith("| D4 ")][0]
         self.assertIn("| APPROVED |", row)
         self.assertNotIn("awaiting owner approval", row)
@@ -695,7 +696,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D4"]["state"], "APPROVED")
         self.assertEqual(p["D4"]["value"]["tie_policy"], p["D4"]["recommended"]["tie_policy"])
         self.assertEqual(p["D4"]["owner_input_required"], [])
-        self.assertEqual(len(l.events), 5)
+        self.assertEqual(len(l.events), 6)
 
     def test_d4_confidence_and_d6_endpoint_not_approvals(self):
         self.assertEqual(REAL34["catalog_version"], "3.4")
@@ -726,13 +727,13 @@ class CrossBoundsAndD5(unittest.TestCase):
         l = _stack()
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         self.assertEqual(p["D4"]["state"], "APPROVED")
-        self.assertEqual(p["D6"]["state"], "PENDING")
+        self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertEqual(p["D4"]["value"]["confidence_threshold"], 0.75)
-        self.assertIsNone(p["D6"]["value"])
+        self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
         self.assertEqual(p["D4"]["owner_input_required"], [])
         self.assertEqual(p["D6"]["owner_input_required"], [])
-        self.assertEqual(len(l.events), 5)
-        self.assertNotIn("D6", [e["decision_id"] for e in l.events])
+        self.assertEqual(len(l.events), 6)
+        self.assertIn("D6", [e["decision_id"] for e in l.events])
 
     def test_d6_write_policy_recorded_not_approved(self):
         self.assertEqual(REAL36["catalog_version"], "3.6")
@@ -755,12 +756,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertFalse(new["contract"]["tote_write_policy"]["owner_input_required"])
         l = _stack()
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D6"]["state"], "PENDING")
+        self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertTrue(p["D6"]["contract_complete"])
-        self.assertIsNone(p["D6"]["value"])
+        self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
         self.assertTrue(p["D6"]["recommended"]["tote_write_policy"].startswith(text + "\n\n"))
         self.assertEqual(p["D4"]["state"], "APPROVED")
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6"])
 
     def test_d6_chat_local_symbols_appended_not_approved(self):
         self.assertEqual(REAL37["catalog_version"], "3.7")
@@ -793,9 +794,9 @@ class CrossBoundsAndD5(unittest.TestCase):
             self.assertEqual(new["contract"][name]["owner_input_required"], old["contract"][name]["owner_input_required"])
         l = _stack()
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D6"]["state"], "PENDING")
-        self.assertIsNone(p["D6"]["value"])
-        self.assertNotIn("D6", [e["decision_id"] for e in l.events])
+        self.assertEqual(p["D6"]["state"], "APPROVED")
+        self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
+        self.assertIn("D6", [e["decision_id"] for e in l.events])
         for did in ("D0", "D1-context", "D4", "D5"):
             self.assertEqual(p[did]["state"], "APPROVED")
             self.assertTrue(p[did]["recorded_against_current_definition"])
@@ -825,12 +826,13 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D4"]["value"]["tie_policy"], tie["recommended"])
         self.assertEqual(p["D4"]["owner_input_required"], [])
         self.assertEqual(p["D4"]["recommended"]["tie_policy"], tie["recommended"])
-        self.assertEqual(l.events[-1]["event_id"], "sha256:1d80d3eaa2a1fa41bf855be5cbd2ea3685aeeab31a6d3a4c2705daafbe9032bd")
-        self.assertEqual(l.events[-1]["catalog_digest"], sha256_hex(REAL35))
-        self.assertEqual(l.events[-1]["action"], "APPROVE_RECOMMENDATION")
-        self.assertEqual(p["D6"]["state"], "PENDING")
+        d4_event = next(e for e in l.events if e["decision_id"] == "D4")
+        self.assertEqual(d4_event["event_id"], "sha256:1d80d3eaa2a1fa41bf855be5cbd2ea3685aeeab31a6d3a4c2705daafbe9032bd")
+        self.assertEqual(d4_event["catalog_digest"], sha256_hex(REAL35))
+        self.assertEqual(d4_event["action"], "APPROVE_RECOMMENDATION")
+        self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertEqual(p["D6"]["owner_input_required"], [])
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6"])
 
 
 if __name__ == "__main__":
