@@ -1,6 +1,6 @@
 # Owner Decision Register (generated projection, OFFLINE PROTOTYPE)
 
-Decision-set digest: `sha256:32c704e1333027f827b14f647fd29a30b4acf61e640b0c56e6583d4bf709d3a6`
+Decision-set digest: `sha256:a8aec242473196d6a6df342c00f30dfcaf1fdf5d6535bd91e66a80d4b135be3c`
 
 Generated from the decision event log. Do not edit by hand. Readiness below is advisory, not authoritative.
 
@@ -8,9 +8,9 @@ Generated from the decision event log. Do not edit by hand. Readiness below is a
 |---|---|---|---|---|---|---|
 | D0 | Model objective | APPROVED | complete | {"assurance_separation": "symbolic assurance results kept distinct from probabilistic output", "encoder": "deterministic NYCH encoder", "model_family": "tiny decoder-only causal LM", "prediction_target": "next NYCH token/symbol sequence"} | {"assurance_separation": "symbolic assurance results kept distinct from probabilistic output", "encoder": "deterministic NYCH encoder", "model_family": "tiny decoder-only causal LM", "prediction_target": "next NYCH token/symbol sequence"} | sha256:d738cb0d586c |
 | D1-context | Context window | APPROVED | complete | {"overflow_policy": "split_into_ordered_windows", "truncation": "never", "window_tokens": 1024} | {"overflow_policy": "split_into_ordered_windows", "truncation": "never", "window_tokens": 1024} | sha256:c7f6907b34fb |
-| D4 | Domain lexicon seed and thresholds | PENDING (owner input required) | INCOMPLETE: confidence_threshold, tie_policy |  |  |  |
+| D4 | Domain lexicon seed and thresholds | PENDING (owner input required) | INCOMPLETE: tie_policy |  |  |  |
 | D5 | GST context assembly and lookup | APPROVED | complete | {"existing_db_migration_002": "deferred; not applied to an existing database", "gst_format": "versioned GST JSON", "gst_schema_path": "nych-language-model/schemas/gst-context-v1.schema.json", "gst_scope": "request-scoped", "gst_source_of_truth": "nych-language-model/src/nych_language_model/pipeline/gst_context.py", "lookup": "exact canonical domain_id + action_key; ambiguity is cache miss", "migration_002_conformance_tests": "deferred; not run", "origin_policy": "HUMAN_AUTHORED automatic structural/invariant validation; HOW_TO_EXTRACTED requires matching human approval; unknown origins fail closed", "storage": "Additive TOTE SQLite v2 (migration 002)", "user_version": 2} | {"existing_db_migration_002": "deferred; not applied to an existing database", "gst_format": "versioned GST JSON", "gst_schema_path": "nych-language-model/schemas/gst-context-v1.schema.json", "gst_scope": "request-scoped", "gst_source_of_truth": "nych-language-model/src/nych_language_model/pipeline/gst_context.py", "lookup": "exact canonical domain_id + action_key; ambiguity is cache miss", "migration_002_conformance_tests": "deferred; not run", "origin_policy": "HUMAN_AUTHORED automatic structural/invariant validation; HOW_TO_EXTRACTED requires matching human approval; unknown origins fail closed", "storage": "Additive TOTE SQLite v2 (migration 002)", "user_version": 2} | sha256:8916be3481d2 |
-| D6 | Symbol-selection call contract | PENDING (owner input required) | INCOMPLETE: endpoint, tote_write_policy |  |  |  |
+| D6 | Symbol-selection call contract | PENDING (owner input required) | INCOMPLETE: tote_write_policy |  |  |  |
 | D7 | Embeddings and position | PENDING (Recommended—awaiting owner approval) | complete |  | {"d_model": 128, "dtype": "float32", "embeddings": "learned_token_symbol", "position_limit": 1024, "positional_encoding": "RoPE"} |  |
 | D8 | Attention | PENDING (Recommended—awaiting owner approval) | complete |  | {"head_width": 32, "heads": 4, "kv_cache": "none_in_reference", "layers": 2, "mask": "causal", "model_width": 128} |  |
 | D9 | Transformer block | PENDING (Recommended—awaiting owner approval) | complete |  | {"dropout_inference": 0.0, "dropout_training": 0.1, "ffn": "SwiGLU", "ffn_hidden_width": 512, "norm": "pre_rmsnorm", "residual": "yes"} |  |
