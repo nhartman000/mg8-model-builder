@@ -1,6 +1,6 @@
 # Owner Decision Register (generated projection, OFFLINE PROTOTYPE)
 
-Decision-set digest: `sha256:7e151d9afae7a8e02d59493dcb70a2254f3cf40e73789b11117aedffcf7c4068`
+Decision-set digest: `sha256:df8282c32764ac58e7ff08bf4d12fe0507be725c158a18e524172dc2716f21b8`
 
 Generated from the decision event log. Do not edit by hand. Readiness below is advisory, not authoritative.
 
@@ -9,7 +9,7 @@ Generated from the decision event log. Do not edit by hand. Readiness below is a
 | D0 | Model objective | PENDING (Recommended—awaiting owner approval) | complete |  | {"assurance_separation": "symbolic assurance results kept distinct from probabilistic output", "encoder": "deterministic NYCH encoder", "model_family": "tiny decoder-only causal LM", "prediction_target": "next NYCH token/symbol sequence"} |  |
 | D1-context | Context window | PENDING (Recommended—awaiting owner approval) | complete |  | {"overflow_policy": "split_into_ordered_windows", "truncation": "never", "window_tokens": 1024} |  |
 | D4 | Domain lexicon seed and thresholds | PENDING (owner input required) | INCOMPLETE: confidence_threshold, seed_lexicon, tie_policy |  |  |  |
-| D5 | GST context assembly and lookup | APPROVED | complete | {"gst_format": "versioned GST JSON", "lookup": "exact canonical domain_id + action_key; ambiguity is cache miss", "origin_policy": "HUMAN_AUTHORED automatic structural/invariant validation; HOW_TO_EXTRACTED requires matching human approval; unknown origins fail closed", "storage": "Additive TOTE SQLite v2 (migration 002)", "user_version": 2} | {"gst_format": "versioned GST JSON", "lookup": "exact canonical domain_id + action_key; ambiguity is cache miss", "origin_policy": "HUMAN_AUTHORED automatic structural/invariant validation; HOW_TO_EXTRACTED requires matching human approval; unknown origins fail closed", "storage": "Additive TOTE SQLite v2 (migration 002)", "user_version": 2} | sha256:68384464cd51 |
+| D5 | GST context assembly and lookup | APPROVED [definition changed; reconfirm] | complete | {"gst_format": "versioned GST JSON", "lookup": "exact canonical domain_id + action_key; ambiguity is cache miss", "origin_policy": "HUMAN_AUTHORED automatic structural/invariant validation; HOW_TO_EXTRACTED requires matching human approval; unknown origins fail closed", "storage": "Additive TOTE SQLite v2 (migration 002)", "user_version": 2} | {"existing_db_migration_002": "deferred; not applied to an existing database", "gst_format": "versioned GST JSON", "gst_schema_path": "nych-language-model/schemas/gst-context-v1.schema.json", "gst_scope": "request-scoped", "gst_source_of_truth": "nych-language-model/src/nych_language_model/pipeline/gst_context.py", "lookup": "exact canonical domain_id + action_key; ambiguity is cache miss", "migration_002_conformance_tests": "deferred; not run", "origin_policy": "HUMAN_AUTHORED automatic structural/invariant validation; HOW_TO_EXTRACTED requires matching human approval; unknown origins fail closed", "storage": "Additive TOTE SQLite v2 (migration 002)", "user_version": 2} | sha256:68384464cd51 |
 | D6 | Symbol-selection call contract | PENDING (owner input required) | INCOMPLETE: endpoint, request_response_schema, tote_write_policy |  |  |  |
 | D7 | Embeddings and position | PENDING (Recommended—awaiting owner approval) | complete |  | {"d_model": 128, "dtype": "float32", "embeddings": "learned_token_symbol", "position_limit": 1024, "positional_encoding": "RoPE"} |  |
 | D8 | Attention | PENDING (Recommended—awaiting owner approval) | complete |  | {"head_width": 32, "heads": 4, "kv_cache": "none_in_reference", "layers": 2, "mask": "causal", "model_width": 128} |  |
@@ -22,14 +22,35 @@ Generated from the decision event log. Do not edit by hand. Readiness below is a
 | D15 | Benchmark and success criteria | PENDING (owner input required) | INCOMPLETE: thresholds |  |  |  |
 | D16 | Packaging/release target | PENDING (owner input required) | INCOMPLETE: format, runtime_device |  |  |  |
 
+## Cross-decision constraints
+
+- D1-context.window_tokens = D7.position_limit
+- D7.d_model = D8.model_width
+
+## Numeric bounds (current catalog)
+
+- D1-context.window_tokens: minimum 1, maximum null, step 1
+- D4.confidence_threshold: minimum 0, maximum 1, step null
+- D5.user_version: minimum 2, maximum 2, step 1
+- D7.d_model: minimum 1, maximum null, step 1
+- D7.position_limit: minimum 1, maximum null, step 1
+- D8.layers: minimum 1, maximum null, step 1
+- D8.heads: minimum 1, maximum null, step 1
+- D8.head_width: minimum 1, maximum null, step 1
+- D8.model_width: minimum 1, maximum null, step 1
+- D9.ffn_hidden_width: minimum 1, maximum null, step 1
+- D9.dropout_training: minimum 0, maximum 1, step null
+- D9.dropout_inference: minimum 0, maximum 1, step null
+- D13.max_bytes_exclusive: minimum 1, maximum 500000, step 1
+
 ## Blocked modules (advisory)
 
 - B1: CONTRACT_NOT_MODELED_IN_CONSOLE, D12
 - B2: CONTRACT_NOT_MODELED_IN_CONSOLE, D1-context, D12
 - B3: CONTRACT_NOT_MODELED_IN_CONSOLE, D12
 - B4: D12, D4
-- B5: D12, D4
-- B6: D12, D6
+- B5: D12, D4, D5
+- B6: D12, D5, D6
 - B7: D0, D1-context, D12, D14, D7
 - B8: D0, D1-context, D12, D14, D7, D8
 - B9: D0, D1-context, D12, D14, D7, D8, D9
