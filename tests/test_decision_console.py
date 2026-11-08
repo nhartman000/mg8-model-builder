@@ -54,7 +54,7 @@ class Core(unittest.TestCase):
     def test_real_d8_constraint(self):
         d8 = [d for d in REAL["decisions"] if d["id"] == "D8"][0]
         self.assertEqual(d8["constraints"][0]["target"], "model_width")
-        l = DecisionLog.load(copy.deepcopy(REAL), REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3)], REAL_EVENTS)
         bad = dict(heads=4, head_width=32, model_width=96, layers=2, mask="causal", kv_cache="none_in_reference")
         with self.assertRaises(DecisionError): l.record("D8", "CHOOSE_OTHER", value=bad, owner=O, timestamp=T)
 
@@ -205,15 +205,25 @@ class Core(unittest.TestCase):
 
 
 class RealFixture(unittest.TestCase):
-    def test_only_d5_approved(self):
-        l = DecisionLog.load(copy.deepcopy(REAL), REAL_EVENTS)
+    def test_approved_before_d7_only(self):
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3)], REAL_EVENTS)
         st = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(st.pop("D5")["state"], "APPROVED")
-        self.assertTrue(all(d["state"] == "PENDING" for d in st.values()))
+        approved = {i for i, d in st.items() if d["state"] == "APPROVED"}
+        self.assertEqual(approved, {"D0", "D1-context", "D5"})
+        for i in approved:
+            self.assertTrue(st[i]["recorded_against_current_definition"])
+            self.assertEqual(st[i]["value"], st[i]["recommended"])
+        self.assertEqual(st["D1-context"]["value"]["window_tokens"], 1024)
+        self.assertEqual(st["D7"]["state"], "PENDING")
         self.assertEqual({k for k, d in st.items() if not d["contract_complete"]}, INCOMPLETE_REAL)
+        self.assertTrue(all(st[i]["state"] == "PENDING" for i in INCOMPLETE_REAL))
+        hist = DecisionLog.load(copy.deepcopy(REAL), REAL_EVENTS[:1])
+        d5 = {d["id"]: d for d in project_owner_decisions(hist)["decisions"]}["D5"]
+        self.assertTrue(d5["recorded_against_current_definition"])
+        self.assertEqual(d5["value"], REAL_EVENTS[0]["value"])
 
     def test_bulk_on_real_never_approves_placeholders_or_unblocks_all(self):
-        l = DecisionLog.load(copy.deepcopy(REAL), REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3)], REAL_EVENTS)
         r = l.approve_all_recommended(owner=O, timestamp=T)
         self.assertEqual(set(r["skipped_incomplete"]), INCOMPLETE_REAL)
         for d in INCOMPLETE_REAL: self.assertEqual(l.state(d), "PENDING")
@@ -416,11 +426,15 @@ class CrossBoundsAndD5(unittest.TestCase):
         l = _stack()
         r = l.approve_all_recommended(owner=O, timestamp=T)
         self.assertEqual(set(r["skipped_incomplete"]), INCOMPLETE_REAL)
-        self.assertNotIn("D5", [e["decision_id"] for e in r["events"]])
+        ids = [e["decision_id"] for e in r["events"]]
+        self.assertNotIn("D0", ids)
+        self.assertNotIn("D1-context", ids)
+        self.assertNotIn("D5", ids)
         self.assertEqual(l.events[0]["event_id"], D5_EVENT)
         vals = {e["decision_id"]: e["value"] for e in r["events"]}
+        d1 = next(e for e in reversed(l.events) if e["decision_id"] == "D1-context")
         self.assertEqual(vals["D7"]["d_model"], vals["D8"]["model_width"])
-        self.assertEqual(vals["D1-context"]["window_tokens"], vals["D7"]["position_limit"])
+        self.assertEqual(d1["value"]["window_tokens"], vals["D7"]["position_limit"])
         self.assertFalse(l.readiness()["readiness_authoritative"])
         for did in INCOMPLETE_REAL:
             self.assertEqual(l.state(did), "PENDING")
@@ -434,8 +448,8 @@ class CrossBoundsAndD5(unittest.TestCase):
         with self.assertRaisesRegex(DecisionError, "cross-decision"):
             l.approve_all_recommended(owner=O, timestamp=T)
         self.assertEqual(len(l.events), n)
-        self.assertEqual(l.state("D0"), "PENDING")
         self.assertEqual(l.state("D8"), "PENDING")
+        self.assertEqual(l.state("D12"), "PENDING")
 
     def test_real_numeric_bounds(self):
         l = _stack()
@@ -483,14 +497,17 @@ class CrossBoundsAndD5(unittest.TestCase):
         for did in INCOMPLETE_REAL:
             with self.assertRaises(DecisionError):
                 fresh.record(did, "APPROVE_RECOMMENDATION", owner=O, timestamp=T)
-        self.assertEqual(len(fresh.events), 1)
+        self.assertEqual(len(fresh.events), len(REAL_EVENTS))
+        self.assertEqual(fresh.state("D7"), "PENDING")
 
     def test_d5_expansion_keeps_historical_event(self):
         self.assertEqual(REAL_EVENTS[0]["event_id"], D5_EVENT)
         self.assertEqual(REAL_EVENTS[0]["catalog_digest"], D5_V2_DIGEST)
         self.assertEqual(sha256_hex(REAL), D5_V2_DIGEST)
         self.assertNotEqual(sha256_hex(REAL3), D5_V2_DIGEST)
-        self.assertEqual(len(REAL_EVENTS), 1)
+        self.assertEqual([e["decision_id"] for e in REAL_EVENTS], ["D5", "D0", "D1-context", "D5"])
+        self.assertEqual([e["action"] for e in REAL_EVENTS],
+                         ["HISTORICAL_APPROVAL", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION"])
         old = next(d for d in REAL["decisions"] if d["id"] == "D5")["historical_approval"]["value"]
         new = next(d for d in REAL3["decisions"] if d["id"] == "D5")
         self.assertIsNone(new["historical_approval"])
@@ -505,51 +522,49 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(l.events[0]["value"], old)
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         self.assertEqual(p["D5"]["state"], "APPROVED")
-        self.assertFalse(p["D5"]["recorded_against_current_definition"])
-        self.assertEqual(p["D5"]["value"], old)
+        self.assertTrue(p["D5"]["recorded_against_current_definition"])
+        self.assertEqual(p["D5"]["value"], rec)
         self.assertEqual(p["D5"]["recommended"], rec)
-        self.assertTrue(all(d["state"] == "PENDING" and d["recorded_against_current_definition"]
-                            for i, d in p.items() if i != "D5"))
-        self.assertIn("D5", l.readiness()["blocked"]["B5"])
+        self.assertEqual(p["D0"]["state"], "APPROVED")
+        self.assertEqual(p["D1-context"]["value"]["window_tokens"], 1024)
+        for did in ("D4", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "D16"):
+            self.assertEqual(p[did]["state"], "PENDING", did)
+        self.assertNotIn("D5", l.readiness()["blocked"]["B5"])
         self.assertFalse(l.readiness()["readiness_authoritative"])
         with self.assertRaises(DecisionError):
             l.import_historical("D5", timestamp=T, rationale="do not mint")
-        self.assertEqual(len(l.events), 1)
+        self.assertEqual(len(l.events), 4)
         with self.assertRaises(DecisionError):
             DecisionLog.load(copy.deepcopy(REAL3), REAL_EVENTS)
         with self.assertRaises(DecisionError):
+            DecisionLog.load(copy.deepcopy(REAL), REAL_EVENTS)
+        with self.assertRaises(DecisionError):
             DecisionLog.load([copy.deepcopy(REAL3), copy.deepcopy(REAL)], REAL_EVENTS)
-        v2_only = DecisionLog.load(copy.deepcopy(REAL), REAL_EVENTS)
+        v2_only = DecisionLog.load(copy.deepcopy(REAL), [REAL_EVENTS[0]])
         d5 = {d["id"]: d for d in project_owner_decisions(v2_only)["decisions"]}["D5"]
         self.assertTrue(d5["recorded_against_current_definition"])
-        self.assertEqual(d5["value"], d5["recommended"])
+        self.assertEqual(d5["value"], old)
 
-        md = project_register_md(_stack())
+        reconfirm = l.events[-1]
+        self.assertEqual(reconfirm["decision_id"], "D5")
+        self.assertEqual(reconfirm["action"], "APPROVE_RECOMMENDATION")
+        self.assertEqual(reconfirm["supersedes"], D5_EVENT)
+        self.assertEqual(reconfirm["catalog_digest"], sha256_hex(REAL3))
+        self.assertEqual(reconfirm["value"]["gst_scope"], "request-scoped")
+        self.assertEqual(reconfirm["value"]["user_version"], 2)
+        self.assertEqual(l.event_state(D5_EVENT), "SUPERSEDED")
+        md = project_register_md(l)
         d5row = [x for x in md.splitlines() if x.startswith("| D5 ")][0]
-        self.assertIn("definition changed; reconfirm", d5row)
+        self.assertNotIn("definition changed", d5row)
+        self.assertIn("APPROVED", d5row)
         self.assertIn("D1-context.window_tokens = D7.position_limit", md)
         self.assertIn("D7.d_model = D8.model_width", md)
         for row in md.splitlines():
-            if row.startswith("| D") and not row.startswith("| D5 "):
+            if row.startswith("| D"):
                 self.assertNotIn("definition changed", row)
-        qson = json.dumps(project_qson_events(_stack()))
+        qson = json.dumps(project_qson_events(l))
         for secret in ("request-scoped", "gst_context.py", "gst-context-v1", "deferred"):
             self.assertNotIn(secret, qson)
-
-        # Owner reconfirm is a new event. The historical event stays event 0.
-        l = _stack()
-        first = copy.deepcopy(l.events[0])
-        e = l.record("D5", "APPROVE_RECOMMENDATION", owner=O, timestamp=T)
-        self.assertEqual(l.events[0], first)
-        self.assertEqual(e["supersedes"], first["event_id"])
-        self.assertEqual(e["action"], "APPROVE_RECOMMENDATION")
-        self.assertEqual(e["catalog_digest"], sha256_hex(REAL3))
-        self.assertNotEqual(e["value"], first["value"])
-        self.assertEqual(e["value"]["gst_scope"], "request-scoped")
-        self.assertEqual(e["value"]["user_version"], 2)
-        after = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}["D5"]
-        self.assertTrue(after["recorded_against_current_definition"])
-        self.assertEqual(len(REAL_EVENTS), 1)  # fixture log was not rewritten
 
 
 if __name__ == "__main__":

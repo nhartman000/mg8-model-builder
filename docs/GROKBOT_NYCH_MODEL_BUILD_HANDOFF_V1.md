@@ -102,9 +102,11 @@ Do not ask Nick to decide again on items already approved. Use the decision inte
 - English-only V1 and D3 suffix behavior.
 - D2 whitespace spans, atomic canonical emoji inventory, statistical typo library then keyboard check, unresolved literal fallback; corpus/source choices and precision gates are in the NYCH decision register.
 - B3 SHA payload and suffix contract; bounded module passed independent inspection. End-to-end B1/B2 span provenance still needs integration checks.
-- B5 additive TOTE SQLite v2, PRAGMA user_version=2, canonical digest, exact domain_id + action_key, ambiguity miss, versioned GST JSON, provider candidates unapproved pending review, origin-specific automatic/human validation.
+- D0 model objective: deterministic NYCH encoder, tiny decoder-only causal LM, next NYCH token/symbol sequence, symbolic assurance kept distinct from probabilistic output.
+- D1-context: 1,024 tokens per window, split longer accepted input into ordered windows, never truncate. A later D7 position limit must equal 1024. D7 is not approved.
+- B5 additive TOTE SQLite v2, PRAGMA user_version=2, canonical digest, exact domain_id + action_key, ambiguity miss, versioned request-scoped GST JSON, schema `nych-language-model/schemas/gst-context-v1.schema.json`, source of truth `src/nych_language_model/pipeline/gst_context.py`, provider candidates unapproved pending review, origin-specific automatic/human validation. Reconfirmed against that expanded definition.
 - B5 code/review: 36 tests passed independently.
-- TOTE migration 002 merged to source control; no existing database applied/tested yet.
+- TOTE migration 002 merged to source control; no existing database applied or conformance-tested yet.
 - Weight pruning deferred to Builder Pro V2.
 - Repositories are private; no public release implied.
 - One GitSON handoff per module boundary must be under 500,000 bytes (owner-stated constraint); the exact validator/schema is still pending.
@@ -113,8 +115,6 @@ Do not ask Nick to decide again on items already approved. Use the decision inte
 
 | Decision | Module(s) | Needed before | Candidate question for Nick |
 |---|---|---|---|
-| Model objective and target output | D0, all | B7–B11 | Confirm the tiny decoder-only causal model predicts the next NYCH token/symbol sequence, with deterministic NYCH encoding and probabilistic generation kept separate? |
-| Context window behavior | D1 | B2, B7–B11 | Approve 1,024 model tokens per window and ordered window splitting for longer accepted input? |
 | Domain lexicon seed and thresholds | D4 | B4, B5 integration | Which seed lexicon and confidence/tie threshold should B4 use? Keep multi-label candidates and UNKNOWN when uncertain. |
 | Symbol-selection call and cache-miss contract | D6 | B6 | Approve the exact request/response JSON for GST + separate prompt, literal fallback, and no automatic TOTE write-back? |
 | Embedding and positional encoding | D7 | B7–B10 | Approve proposed d_model 128, learned embeddings, RoPE, float32 reference build? |
@@ -197,9 +197,9 @@ Merge a module only after Inspector PASS and all dependent contracts are frozen.
 ### Immediate takeover
 
 1. ~~Publish missing Builder/Inspector cards.~~ Done: all 22 cards are committed on main (verified at 2284ac9). Still audit NYCH and T.O.T.E-loops trees; the NYCH BUILD_STATUS is stale relative to the B5 V2 report and needs a separate reconciliation.
-2. Update the MG8 and NYCH decision registers from this handoff. D5 is approved; do not ask Nick again about B5 storage/version/lookup/GST defaults.
-3. Build the Decision Console and its versioned decision schema. Make the first owner screen show the remaining D0, D1-context, D4, D6–D16 choices in grouped form, with recommendations explicitly marked pending.
-4. Collect the owner decisions in one compact session. Do not launch architecture-dependent work until required choices are recorded.
+2. Update the MG8 and NYCH decision registers from this handoff. D0 and D1-context are approved. D5 is reconfirmed against the expanded definition; do not ask Nick again about B5 storage/version/lookup/GST defaults, request scope, schema path, or the deferred migration-002 application and tests.
+3. Build the Decision Console and its versioned decision schema. The owner screen still shows D4, D6, and D7–D16, with recommendations explicitly marked pending. D4 and D6 are incomplete.
+4. Collect the remaining owner decisions. D7–D11 are the next walkthrough. Do not launch architecture-dependent work until those choices are recorded.
 5. Once choices are frozen, launch ready builders concurrently. B1 review, B2 implementation, B4 lexicon after D4, B6 after D6, B7–B10 after their shared architecture decisions, and B11 after corpus/metrics decisions may proceed as independent candidate jobs with mocks where needed.
 6. Run separate Inspectors in parallel as candidates finish. Fix defects on new commits and re-inspect the corrected commit.
 7. Wire passing modules through GitSON only after dependency gates pass.
