@@ -12,6 +12,15 @@ Rules (handoff section 6):
   complete (every field has a recommended value and no field is marked
   owner-input-required). Incomplete decisions stay PENDING; bulk approval
   skips them and lists them visibly. No owner value is ever guessed.
+- Catalog v3 adds cross-decision ``equals`` constraints and numeric
+  ``maximum`` / ``step`` bounds (either may be null when no bound is
+  documented). Recommendations must already satisfy those rules. An
+  approval is rejected when it breaks a bound or disagrees with a peer
+  already approved against the same definition. D14 stays owner-input
+  text; this module does not invent a numeric size for it.
+- Snapshots are oldest-first. The shipped D5 historical approval is bound
+  to catalog v2. A later snapshot may expand that contract; the historical
+  event is not rewritten and does not approve the new definition.
 - "Approve all recommended" writes one event per decision; exceptions and
   skipped-incomplete IDs are listed in every event.
 - Notes and rationales are free text and are STORED in events and in the
@@ -33,10 +42,15 @@ import copy
 import hashlib
 import json
 import re
+from decimal import Decimal
 from typing import Any, Iterable
 
 SCHEMA_ID = "mg8.decision-event.v1"
-CATALOG_SCHEMA_ID = "mg8.decision-catalog.v2"
+CATALOG_SCHEMA_V2 = "mg8.decision-catalog.v2"
+CATALOG_SCHEMA_V3 = "mg8.decision-catalog.v3"
+CATALOG_SCHEMA_ID = CATALOG_SCHEMA_V2  # older snapshots; v3 is the current catalog
+CATALOG_SCHEMA_IDS = frozenset({CATALOG_SCHEMA_V2, CATALOG_SCHEMA_V3})
+_SCHEMA_RANK = {CATALOG_SCHEMA_V2: 2, CATALOG_SCHEMA_V3: 3}
 PROJECTION_SCHEMA_ID = "owner-decisions.v1"
 STATES = ("PENDING", "APPROVED", "REJECTED", "SUPERSEDED", "BLOCKED")
 ACTIONS = ("APPROVE_RECOMMENDATION", "CHOOSE_OTHER", "LEAVE_PENDING", "REJECT", "BLOCK", "HISTORICAL_APPROVAL")
@@ -91,20 +105,24 @@ def _reject_forbidden(obj: Any) -> None:
 
 # ------------------------------------------------------------------ catalog
 def validate_catalog(catalog: Any) -> None:
-    if not isinstance(catalog, dict) or catalog.get("schema") != CATALOG_SCHEMA_ID:
+    if not isinstance(catalog, dict) or catalog.get("schema") not in CATALOG_SCHEMA_IDS:
         raise DecisionError("catalog schema mismatch")
-    if set(catalog) != {"schema", "catalog_version", "decisions"}:
+    v3 = catalog["schema"] == CATALOG_SCHEMA_V3
+    top = {"schema", "catalog_version", "decisions"} | ({"cross_constraints"} if v3 else set())
+    if set(catalog) != top:
         raise DecisionError("catalog top-level fields mismatch")
     if not _is_str(catalog["catalog_version"], False) or not isinstance(catalog["decisions"], list):
         raise DecisionError("catalog version/decisions invalid")
     req = {"id", "title", "question", "modules", "depends_on", "round", "contract", "constraints", "historical_approval", "sources"}
     seen = set()
+    by_id = {}
     for d in catalog["decisions"]:
         if not isinstance(d, dict) or set(d) != req:
             raise DecisionError(f"decision fields mismatch: {d.get('id') if isinstance(d, dict) else d}")
         if not (_is_str(d["id"], False) and ID_RE.match(d["id"])) or d["id"] in seen:
             raise DecisionError(f"bad or duplicate decision id {d['id']!r}")
         seen.add(d["id"])
+        by_id[d["id"]] = d
         for k in ("title", "question", "round"):
             if not _is_str(d[k], False):
                 raise DecisionError(f"{d['id']}: {k} must be non-empty string")
@@ -118,7 +136,7 @@ def validate_catalog(catalog: Any) -> None:
         if not isinstance(c, dict) or not c:
             raise DecisionError(f"{d['id']}: contract must be non-empty object")
         for fname, f in c.items():
-            _validate_field_def(d["id"], fname, f)
+            _validate_field_def(d["id"], fname, f, v3)
         if not isinstance(d["constraints"], list):
             raise DecisionError(f"{d['id']}: constraints must be list")
         for con in d["constraints"]:
@@ -136,36 +154,134 @@ def validate_catalog(catalog: Any) -> None:
         for dep in d["depends_on"]:
             if dep not in seen or dep == d["id"]:
                 raise DecisionError(f"{d['id']} depends on unknown/self {dep}")
+    if v3:
+        _validate_cross_defs(catalog, by_id)
 
 
-def _validate_field_def(did, fname, f):
+def _validate_cross_defs(catalog: dict, by_id: dict) -> None:
+    cons = catalog["cross_constraints"]
+    if not isinstance(cons, list):
+        raise DecisionError("cross_constraints must be a list")
+    seen = set()
+    for con in cons:
+        if not (isinstance(con, dict) and set(con) == {"kind", "left", "right"} and con["kind"] == "equals"):
+            raise DecisionError("invalid cross constraint")
+        refs = []
+        for side in ("left", "right"):
+            ref = con[side]
+            if not (isinstance(ref, dict) and set(ref) == {"decision", "field"} and ref["decision"] in by_id
+                    and ref["field"] in by_id[ref["decision"]]["contract"]):
+                raise DecisionError("cross constraint references unknown decision or field")
+            refs.append(ref)
+        left, right = refs
+        if left["decision"] == right["decision"]:
+            raise DecisionError("cross constraint must span two decisions")
+        fl = by_id[left["decision"]]["contract"][left["field"]]
+        fr = by_id[right["decision"]]["contract"][right["field"]]
+        if fl["kind"] != fr["kind"]:
+            raise DecisionError("cross constraint fields must share a kind")
+        key = tuple(sorted(((left["decision"], left["field"]), (right["decision"], right["field"]))))
+        if key in seen:
+            raise DecisionError("duplicate cross constraint")
+        seen.add(key)
+        if fl["recommended"] is not None and fr["recommended"] is not None and fl["recommended"] != fr["recommended"]:
+            raise DecisionError(
+                f"cross-decision constraint violated by recommendations: "
+                f"{left['decision']}.{left['field']} != {right['decision']}.{right['field']}")
+
+
+def _bound_token_ok(kind: str, name: str, val: Any) -> bool:
+    if val is None:
+        return True
+    if kind == "integer":
+        good = _is_int(val)
+    else:
+        good = _is_num(val)
+    if not good:
+        return False
+    return name != "step" or val > 0
+
+
+def _validate_field_def(did, fname, f, v3=False):
     if not ID_RE.match(fname) or not isinstance(f, dict):
         raise DecisionError(f"{did}.{fname}: bad field")
     kind = f.get("kind")
     base = {"kind", "recommended", "owner_input_required", "unit"}
     extra = {"choice": {"options"}, "integer": {"minimum"}, "number": {"minimum"}, "text": set()}.get(kind)
-    if extra is None or set(f) != base | extra:
+    if extra is None:
+        raise DecisionError(f"{did}.{fname}: field keys mismatch for kind {kind}")
+    if v3 and kind in ("integer", "number"):
+        extra = set(extra) | {"maximum", "step"}
+    if set(f) != base | extra:
         raise DecisionError(f"{did}.{fname}: field keys mismatch for kind {kind}")
     if not isinstance(f["owner_input_required"], bool) or not (f["unit"] is None or _is_str(f["unit"], False)):
         raise DecisionError(f"{did}.{fname}: bad flags")
     if kind == "choice" and not (isinstance(f["options"], list) and len(f["options"]) >= 1 and all(_is_str(o, False) for o in f["options"])):
         raise DecisionError(f"{did}.{fname}: bad options")
-    if kind in ("integer", "number") and not (f["minimum"] is None or _is_num(f["minimum"])):
-        raise DecisionError(f"{did}.{fname}: bad minimum")
+    if kind in ("integer", "number"):
+        if v3:
+            for name in ("minimum", "maximum", "step"):
+                if not _bound_token_ok(kind, name, f[name]):
+                    raise DecisionError(f"{did}.{fname}: bad {name}")
+            lo, hi = f["minimum"], f["maximum"]
+            if lo is not None and hi is not None and lo > hi:
+                raise DecisionError(f"{did}.{fname}: minimum exceeds maximum")
+        elif not (f["minimum"] is None or _is_num(f["minimum"])):
+            raise DecisionError(f"{did}.{fname}: bad minimum")
     if f["owner_input_required"] and f["recommended"] is not None:
         raise DecisionError(f"{did}.{fname}: owner-input field must not carry a guessed recommendation")
     if f["recommended"] is not None:
         _validate_field_value(did, fname, f, f["recommended"])
 
 
+def _within_bounds(f, v) -> bool:
+    lo, hi = f.get("minimum"), f.get("maximum")
+    if lo is not None and v < lo:
+        return False
+    if hi is not None and v > hi:
+        return False
+    return True
+
+
+def _on_step(kind, f, v) -> bool:
+    step = f.get("step")
+    if step is None:
+        return True
+    origin = f.get("minimum")
+    origin = 0 if origin is None else origin
+    if kind == "integer":
+        return _is_int(step) and step > 0 and (v - origin) % step == 0
+    if not (_is_num(step) and step > 0):
+        return False
+    q = (Decimal(str(v)) - Decimal(str(origin))) / Decimal(str(step))
+    return q == q.to_integral_value()
+
+
 def _validate_field_value(did, fname, f, v):
     k = f["kind"]
     ok = ((k == "choice" and v in f["options"]) or
-          (k == "integer" and _is_int(v) and (f["minimum"] is None or v >= f["minimum"])) or
-          (k == "number" and _is_num(v) and (f["minimum"] is None or v >= f["minimum"])) or
+          (k == "integer" and _is_int(v) and _within_bounds(f, v) and _on_step(k, f, v)) or
+          (k == "number" and _is_num(v) and _within_bounds(f, v) and _on_step(k, f, v)) or
           (k == "text" and _is_str(v, False)))
     if not ok:
         raise DecisionError(f"{did}.{fname}: invalid value")
+
+
+def _assert_cross_consistent(catalog: dict, values_by_id: dict) -> None:
+    """Reject a joint assignment that breaks a catalog ``equals`` constraint.
+
+    Sides with no committed value are skipped. Both sides present must match.
+    """
+    for con in catalog.get("cross_constraints", []):
+        left, right = con["left"], con["right"]
+        if left["decision"] not in values_by_id or right["decision"] not in values_by_id:
+            continue
+        lv = values_by_id[left["decision"]][left["field"]]
+        rv = values_by_id[right["decision"]][right["field"]]
+        if lv != rv:
+            raise DecisionError(
+                f"cross-decision constraint violated: {left['decision']}.{left['field']} ({lv!r}) "
+                f"must equal {right['decision']}.{right['field']} ({rv!r})")
 
 
 def is_complete(decision: dict) -> bool:
@@ -244,6 +360,9 @@ class DecisionLog:
         digests = [catalog_digest(c) for c in snaps]
         if len(set(digests)) != len(digests):
             raise DecisionError("duplicate catalog snapshot")
+        ranks = [_SCHEMA_RANK[c["schema"]] for c in snaps]
+        if any(a > b for a, b in zip(ranks, ranks[1:])):
+            raise DecisionError("catalog snapshots must be oldest first")
         self.__catalogs = snaps
         self.__digests = digests
         self.__events: list = []
@@ -314,8 +433,10 @@ class DecisionLog:
             h = d["historical_approval"]
             if not allow_historical or h is None or head is not None or e["value"] != h["value"] or e["owner"] != h["owner"] or e["bulk_id"] is not None:
                 raise DecisionError("historical approval only importable once, as declared in the catalog")
+            self._check_approval_cross(snap, e["decision_id"], e["value"])
         elif e["state"] == "APPROVED":
             _validate_value(d, e["value"])
+            self._check_approval_cross(snap, e["decision_id"], e["value"])
             if e["action"] == "APPROVE_RECOMMENDATION":
                 rv = recommended_value(d)
                 if rv is None:
@@ -388,6 +509,14 @@ class DecisionLog:
                 and d["historical_approval"] is None]
         skipped = sorted(d["id"] for d in pend if not is_complete(d))
         targets = [d["id"] for d in pend if is_complete(d)]
+        planned = {}
+        for dec in self.__catalogs[-1]["decisions"]:
+            cv = self._committed_value(dec["id"], -1)
+            if cv is not None:
+                planned[dec["id"]] = cv
+        for t in targets:
+            planned[t] = recommended_value(self._decision(t))
+        _assert_cross_consistent(self.__catalogs[-1], planned)
         bulk_id = sha256_hex({"owner": owner, "timestamp": timestamp, "targets": targets, "exceptions": exc,
                               "skipped": skipped, "head": self.head()})
         made = []
@@ -420,6 +549,34 @@ class DecisionLog:
     def _satisfied(self, did: str) -> bool:
         eff = self._effective(did)
         return eff["state"] == "APPROVED" and eff["current_definition"]
+
+    def _check_approval_cross(self, snap: int, did: str, value: dict) -> None:
+        committed = {}
+        for dec in self.__catalogs[snap]["decisions"]:
+            cv = self._committed_value(dec["id"], snap)
+            if cv is not None:
+                committed[dec["id"]] = cv
+        committed[did] = value
+        _assert_cross_consistent(self.__catalogs[snap], committed)
+
+    def _committed_value(self, did: str, snap_index: int):
+        """Approved value for ``did`` only when that approval matches the definition at ``snap_index``.
+
+        A stale approval (recorded against an older decision digest) does not constrain new approvals
+        and does not count as the current contract. ``None`` means no committed peer value.
+        """
+        h = self._head_event(did)
+        if h is None or h["state"] != "APPROVED" or h["value"] is None:
+            return None
+        hsnap = self.__digests.index(h["catalog_digest"])
+        try:
+            old = self._decision(did, hsnap)
+            cur = self._decision(did, snap_index)
+        except DecisionError:
+            return None
+        if decision_digest(old) != decision_digest(cur):
+            return None
+        return h["value"]
 
     def readiness(self) -> dict:
         """Conservative, NON-AUTHORITATIVE gate. A module is blocked unless
@@ -477,6 +634,8 @@ def project_owner_decisions(log: DecisionLog) -> dict:
             "id": d["id"], "title": d["title"], "modules": d["modules"],
             "contract_complete": is_complete(d),
             "owner_input_required": sorted(k for k, f in d["contract"].items() if f["owner_input_required"]),
+            "numeric_bounds": {k: {b: f[b] for b in ("minimum", "maximum", "step") if b in f}
+                               for k, f in d["contract"].items() if f["kind"] in ("integer", "number")},
             "state": eff["state"], "recorded_against_current_definition": eff["current_definition"],
             "value": copy.deepcopy(h["value"]) if h else None,
             "recommended": recommended_value(d),
@@ -490,6 +649,7 @@ def project_owner_decisions(log: DecisionLog) -> dict:
         })
     body = {"schema": PROJECTION_SCHEMA_ID, "catalog_digest": catalog_digest(cat),
             "catalog_snapshots": [catalog_digest(c) for c in v.catalogs],
+            "cross_constraints": copy.deepcopy(cat.get("cross_constraints", [])),
             "log_head": v.head(), "event_count": len(v.events),
             "decisions": decisions, "readiness": v.readiness()}
     return dict(body, decision_set_digest=sha256_hex(body))
@@ -517,6 +677,22 @@ def project_register_md(log: DecisionLog) -> str:
         val = "" if d["value"] is None else d["value"]
         rec = "" if d["recommended"] is None else d["recommended"]
         lines.append("| " + " | ".join(md_escape(x) for x in [d["id"], d["title"], state, contract, val, rec, (d["head_event"] or "")[:19]]) + " |")
+    lines += ["", "## Cross-decision constraints", ""]
+    if p["cross_constraints"]:
+        for con in p["cross_constraints"]:
+            left, right = con["left"], con["right"]
+            lines.append(f"- {md_escape(left['decision'])}.{md_escape(left['field'])} = {md_escape(right['decision'])}.{md_escape(right['field'])}")
+    else:
+        lines.append("- none")
+    lines += ["", "## Numeric bounds (current catalog)", ""]
+    any_bounds = False
+    for d in p["decisions"]:
+        for fname, b in d["numeric_bounds"].items():
+            any_bounds = True
+            parts = [f"{name} {json.dumps(b[name])}" for name in ("minimum", "maximum", "step") if name in b]
+            lines.append("- " + md_escape(f"{d['id']}.{fname}: " + ", ".join(parts)))
+    if not any_bounds:
+        lines.append("- none")
     lines += ["", "## Blocked modules (advisory)", ""]
     for m, ds in p["readiness"]["blocked"].items():
         lines.append(f"- {md_escape(m)}: {md_escape(', '.join(ds))}")

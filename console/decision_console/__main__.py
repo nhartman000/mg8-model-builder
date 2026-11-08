@@ -1,5 +1,5 @@
 """CLI (offline export only; never launches builds):
-python -m decision_console <events.jsonl> <outdir> <catalog_snapshot.json> [<newer_snapshot.json> ...]
+python -m decision_console <events.jsonl> <outdir> <oldest_catalog.json> [<newer_snapshot.json> ...]
 Optional env MG8_EXPECTED_HEAD / MG8_EXPECTED_COUNT: externally trusted completeness check."""
 import json, os, sys, pathlib
 from .core import DecisionLog, project_owner_decisions, project_register_md, project_qson_events, canonical_json
