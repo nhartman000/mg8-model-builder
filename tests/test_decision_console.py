@@ -7,6 +7,7 @@ from decision_console.core import (DecisionLog, DecisionError, project_owner_dec
 SYN = json.loads((ROOT / "console/fixtures/synthetic_catalog.json").read_text())
 REAL = json.loads((ROOT / "console/fixtures/catalog.v2.json").read_text())
 REAL3 = json.loads((ROOT / "console/fixtures/catalog.v3.json").read_text())
+REAL31 = json.loads((ROOT / "console/fixtures/catalog.v3.1.json").read_text())
 REAL_EVENTS = [json.loads(l) for l in (ROOT / "console/fixtures/events.v2.jsonl").read_text().splitlines() if l]
 O, T = "owner-synthetic", "2026-01-01T00:00:00Z"
 INCOMPLETE_REAL = {"D4", "D6", "D11", "D13", "D14", "D15", "D16"}
@@ -54,7 +55,7 @@ class Core(unittest.TestCase):
     def test_real_d8_constraint(self):
         d8 = [d for d in REAL["decisions"] if d["id"] == "D8"][0]
         self.assertEqual(d8["constraints"][0]["target"], "model_width")
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31)], REAL_EVENTS)
         bad = dict(heads=4, head_width=32, model_width=96, layers=2, mask="causal", kv_cache="none_in_reference")
         with self.assertRaises(DecisionError): l.record("D8", "CHOOSE_OTHER", value=bad, owner=O, timestamp=T)
 
@@ -206,7 +207,7 @@ class Core(unittest.TestCase):
 
 class RealFixture(unittest.TestCase):
     def test_approved_before_d7_only(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31)], REAL_EVENTS)
         st = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         approved = {i for i, d in st.items() if d["state"] == "APPROVED"}
         self.assertEqual(approved, {"D0", "D1-context", "D5"})
@@ -223,7 +224,7 @@ class RealFixture(unittest.TestCase):
         self.assertEqual(d5["value"], REAL_EVENTS[0]["value"])
 
     def test_bulk_on_real_never_approves_placeholders_or_unblocks_all(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31)], REAL_EVENTS)
         r = l.approve_all_recommended(owner=O, timestamp=T)
         self.assertEqual(set(r["skipped_incomplete"]), INCOMPLETE_REAL)
         for d in INCOMPLETE_REAL: self.assertEqual(l.state(d), "PENDING")
@@ -232,7 +233,7 @@ class RealFixture(unittest.TestCase):
         for m in ("B1", "B2", "B3", "B4", "B6", "B7", "B11", "INTEGRATION"): self.assertIn(m, rd["blocked"])
 
     def test_generated_outputs_match_committed(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31)], REAL_EVENTS)
         out = ROOT / "console/out"
         self.assertEqual((out / "DECISION_REGISTER.generated.md").read_text("utf-8"), project_register_md(l))
         self.assertEqual(json.loads((out / "owner-decisions.v1.json").read_text("utf-8")), project_owner_decisions(l))
@@ -266,7 +267,7 @@ def _rec(cat, did):
 
 
 def _stack():
-    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3)], REAL_EVENTS)
+    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31)], REAL_EVENTS)
 
 
 def _int_field(rec, minimum=0, maximum=None, step=1):
@@ -565,6 +566,48 @@ class CrossBoundsAndD5(unittest.TestCase):
         qson = json.dumps(project_qson_events(l))
         for secret in ("request-scoped", "gst_context.py", "gst-context-v1", "deferred"):
             self.assertNotIn(secret, qson)
+
+    def test_d6_schema_recorded_not_approved(self):
+        old = next(d for d in REAL3["decisions"] if d["id"] == "D6")
+        new = next(d for d in REAL31["decisions"] if d["id"] == "D6")
+        self.assertEqual(REAL31["schema"], "mg8.decision-catalog.v3")
+        self.assertEqual(REAL31["catalog_version"], "3.1")
+        for a, b in zip(REAL3["decisions"], REAL31["decisions"]):
+            if a["id"] != "D6":
+                self.assertEqual(a, b)
+        self.assertEqual(new["contract"]["inputs"], old["contract"]["inputs"])
+        self.assertEqual(new["contract"]["literal_fallback"], old["contract"]["literal_fallback"])
+        self.assertEqual(new["contract"]["endpoint"], old["contract"]["endpoint"])
+        self.assertEqual(new["contract"]["tote_write_policy"], old["contract"]["tote_write_policy"])
+        field = new["contract"]["request_response_schema"]
+        self.assertFalse(field["owner_input_required"])
+        text = field["recommended"]
+        for phrase in ("fibbonacci sequence", "`FbncSqnc`", "`_wrd`", "`wrdSmth`", "ftbl",
+                       "modality operators", "narrative perspective and tense", "time of day if any",
+                       "grammatical invariants"):
+            self.assertIn(phrase, text)
+        l = _stack()
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5"])
+        p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D6"]["state"], "PENDING")
+        self.assertIsNone(p["D6"]["value"])
+        self.assertIsNone(p["D6"]["recommended"])
+        self.assertEqual(p["D6"]["owner_input_required"], ["endpoint", "tote_write_policy"])
+        for did in ("D0", "D1-context", "D5"):
+            self.assertEqual(p[did]["state"], "APPROVED")
+            self.assertTrue(p[did]["recorded_against_current_definition"])
+        d4 = next(d for d in REAL31["decisions"] if d["id"] == "D4")
+        for name in ("seed_lexicon", "confidence_threshold", "tie_policy"):
+            self.assertIsNone(d4["contract"][name]["recommended"])
+            self.assertTrue(d4["contract"][name]["owner_input_required"])
+        with self.assertRaises(DecisionError):
+            l.record("D6", "APPROVE_RECOMMENDATION", owner="Nick Hartman", timestamp="2026-11-08T19:20:00Z")
+        self.assertEqual(len(l.events), 4)
+        md = project_register_md(l)
+        row = [x for x in md.splitlines() if x.startswith("| D6 ")][0]
+        self.assertIn("INCOMPLETE: endpoint, tote_write_policy", row)
+        self.assertNotIn("request_response_schema", row)
+        self.assertNotIn("FbncSqnc", json.dumps(project_qson_events(l)))
 
 
 if __name__ == "__main__":

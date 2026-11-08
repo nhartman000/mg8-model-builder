@@ -116,7 +116,7 @@ Do not ask Nick to decide again on items already approved. Use the decision inte
 | Decision | Module(s) | Needed before | Candidate question for Nick |
 |---|---|---|---|
 | Domain lexicon seed and thresholds | D4 | B4, B5 integration | Which seed lexicon and confidence/tie threshold should B4 use? Keep multi-label candidates and UNKNOWN when uncertain. |
-| Symbol-selection call and cache-miss contract | D6 | B6 | Approve the exact request/response JSON for GST + separate prompt, literal fallback, and no automatic TOTE write-back? |
+| Symbol-selection call and cache-miss contract | D6 | B6 | Behavioral request/response contract is recorded in catalog v3.1 `request_response_schema` and is not an approval. Endpoint and TOTE write policy are still missing. Do not invent an exact JSON schema, HTTP path, or write-back rule. |
 | Embedding and positional encoding | D7 | B7–B10 | Approve proposed d_model 128, learned embeddings, RoPE, float32 reference build? |
 | Attention | D8 | B8–B10 | Approve two causal layers, four heads, head width 32, and no KV cache in the V1 reference? |
 | Transformer block | D9 | B9–B10 | Approve Pre-RMSNorm, residual connections, SwiGLU width 512, dropout 0.1 only during training? |
@@ -198,7 +198,7 @@ Merge a module only after Inspector PASS and all dependent contracts are frozen.
 
 1. ~~Publish missing Builder/Inspector cards.~~ Done: all 22 cards are committed on main (verified at 2284ac9). Still audit NYCH and T.O.T.E-loops trees; the NYCH BUILD_STATUS is stale relative to the B5 V2 report and needs a separate reconciliation.
 2. Update the MG8 and NYCH decision registers from this handoff. D0 and D1-context are approved. D5 is reconfirmed against the expanded definition; do not ask Nick again about B5 storage/version/lookup/GST defaults, request scope, schema path, or the deferred migration-002 application and tests.
-3. Build the Decision Console and its versioned decision schema. The owner screen still shows D4, D6, and D7–D16, with recommendations explicitly marked pending. D4 and D6 are incomplete.
+3. Build the Decision Console and its versioned decision schema. The owner screen still shows D4, D6, and D7–D16. D4 is incomplete. D6 is incomplete and not approved: the behavioral request/response contract is recorded, and endpoint plus TOTE write policy are still open.
 4. Collect the remaining owner decisions. D7–D11 are the next walkthrough. Do not launch architecture-dependent work until those choices are recorded.
 5. Once choices are frozen, launch ready builders concurrently. B1 review, B2 implementation, B4 lexicon after D4, B6 after D6, B7–B10 after their shared architecture decisions, and B11 after corpus/metrics decisions may proceed as independent candidate jobs with mocks where needed.
 6. Run separate Inspectors in parallel as candidates finish. Fix defects on new commits and re-inspect the corrected commit.
