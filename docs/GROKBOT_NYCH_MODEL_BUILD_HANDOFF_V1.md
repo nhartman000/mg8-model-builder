@@ -19,7 +19,7 @@ Keep repository responsibilities separate:
 
 | Repository | Responsibility | Current state |
 |---|---|---|
-| [mg8-model-builder](https://github.com/nhartman000/mg8-model-builder) | Decision registry, builder/inspector cards, orchestration plan, decision interface | Private. README and decision register are present. Several worker-card paths described in README were not found during this audit; audit the GitHub tree and publish the actual cards. Local scratch files are not proof that files exist on GitHub. |
+| [mg8-model-builder](https://github.com/nhartman000/mg8-model-builder) | Decision registry, builder/inspector cards, orchestration plan, decision interface | Private. README and decision register are present. Builder cards 01–11 (`icm/MG8PK/workers/`) and Inspector cards 01–11 (`icm/MG8PK/inspectors/`) are committed on main (verified at 2284ac9). The earlier “not found” finding is historical. Decision Console V1 (offline) lives under `console/`. |
 | [nych-language-model](https://github.com/nhartman000/nych-language-model) | NYCH V1 implementation, module contracts, schemas, reports, tests | Private. B5 V2 is integrated and passed independent review. B1 remains pending independent review; B3 bounded module passed; B2/B4 integration and B6–B11 implementations are not complete. |
 | [T.O.T.E-loops](https://github.com/nhartman000/T.O.T.E-loops) | Canonical TOTE SQLite schema, versioned migration, seed builder/export | Migration 002 and fresh-build schema are integrated on main at aacddbe744c18133c091b825a88327ba7fbf828a. Existing database migration and conformance tests are deferred; no database file has been migrated. |
 
@@ -196,7 +196,7 @@ Merge a module only after Inspector PASS and all dependent contracts are frozen.
 
 ### Immediate takeover
 
-1. Audit actual GitHub trees for all three repos. Reconcile the MG8 README claims with committed worker cards; publish any missing Builder/Inspector cards. Do not mistake the local scratch scaffold for committed repo content.
+1. ~~Publish missing Builder/Inspector cards.~~ Done: all 22 cards are committed on main (verified at 2284ac9). Still audit NYCH and T.O.T.E-loops trees; the NYCH BUILD_STATUS is stale relative to the B5 V2 report and needs a separate reconciliation.
 2. Update the MG8 and NYCH decision registers from this handoff. D5 is approved; do not ask Nick again about B5 storage/version/lookup/GST defaults.
 3. Build the Decision Console and its versioned decision schema. Make the first owner screen show the remaining D0, D1-context, D4, D6–D16 choices in grouped form, with recommendations explicitly marked pending.
 4. Collect the owner decisions in one compact session. Do not launch architecture-dependent work until required choices are recorded.

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mg8.decision-event.v1",
+  "title": "MG8 owner decision event (immutable, append-only)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema","event_id","seq","decision_id","action","state","value","owner","timestamp","rationale","note","supersedes","bulk_id","bulk_exceptions","catalog_digest","prev_event_digest"],
+  "properties": {
+    "schema": {"const": "mg8.decision-event.v1"},
+    "event_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$", "description": "SHA-256 of canonical JSON of all other fields"},
+    "seq": {"type": "integer", "minimum": 0},
+    "decision_id": {"type": "string"},
+    "action": {"enum": ["APPROVE_RECOMMENDATION","CHOOSE_OTHER","LEAVE_PENDING","REJECT","BLOCK","HISTORICAL_APPROVAL"]},
+    "state": {"enum": ["PENDING","APPROVED","REJECTED","BLOCKED"], "description": "SUPERSEDED is derived, never stored"},
+    "value": {"description": "Contract value; null unless state is APPROVED"},
+    "owner": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "minLength": 1},
+    "rationale": {"type": "string"},
+    "note": {"type": "string", "description": "Editorial only; never changes value"},
+    "supersedes": {"type": ["string","null"]},
+    "bulk_id": {"type": ["string","null"]},
+    "bulk_exceptions": {"type": "array", "items": {"type": "string"}},
+    "catalog_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "prev_event_digest": {"type": ["string","null"]}
+  }
+}

@@ -1,0 +1,347 @@
+{
+  "schema": "mg8.decision-catalog.v1",
+  "catalog_version": "1",
+  "decisions": [
+    {
+      "id": "D0",
+      "title": "Model objective",
+      "question": "Confirm the deterministic NYCH encoder plus tiny decoder-only causal LM predicting the next NYCH token/symbol sequence?",
+      "modules": [
+        "B7",
+        "B8",
+        "B9",
+        "B10",
+        "B11"
+      ],
+      "depends_on": [],
+      "round": "objective/size/context",
+      "control": {
+        "kind": "text_contract"
+      },
+      "recommended": "Deterministic NYCH encoder plus tiny decoder-only causal LM; symbolic assurance kept distinct from probabilistic output.",
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D1-context",
+      "title": "Context window",
+      "question": "Approve tokens per window (longer accepted input split into ordered windows, never truncated)?",
+      "modules": [
+        "B2",
+        "B7",
+        "B8",
+        "B9",
+        "B10",
+        "B11"
+      ],
+      "depends_on": [],
+      "round": "objective/size/context",
+      "control": {
+        "kind": "numeric",
+        "min": 256,
+        "max": 4096,
+        "step": 256,
+        "unit": "tokens"
+      },
+      "recommended": 1024,
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D4",
+      "title": "Domain lexicon seed and thresholds",
+      "question": "Which seed lexicon and confidence/tie threshold should B4 use?",
+      "modules": [
+        "B4"
+      ],
+      "depends_on": [],
+      "round": "semantics/domain",
+      "control": {
+        "kind": "text_contract"
+      },
+      "recommended": "Owner-supplied versioned local associative lexicon; thresholds to be specified; UNKNOWN when uncertain.",
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D5",
+      "title": "GST context assembly and lookup",
+      "question": "B5 GST v2 and additive TOTE migration 002 (historical approval).",
+      "modules": [
+        "B5"
+      ],
+      "depends_on": [],
+      "round": "semantics/domain",
+      "control": {
+        "kind": "text_contract"
+      },
+      "recommended": "Additive TOTE SQLite v2; user_version=2; exact domain_id + action_key lookup; ambiguity is cache miss; versioned GST JSON; unknown origins fail closed.",
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D6",
+      "title": "Symbol-selection call contract",
+      "question": "Approve exact request/response JSON for GST + separate prompt, literal fallback, no automatic TOTE write-back?",
+      "modules": [
+        "B6"
+      ],
+      "depends_on": [
+        "D5"
+      ],
+      "round": "semantics/domain",
+      "control": {
+        "kind": "text_contract"
+      },
+      "recommended": "GST and prompt as separate inputs; literal fallback; no TOTE write-back until write/admission contract approved.",
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D7",
+      "title": "Embedding width (d_model)",
+      "question": "Approve d_model (learned embeddings, RoPE, float32 reference)?",
+      "modules": [
+        "B7",
+        "B8",
+        "B9",
+        "B10"
+      ],
+      "depends_on": [
+        "D0"
+      ],
+      "round": "model architecture",
+      "control": {
+        "kind": "numeric",
+        "min": 64,
+        "max": 1024,
+        "step": 64,
+        "unit": "dimensions"
+      },
+      "recommended": 128,
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D8",
+      "title": "Attention heads",
+      "question": "Approve heads (two causal layers, head width 32, no KV cache)?",
+      "modules": [
+        "B8",
+        "B9",
+        "B10"
+      ],
+      "depends_on": [
+        "D7"
+      ],
+      "round": "model architecture",
+      "control": {
+        "kind": "numeric",
+        "min": 1,
+        "max": 16,
+        "step": 1,
+        "unit": "heads"
+      },
+      "recommended": 4,
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D9",
+      "title": "SwiGLU hidden width",
+      "question": "Approve Pre-RMSNorm block with SwiGLU width (dropout 0.1 training only)?",
+      "modules": [
+        "B9",
+        "B10"
+      ],
+      "depends_on": [
+        "D8"
+      ],
+      "round": "model architecture",
+      "control": {
+        "kind": "numeric",
+        "min": 128,
+        "max": 4096,
+        "step": 128,
+        "unit": "units"
+      },
+      "recommended": 512,
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D10",
+      "title": "Output head",
+      "question": "Approve tied embeddings, full-vocabulary logits, stable softmax, next-token cross-entropy?",
+      "modules": [
+        "B10",
+        "B11"
+      ],
+      "depends_on": [
+        "D9"
+      ],
+      "round": "model architecture",
+      "control": {
+        "kind": "text_contract"
+      },
+      "recommended": "Tied embeddings, full-vocabulary logits, stable softmax, next-token cross-entropy.",
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D11",
+      "title": "Neural corpus and training",
+      "question": "Select license-cleared English corpus distinct from typo-statistics corpus?",
+      "modules": [
+        "B11"
+      ],
+      "depends_on": [
+        "D0"
+      ],
+      "round": "data/training/evaluation",
+      "control": {
+        "kind": "text_contract"
+      },
+      "recommended": "Owner-approved license-cleared corpus; dedup; fixed split; no prompts; recorded seeds/config/hardware; baseline on same split.",
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D12",
+      "title": "Inspector evidence bar",
+      "question": "Approve contract coverage, negative/boundary/adversarial tests, reproducibility, exact digests; missing evidence blocks PASS?",
+      "modules": [
+        "ALL"
+      ],
+      "depends_on": [],
+      "round": "assurance/wiring/release",
+      "control": {
+        "kind": "text_contract"
+      },
+      "recommended": "Separate Inspector per Builder; missing evidence means INTERMEDIATE.",
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D13",
+      "title": "GitSON contract/runtime",
+      "question": "Approve per-boundary GitSON with digests, upstream PASS, trusted host validation, <500,000-byte cap?",
+      "modules": [
+        "INTEGRATION"
+      ],
+      "depends_on": [
+        "D12"
+      ],
+      "round": "assurance/wiring/release",
+      "control": {
+        "kind": "text_contract"
+      },
+      "recommended": "Interface-versioned per-boundary GitSON; exact artifact and upstream PASS digests; trusted host validation; <500,000 bytes.",
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D14",
+      "title": "Tiny-model size and resource budget",
+      "question": "Choose parameter band, memory/latency target, training hardware.",
+      "modules": [
+        "B7",
+        "B8",
+        "B9",
+        "B10",
+        "B11"
+      ],
+      "depends_on": [
+        "D0"
+      ],
+      "round": "objective/size/context",
+      "control": {
+        "kind": "text_contract"
+      },
+      "recommended": "OWNER INPUT REQUIRED: no numeric size is assumed.",
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D15",
+      "title": "Benchmark and success criteria",
+      "question": "Choose structural fidelity, semantic preservation, OOV/typo, next-token, latency, baseline measures.",
+      "modules": [
+        "B11"
+      ],
+      "depends_on": [
+        "D0"
+      ],
+      "round": "data/training/evaluation",
+      "control": {
+        "kind": "text_contract"
+      },
+      "recommended": "Report each measure separately against a standard baseline; thresholds owner-set.",
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D16",
+      "title": "Packaging/release target",
+      "question": "Choose downloadable format and supported runtime/device.",
+      "modules": [
+        "B11"
+      ],
+      "depends_on": [
+        "D15"
+      ],
+      "round": "assurance/wiring/release",
+      "control": {
+        "kind": "text_contract"
+      },
+      "recommended": "Private until an explicit release decision; format owner-set.",
+      "alternatives": [],
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema": "mg8.decision-catalog.v1",
+  "catalog_version": "synthetic-test",
+  "decisions": [
+    {
+      "id": "S1",
+      "title": "Synthetic choice",
+      "question": "Pick a colour (synthetic).",
+      "modules": [
+        "MA"
+      ],
+      "depends_on": [],
+      "round": "r1",
+      "control": {
+        "kind": "choice",
+        "options": [
+          "red",
+          "blue"
+        ]
+      },
+      "recommended": "red",
+      "alternatives": [
+        "blue"
+      ]
+    },
+    {
+      "id": "S2",
+      "title": "Synthetic number",
+      "question": "Pick a size (synthetic).",
+      "modules": [
+        "MB"
+      ],
+      "depends_on": [
+        "S1"
+      ],
+      "round": "r1",
+      "control": {
+        "kind": "numeric",
+        "min": 0,
+        "max": 10,
+        "step": 2,
+        "unit": "units"
+      },
+      "recommended": 4,
+      "alternatives": [
+        6
+      ]
+    },
+    {
+      "id": "S3",
+      "title": "Synthetic contract",
+      "question": "Accept contract (synthetic).",
+      "modules": [
+        "MC"
+      ],
+      "depends_on": [],
+      "round": "r2",
+      "control": {
+        "kind": "text_contract"
+      },
+      "recommended": "contract text",
+      "alternatives": []
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"bulk_id": null, "decision_id": "D5", "event_id": "sha256:83a492c414f434de7a0ced8b1da56d0eee81506384162f1c4c8eedda34a34830", "owner": "N Hartman", "schema": "qson.decision-event.v1", "seq": 0, "state": "APPROVED", "supersedes": null, "timestamp": "historical: see DECISION_REGISTER.md (pre-console)"}

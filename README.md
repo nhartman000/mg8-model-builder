@@ -24,3 +24,12 @@ Parallel building does not mean unreviewed integration. A blocked dependency can
 ## Status
 
 The B5 GST context module is integrated in the NYCH repo and independently reviewed; its 36-test suite passed. TOTE migration 002 is integrated into the TOTE repo, but has not been applied to an existing database and its tests are deferred. D5 is approved. Remaining owner choices and the decision-console plan are in the build handoff. Builder cards are plans, not claims that autonomous agents are currently running.
+
+## Decision Console V1 (offline)
+
+`console/` holds the Model Builder Decision Console core specified in handoff §6: an append-only, hash-chained, versioned decision-event log (`console/schemas/decision-event.v1.schema.json`), per-decision bulk approval with visible exceptions, immutable supersession, and deterministic projections (`owner-decisions.v1.json`, generated register markdown, metadata-only QSON events). Stdlib Python only; no network, provider, or database side effects.
+
+- Regenerate: `PYTHONPATH=console python3 -m decision_console console/fixtures/catalog.v1.json console/fixtures/events.v1.jsonl console/out`
+- Test: `python3 -m unittest discover -s tests`
+
+The only seeded event is the historical D5 approval. All other recommendations remain PENDING ("Recommended—awaiting owner approval"); the generated register does not replace `icm/MG8PK/DECISION_REGISTER.md` until the owner approves that switch.
