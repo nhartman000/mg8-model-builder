@@ -1,0 +1,168 @@
+{
+  "schema": "mg8.decision-catalog.v2",
+  "catalog_version": "synthetic-test",
+  "decisions": [
+    {
+      "id": "S1",
+      "title": "Synthetic choice",
+      "question": "Pick a colour (synthetic).",
+      "modules": [
+        "B7"
+      ],
+      "depends_on": [],
+      "round": "r1",
+      "contract": {
+        "colour": {
+          "kind": "choice",
+          "recommended": "red",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "red",
+            "blue"
+          ]
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "S2",
+      "title": "Synthetic product",
+      "question": "Synthetic widths.",
+      "modules": [
+        "B8"
+      ],
+      "depends_on": [
+        "S1"
+      ],
+      "round": "r1",
+      "contract": {
+        "a": {
+          "kind": "integer",
+          "recommended": 4,
+          "owner_input_required": false,
+          "unit": null,
+          "minimum": 1
+        },
+        "b": {
+          "kind": "integer",
+          "recommended": 32,
+          "owner_input_required": false,
+          "unit": null,
+          "minimum": 1
+        },
+        "w": {
+          "kind": "integer",
+          "recommended": 128,
+          "owner_input_required": false,
+          "unit": null,
+          "minimum": 1
+        }
+      },
+      "constraints": [
+        {
+          "kind": "product_equals",
+          "target": "w",
+          "factors": [
+            "a",
+            "b"
+          ]
+        }
+      ],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "S3",
+      "title": "Synthetic incomplete",
+      "question": "Owner must supply (synthetic).",
+      "modules": [
+        "B9"
+      ],
+      "depends_on": [],
+      "round": "r2",
+      "contract": {
+        "known": {
+          "kind": "text",
+          "recommended": "x",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "open": {
+          "kind": "text",
+          "recommended": null,
+          "owner_input_required": true,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "S4",
+      "title": "Synthetic global",
+      "question": "Applies to all (synthetic).",
+      "modules": [
+        "ALL"
+      ],
+      "depends_on": [],
+      "round": "r2",
+      "contract": {
+        "bar": {
+          "kind": "text",
+          "recommended": "y",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "SH",
+      "title": "Synthetic historical",
+      "question": "Declared historical (synthetic).",
+      "modules": [
+        "B10"
+      ],
+      "depends_on": [],
+      "round": "r2",
+      "contract": {
+        "v": {
+          "kind": "text",
+          "recommended": "h",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": {
+        "owner": "owner-synthetic",
+        "source_ref": "synthetic",
+        "value": {
+          "v": "h"
+        }
+      },
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    }
+  ]
+}
