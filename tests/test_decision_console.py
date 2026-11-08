@@ -8,6 +8,7 @@ SYN = json.loads((ROOT / "console/fixtures/synthetic_catalog.json").read_text())
 REAL = json.loads((ROOT / "console/fixtures/catalog.v2.json").read_text())
 REAL3 = json.loads((ROOT / "console/fixtures/catalog.v3.json").read_text())
 REAL31 = json.loads((ROOT / "console/fixtures/catalog.v3.1.json").read_text())
+REAL32 = json.loads((ROOT / "console/fixtures/catalog.v3.2.json").read_text())
 REAL_EVENTS = [json.loads(l) for l in (ROOT / "console/fixtures/events.v2.jsonl").read_text().splitlines() if l]
 O, T = "owner-synthetic", "2026-01-01T00:00:00Z"
 INCOMPLETE_REAL = {"D4", "D6", "D11", "D13", "D14", "D15", "D16"}
@@ -55,7 +56,7 @@ class Core(unittest.TestCase):
     def test_real_d8_constraint(self):
         d8 = [d for d in REAL["decisions"] if d["id"] == "D8"][0]
         self.assertEqual(d8["constraints"][0]["target"], "model_width")
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32)], REAL_EVENTS)
         bad = dict(heads=4, head_width=32, model_width=96, layers=2, mask="causal", kv_cache="none_in_reference")
         with self.assertRaises(DecisionError): l.record("D8", "CHOOSE_OTHER", value=bad, owner=O, timestamp=T)
 
@@ -207,7 +208,7 @@ class Core(unittest.TestCase):
 
 class RealFixture(unittest.TestCase):
     def test_approved_before_d7_only(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32)], REAL_EVENTS)
         st = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         approved = {i for i, d in st.items() if d["state"] == "APPROVED"}
         self.assertEqual(approved, {"D0", "D1-context", "D5"})
@@ -224,7 +225,7 @@ class RealFixture(unittest.TestCase):
         self.assertEqual(d5["value"], REAL_EVENTS[0]["value"])
 
     def test_bulk_on_real_never_approves_placeholders_or_unblocks_all(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32)], REAL_EVENTS)
         r = l.approve_all_recommended(owner=O, timestamp=T)
         self.assertEqual(set(r["skipped_incomplete"]), INCOMPLETE_REAL)
         for d in INCOMPLETE_REAL: self.assertEqual(l.state(d), "PENDING")
@@ -233,7 +234,7 @@ class RealFixture(unittest.TestCase):
         for m in ("B1", "B2", "B3", "B4", "B6", "B7", "B11", "INTEGRATION"): self.assertIn(m, rd["blocked"])
 
     def test_generated_outputs_match_committed(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32)], REAL_EVENTS)
         out = ROOT / "console/out"
         self.assertEqual((out / "DECISION_REGISTER.generated.md").read_text("utf-8"), project_register_md(l))
         self.assertEqual(json.loads((out / "owner-decisions.v1.json").read_text("utf-8")), project_owner_decisions(l))
@@ -267,7 +268,7 @@ def _rec(cat, did):
 
 
 def _stack():
-    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31)], REAL_EVENTS)
+    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32)], REAL_EVENTS)
 
 
 def _int_field(rec, minimum=0, maximum=None, step=1):
@@ -466,9 +467,10 @@ class CrossBoundsAndD5(unittest.TestCase):
         with self.assertRaisesRegex(DecisionError, "cross-decision"):
             l.record("D8", "APPROVE_RECOMMENDATION", owner=O, timestamp=T)
 
-        d4 = _rec(REAL3, "D4")
+        d4 = _rec(REAL32, "D4")
         self.assertIsNone(d4["confidence_threshold"])
-        base = dict(d4, seed_lexicon="owner-seed", tie_policy="owner-tie")
+        self.assertIsNone(d4["tie_policy"])
+        base = dict(d4, tie_policy="owner-tie")
         with self.assertRaises(DecisionError):
             l.record("D4", "CHOOSE_OTHER", value=dict(base, confidence_threshold=1.5), owner=O, timestamp=T)
         l.record("D4", "CHOOSE_OTHER", value=dict(base, confidence_threshold=0.25), owner=O, timestamp=T)
@@ -608,6 +610,57 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("INCOMPLETE: endpoint, tote_write_policy", row)
         self.assertNotIn("request_response_schema", row)
         self.assertNotIn("FbncSqnc", json.dumps(project_qson_events(l)))
+
+    def test_d4_lexicon_recorded_not_approved(self):
+        self.assertEqual(REAL32["schema"], "mg8.decision-catalog.v3")
+        self.assertEqual(REAL32["catalog_version"], "3.2")
+        for a, b in zip(REAL31["decisions"], REAL32["decisions"]):
+            if a["id"] != "D4":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL31["decisions"] if d["id"] == "D4")
+        new = next(d for d in REAL32["decisions"] if d["id"] == "D4")
+        self.assertEqual(new["contract"]["method"], old["contract"]["method"])
+        self.assertEqual(new["contract"]["confidence_threshold"], old["contract"]["confidence_threshold"])
+        self.assertEqual(new["contract"]["tie_policy"], old["contract"]["tie_policy"])
+        path = "icm/MG8PK/lexicons/nych-professional-domain-taxonomy.md"
+        lexicon = (ROOT / path).read_text(encoding="utf-8")
+        for phrase in ("NYCH Professional Domain Taxonomy — Expanded Draft",
+                       "Coverage gaps to consider separately",
+                       "NYCH/TOTE ingestion and review notes",
+                       "Pasted text (20261108-193332).txt"):
+            self.assertIn(phrase, lexicon)
+        url = "https://tld-list.com/tld-categories/professional"
+        for name in ("seed_lexicon", "scoring_rubric"):
+            field = new["contract"][name]
+            self.assertEqual(field["kind"], "text")
+            self.assertFalse(field["owner_input_required"])
+            self.assertIn(url, field["recommended"])
+            self.assertIn(path, field["recommended"])
+            self.assertIn("is primary", field["recommended"])
+            self.assertIn("fall back to the attached NYCH taxonomy lexicon", field["recommended"])
+            self.assertIn("updated with every proper NYCH update", field["recommended"])
+        for name in ("confidence_threshold", "tie_policy"):
+            self.assertIsNone(new["contract"][name]["recommended"])
+            self.assertTrue(new["contract"][name]["owner_input_required"])
+        l = _stack()
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5"])
+        p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D4"]["state"], "PENDING")
+        self.assertIsNone(p["D4"]["value"])
+        self.assertIsNone(p["D4"]["recommended"])
+        self.assertEqual(p["D4"]["owner_input_required"], ["confidence_threshold", "tie_policy"])
+        self.assertEqual(p["D6"]["owner_input_required"], ["endpoint", "tote_write_policy"])
+        for did in ("D0", "D1-context", "D5"):
+            self.assertEqual(p[did]["state"], "APPROVED")
+            self.assertTrue(p[did]["recorded_against_current_definition"])
+        with self.assertRaises(DecisionError):
+            l.record("D4", "APPROVE_RECOMMENDATION", owner="Nick Hartman", timestamp="2026-11-08T19:48:00Z")
+        self.assertEqual(len(l.events), 4)
+        row = [x for x in project_register_md(l).splitlines() if x.startswith("| D4 ")][0]
+        self.assertIn("INCOMPLETE: confidence_threshold, tie_policy", row)
+        self.assertNotIn("seed_lexicon", row)
+        qson = json.dumps(project_qson_events(l))
+        self.assertNotIn("tld-list.com", qson)
 
 
 if __name__ == "__main__":
