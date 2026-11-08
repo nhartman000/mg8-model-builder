@@ -4,23 +4,128 @@
   "title": "MG8 owner decision event (immutable, append-only)",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema","event_id","seq","decision_id","action","state","value","owner","timestamp","rationale","note","supersedes","bulk_id","bulk_exceptions","catalog_digest","prev_event_digest"],
+  "required": [
+    "schema",
+    "event_id",
+    "seq",
+    "decision_id",
+    "action",
+    "state",
+    "value",
+    "owner",
+    "timestamp",
+    "rationale",
+    "note",
+    "supersedes",
+    "bulk_id",
+    "bulk_exceptions",
+    "bulk_skipped_incomplete",
+    "catalog_digest",
+    "prev_event_digest"
+  ],
   "properties": {
-    "schema": {"const": "mg8.decision-event.v1"},
-    "event_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$", "description": "SHA-256 of canonical JSON of all other fields"},
-    "seq": {"type": "integer", "minimum": 0},
-    "decision_id": {"type": "string"},
-    "action": {"enum": ["APPROVE_RECOMMENDATION","CHOOSE_OTHER","LEAVE_PENDING","REJECT","BLOCK","HISTORICAL_APPROVAL"]},
-    "state": {"enum": ["PENDING","APPROVED","REJECTED","BLOCKED"], "description": "SUPERSEDED is derived, never stored"},
-    "value": {"description": "Contract value; null unless state is APPROVED"},
-    "owner": {"type": "string", "minLength": 1},
-    "timestamp": {"type": "string", "minLength": 1},
-    "rationale": {"type": "string"},
-    "note": {"type": "string", "description": "Editorial only; never changes value"},
-    "supersedes": {"type": ["string","null"]},
-    "bulk_id": {"type": ["string","null"]},
-    "bulk_exceptions": {"type": "array", "items": {"type": "string"}},
-    "catalog_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
-    "prev_event_digest": {"type": ["string","null"]}
-  }
+    "schema": {
+      "const": "mg8.decision-event.v1"
+    },
+    "event_id": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "SHA-256 of canonical JSON of all other fields"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "decision_id": {
+      "type": "string"
+    },
+    "action": {
+      "enum": [
+        "APPROVE_RECOMMENDATION",
+        "CHOOSE_OTHER",
+        "LEAVE_PENDING",
+        "REJECT",
+        "BLOCK",
+        "HISTORICAL_APPROVAL"
+      ]
+    },
+    "state": {
+      "enum": [
+        "PENDING",
+        "APPROVED",
+        "REJECTED",
+        "BLOCKED"
+      ],
+      "description": "SUPERSEDED is derived, never stored"
+    },
+    "value": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Object with exactly the catalog contract fields; null unless APPROVED. Semantic checks (options, minimum, product constraints, completeness) are enforced by core.py."
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Unauthenticated label; authorship must be established outside this module"
+    },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "rationale": {
+      "type": "string",
+      "maxLength": 4000,
+      "description": "Free text, STORED. No real prompt text or user examples."
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 4000,
+      "description": "Free text, STORED; never changes value. No real prompt text or user examples."
+    },
+    "supersedes": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "bulk_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "bulk_exceptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "catalog_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "prev_event_digest": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "bulk_skipped_incomplete": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "Sorted; incomplete-contract decisions left PENDING by this bulk action"
+    }
+  },
+  "description": "Structural schema. core.py enforces this plus semantic rules (hash chain, catalog snapshot, completeness, historical-approval import). The hash chain cannot detect tail truncation; use an externally trusted expected head/count."
 }

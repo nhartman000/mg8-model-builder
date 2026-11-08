@@ -25,11 +25,17 @@ Parallel building does not mean unreviewed integration. A blocked dependency can
 
 The B5 GST context module is integrated in the NYCH repo and independently reviewed; its 36-test suite passed. TOTE migration 002 is integrated into the TOTE repo, but has not been applied to an existing database and its tests are deferred. D5 is approved. Remaining owner choices and the decision-console plan are in the build handoff. Builder cards are plans, not claims that autonomous agents are currently running.
 
-## Decision Console V1 (offline)
+## Decision Console V1 — OFFLINE CORE / EXPORT PROTOTYPE (no UI yet)
 
-`console/` holds the Model Builder Decision Console core specified in handoff §6: an append-only, hash-chained, versioned decision-event log (`console/schemas/decision-event.v1.schema.json`), per-decision bulk approval with visible exceptions, immutable supersession, and deterministic projections (`owner-decisions.v1.json`, generated register markdown, metadata-only QSON events). Stdlib Python only; no network, provider, or database side effects.
+`console/` holds the event core and file exports for the Decision Console in handoff §6. There is no interactive UI yet. It makes no network, provider, database, or build-launch calls, and its readiness output is advisory only (`readiness_authoritative: false`). Do not launch builders from it.
 
-- Regenerate: `PYTHONPATH=console python3 -m decision_console console/fixtures/catalog.v1.json console/fixtures/events.v1.jsonl console/out`
+- Catalog `console/fixtures/catalog.v2.json` gives each decision a structured contract. Fields marked `owner_input_required` carry no recommendation. A decision with any such field is INCOMPLETE: it cannot be approved by recommendation, bulk approval skips it and lists it in every bulk event, and it keeps its modules blocked. An owner can still complete it explicitly with `CHOOSE_OTHER`.
+- Events (`console/schemas/decision-event.v1.schema.json`) are append-only and hash-chained, with strict type and semantic validation, immutable supersession, and per-decision bulk events showing their exceptions. Each event records which catalog snapshot it was made against. When a definition changes, earlier approvals are kept but flagged for reconfirmation, and they stop counting toward readiness.
+- Historical approvals can only be imported once, through `import_historical()`, and only when the catalog declares them (D5). Normal recording can't create them.
+- Trust boundary: the hash chain can't detect a log whose last events were cut off, and `owner` is an unauthenticated label. For completeness, pass an externally trusted expected head/count (`MG8_EXPECTED_HEAD` / `MG8_EXPECTED_COUNT`); authorship has to come from signed commits or similar.
+- Notes and rationales are free text and are stored in events and in `owner-decisions.v1.json` (QSON exports are metadata only). Never put real prompt text or user examples in them. The forbidden-key filter only catches obvious mistakes; it doesn't guarantee prompts aren't stored.
+- Readiness is conservative. B1–B3 are always blocked because their contracts aren't modeled here, `ALL` decisions (D12) gate every module, and dependency closures apply.
+- Regenerate: `PYTHONPATH=console python3 -m decision_console console/fixtures/events.v2.jsonl console/out console/fixtures/catalog.v2.json`
 - Test: `python3 -m unittest discover -s tests`
 
-The only seeded event is the historical D5 approval. All other recommendations remain PENDING ("Recommended—awaiting owner approval"); the generated register does not replace `icm/MG8PK/DECISION_REGISTER.md` until the owner approves that switch.
+The only event is the historical D5 approval. Everything else is PENDING. `console/fixtures/archive/` keeps the superseded v1 fixtures from 25f884b unchanged. The generated register doesn't replace `icm/MG8PK/DECISION_REGISTER.md` until the owner approves that switch.

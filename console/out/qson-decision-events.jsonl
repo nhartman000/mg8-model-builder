@@ -1,1 +1,1 @@
-{"bulk_id": null, "decision_id": "D5", "event_id": "sha256:83a492c414f434de7a0ced8b1da56d0eee81506384162f1c4c8eedda34a34830", "owner": "N Hartman", "schema": "qson.decision-event.v1", "seq": 0, "state": "APPROVED", "supersedes": null, "timestamp": "historical: see DECISION_REGISTER.md (pre-console)"}
+{"bulk_id": null, "decision_id": "D5", "event_id": "sha256:68384464cd519cb5d360b28ecd3f4d150a6d7e794fa3095f94489386726276aa", "owner": "N Hartman", "schema": "qson.decision-event.v1", "seq": 0, "state": "APPROVED", "supersedes": null, "timestamp": "2026-11-08T00:00:00-05:00"}
