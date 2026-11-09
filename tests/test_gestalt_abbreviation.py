@@ -21,8 +21,12 @@ class GestaltAbbreviationPreview(unittest.TestCase):
         self.assertEqual(abbreviate_word("apple"), "'ppl")
         self.assertEqual(abbreviate_word("opal"), "'pl")
 
-    def test_fried_apple_uses_owner_override(self):
+    def test_ie_becomes_y_by_default(self):
+        from nych_preview.gestalt_abbreviation import OVERRIDES
+        self.assertNotIn("fried", OVERRIDES)
+        self.assertEqual(OVERRIDES["eye"], "'y")
         self.assertEqual(abbreviate_word("fried"), "fryd")
+        self.assertEqual(abbreviate_word("died"), "dyd")
         self.assertEqual(abbreviate_word("eye"), "'y")
         self.assertEqual(
             abbreviate_compound(["fried", "apple"], contains_proper_name=False),

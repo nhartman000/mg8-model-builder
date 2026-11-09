@@ -1,5 +1,6 @@
 """Gestalt-ID abbreviation preview. Not wired into any Builder.
 
+The letter sequence ie is written as y before vowels are dropped.
 Vowels a, e, i, o, and u are dropped. Identical adjacent letters collapse.
 The letter c is kept. A word that starts with a vowel is prefixed with '
 in place of that vowel. A doubled consonant immediately after that vowel
@@ -53,6 +54,24 @@ def _collapse(text: str) -> str:
     return "".join(chars)
 
 
+def _rewrite_ie(word: str) -> str:
+    """Write the letter sequence ie as y before vowels are dropped.
+
+    This is the default. The owner said it is usual, not universal, and
+    cited except-after-c. Those exceptions are not guessed here.
+    """
+    out: list[str] = []
+    index = 0
+    while index < len(word):
+        if index + 1 < len(word) and word[index].lower() == "i" and word[index + 1].lower() == "e":
+            out.append("y")
+            index += 2
+        else:
+            out.append(word[index])
+            index += 1
+    return "".join(out)
+
+
 def abbreviate_word(word: str) -> str:
     """Abbreviate one word. Owner overrides win before the default rule."""
     if not word or any(not ch.isalpha() for ch in word):
@@ -60,6 +79,7 @@ def abbreviate_word(word: str) -> str:
     override = OVERRIDES.get(word.lower())
     if override is not None:
         return override
+    word = _rewrite_ie(word)
     first = word[0].lower()
     if first == "y":
         raise GestaltAbbrevError("y-initial word; not decided")

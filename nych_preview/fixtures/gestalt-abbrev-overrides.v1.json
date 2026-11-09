@@ -1,9 +1,8 @@
 {
   "schema": "mg8.gestalt-abbrev-overrides.v1",
   "owner_only": true,
-  "note": "New entries are owner-only. Nick Hartman's rule for adding an entry is: write y when a long-I sound, a hard I as in the pronoun I, must be preserved, and use ' to annotate a vowel sound without writing the vowel. Spelling alone does not decide this. The default abbreviation rule does not invent a y.",
+  "note": "New entries are owner-only. Nick Hartman must state each exception. The default rule writes the letter sequence ie as y before dropping vowels, because he said that ie is usually a hard I. fried -> fryd is produced by that default rule and is not listed here. eye -> 'y stays, because the apostrophe annotates the vowel sound. Candidate exceptions not entered: field, piece, friend, and cie words such as science and ancient.",
   "words": {
-    "eye": "'y",
-    "fried": "fryd"
+    "eye": "'y"
   }
 }
