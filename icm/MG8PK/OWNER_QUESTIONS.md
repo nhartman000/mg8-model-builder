@@ -2,6 +2,8 @@
 
 Catalog v3.13 fills the remaining open D14, D15, and D16 fields from one public reference. Those values are recommendations. They are not approvals. D12 and D13 were already complete and were not changed. Approved decisions D0, D1-context, and D4 through D11 were not edited.
 
+Questions 1 and 2 are answered below. The answers are stored on pending D15 in catalog v3.14 (`gestalt_id_abbreviation` and `interlinear_annotation`). D6, D8, and D10 were not edited, because those decisions are already approved.
+
 The reference is Ronen Eldan and Yuanzhi Li, TinyStories (2023), https://arxiv.org/abs/2305.07759, plus the float32 checkpoint configs at https://huggingface.co/roneneldan/TinyStories-1M/raw/main/config.json and https://huggingface.co/roneneldan/TinyStories-2Layers-33M/raw/main/config.json. It supplies a small-model training scale, a single-V100 hardware class, float32 packaging, and the practice of tracking evaluation loss separately from other scores. It does not supply NYCH symbol rules.
 
 ## Where the reference answers were applied
@@ -21,25 +23,36 @@ These do not need an owner answer unless the recommendation should be rejected.
 
 A reference model cannot answer these. Approved choices are not asked again. That includes the D4 tie policy, the D6 symbol-selection contract, the D8 30/30/20/20 starting mix, the Common Corpus choice, and the approved layer widths.
 
-### 1. Which shortening rule builds the gestalt ID?
+### 1. Which shortening rule builds the gestalt ID? — Answered, not approved
 
-The D3 trace suffix drops a, e, i, o, and u, keeps y, and collapses repeated consonants. D6 and D8 also append a shortened word after `_` on the gestalt ID. The cards do not say those two shortenings are the same rule.
+Recorded on pending D15 `gestalt_id_abbreviation` in catalog v3.14. D6 and D8 field text was not changed.
 
-Only the owner can say whether the gestalt-ID abbreviation is the D3 consonant skeleton or a different shortening.
+Verbatim: "drop vowels and double consonants keep y and capitalize if compound with a name like Fibonacci sequence gets FbncSqnc or compounded without name gets brick layer to brkLyr or computer programmer to cmptrPrgrmr"
 
-Consumed by D6 `request_response_schema` and D8 `primacy_tradeoff`, in B3, B6, and B8.
+Interpretation, flagged as interpretation: gestalt-ID abbreviation uses the same consonant skeleton as D3 (drop a, e, i, o, u; keep y; collapse doubled consonants). Compounds are joined with no separator. A compound containing a proper name capitalizes every part (PascalCase), for example Fibonacci sequence -> FbncSqnc. A compound without a name keeps the first part lowercase and capitalizes later parts (camelCase), for example brick layer -> brkLyr and computer programmer -> cmptrPrgrmr. B3, B6, and B8 would consume this as a hard string rule once the pending field is approved.
 
-Applied as a hard string-construction rule. It is not a training hyperparameter.
+Further interpretation, flagged because identical-letter collapse alone yields brckLyr: the preview helper also treats the adjacent digraph ck as a doubled consonant and keeps k. That step is not a rule for any other digraph. The helper is `nych_preview/gestalt_abbreviation.py`. It is not wired into any Builder.
 
-### 2. What must a NYCH output get right before the sidecar can go?
+Still open, and not decided: a single proper-name word (Fibonacci alone -> Fbnc?); a word starting with a vowel (apple -> ppl?); all-vowel words; hyphenated compounds; compounds of 3 or more parts.
 
-The D15 loss rule only compares validation cross-entropy. It does not say when a gestalt ID, an abbreviation, a kept tie, `unresolved domain`, or a modality operator is correct.
+### 2. What must a NYCH output get right before the sidecar can go? — Answered, not approved
 
-Only the owner can name the structural checks that define a correct NYCH output.
+Recorded on pending D15 `interlinear_annotation` in catalog v3.14. D10 `verification_sidecar` was not changed. The D15 loss rule remains in place.
 
-Consumed by D10 `verification_sidecar` and D15 `thresholds`, in B6, B10, and B11.
+Verbatim: "what I would like is a sort of info tree to exist interlinear so before gestalts are picked the nych output is still words but the info exists above in a sub-line interlinear style."
 
-Applied as test cases that stay required even after the 1.05 loss rule passes. The loss rule remains a starting point, not this definition.
+Example given:
+
+```
+(domain=building_subdom=carpentry)(modalityOp=kine-int)(past-t)
+the carpenter                                               freaked  out           after               he took the bump of k.
+```
+
+Interpretation, flagged as interpretation, alignment unconfirmed by the owner: before gestalt selection, NYCH output is the original words on a base line, and an interlinear annotation line above carries span-aligned tags. In the example, domain=building and subdom=carpentry are read over "the carpenter", modalityOp=kine-int over "freaked out", and past-t possibly over "after" or over the clause. Structural checks for the sidecar should test this interlinear structure. B10 and B11 would apply those checks once the pending field is approved.
+
+Module reading, interpretation only: B4 would produce the domain and subdomain tags; B5 or B6 would produce modalityOp from the TOTE modality operator; the source of tense (past-t) is unknown.
+
+Still open, and not decided: the exact span alignment of each tag; whether "he took the bump of k" gets tags; the tag syntax grammar; whether tense is an existing modality operator or a new tag type; whether the interlinear line persists after gestalts are picked.
 
 ### 3. What is the technical and scientific lexicon source?
 
