@@ -2,7 +2,7 @@
 
 Catalog v3.13 fills the remaining open D14, D15, and D16 fields from one public reference. Those values are recommendations. They are not approvals. D12 and D13 were already complete and were not changed. Approved decisions D0, D1-context, and D4 through D11 were not edited.
 
-Questions 1 and 2 are answered below. The answers are stored on pending D15 in catalog v3.14 (`gestalt_id_abbreviation` and `interlinear_annotation`). D6, D8, and D10 were not edited, because those decisions are already approved.
+Questions 1 and 2 are answered below. Question 1 is stored on pending D15 `gestalt_id_abbreviation` in catalog v3.14. Question 2, including the later tag addendum, is stored on the same pending field `interlinear_annotation`, now in catalog v3.15. D6, D8, and D10 were not edited, because those decisions are already approved.
 
 The reference is Ronen Eldan and Yuanzhi Li, TinyStories (2023), https://arxiv.org/abs/2305.07759, plus the float32 checkpoint configs at https://huggingface.co/roneneldan/TinyStories-1M/raw/main/config.json and https://huggingface.co/roneneldan/TinyStories-2Layers-33M/raw/main/config.json. It supplies a small-model training scale, a single-V100 hardware class, float32 packaging, and the practice of tracking evaluation loss separately from other scores. It does not supply NYCH symbol rules.
 
@@ -37,7 +37,7 @@ Still open, and not decided: a single proper-name word (Fibonacci alone -> Fbnc?
 
 ### 2. What must a NYCH output get right before the sidecar can go? — Answered, not approved
 
-Recorded on pending D15 `interlinear_annotation` in catalog v3.14. D10 `verification_sidecar` was not changed. The D15 loss rule remains in place.
+Recorded on pending D15 `interlinear_annotation`. Catalog v3.15 includes the tag addendum in that same field. D10 `verification_sidecar` was not changed. The D15 loss rule remains in place.
 
 Verbatim: "what I would like is a sort of info tree to exist interlinear so before gestalts are picked the nych output is still words but the info exists above in a sub-line interlinear style."
 
@@ -52,7 +52,18 @@ Interpretation, flagged as interpretation, alignment unconfirmed by the owner: b
 
 Module reading, interpretation only: B4 would produce the domain and subdomain tags; B5 or B6 would produce modalityOp from the TOTE modality operator; the source of tense (past-t) is unknown.
 
-Still open, and not decided: the exact span alignment of each tag; whether "he took the bump of k" gets tags; the tag syntax grammar; whether tense is an existing modality operator or a new tag type; whether the interlinear line persists after gestalts are picked.
+Owner addendum, confirmed: "he took the bump of k" also gets tags. Verbatim example:
+
+```
+(pronoun)(modOp=kine-ext)(object=gestalt)(object_k=gestalt)
+he took the bump of k
+```
+
+Interpretation, flagged as interpretation: "he" maps to (pronoun); "took" maps to (modOp=kine-ext); "the bump" maps to (object=gestalt); "k" maps to (object_k=gestalt).
+
+The full carpenter sentence, kept above this addendum, is the first interlinear test fixture (`nych_preview/fixtures/interlinear_examples.json`, entry `full-sentence`).
+
+Still open, and not decided: the exact span alignment of each tag on the full sentence; the tag syntax grammar; whether tense is an existing modality operator or a new tag type; whether the interlinear line persists after gestalts are picked. The owner used both `modalityOp=` and `modOp=`; which spelling is canonical is open. `object_k` appears to name the object by its surface token; whether that is the convention is open.
 
 ### 3. What is the technical and scientific lexicon source?
 

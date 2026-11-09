@@ -1,0 +1,13 @@
+[
+  {
+    "id": "full-sentence",
+    "role": "first",
+    "annotation": "(domain=building_subdom=carpentry)(modalityOp=kine-int)(past-t)",
+    "base": "the carpenter                                               freaked  out           after               he took the bump of k."
+  },
+  {
+    "id": "continuation-tags",
+    "annotation": "(pronoun)(modOp=kine-ext)(object=gestalt)(object_k=gestalt)",
+    "base": "he took the bump of k"
+  }
+]
