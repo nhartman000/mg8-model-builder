@@ -106,8 +106,9 @@ def abbreviate_word(word: str) -> str:
 def abbreviate_compound(words: list[str], *, contains_proper_name: bool) -> str:
     """Join two abbreviated parts.
 
-    A vowel-initial later part is joined with a double quote and is not
-    capitalized. A vowel-initial or y-initial first part stays undecided
+    A vowel-initial later part keeps its leading apostrophe and the next
+    letter is capitalized, so fried apple is fryd'Ppl. A vowel-initial or
+    y-initial first part stays undecided
     unless that word is in the owner override list.
     """
     if not isinstance(contains_proper_name, bool):
@@ -130,13 +131,15 @@ def abbreviate_compound(words: list[str], *, contains_proper_name: bool) -> str:
     left = abbreviate_word(left_word)
     right = abbreviate_word(right_word)
     if right_word[0].lower() in VOWELS or right.startswith("'"):
-        if right.startswith("'"):
-            right = right[1:]
-        if not right:
+        if not right.startswith("'"):
+            right = "'" + right
+        if len(right) > 1 and right[1].isalpha():
+            right = "'" + right[1].upper() + right[2:]
+        if len(right) < 2:
             raise GestaltAbbrevError("all-vowel word; not decided")
         if contains_proper_name and left[:1].isalpha():
             left = left.capitalize()
-        return left + '"' + right
+        return left + right
     if contains_proper_name:
         return left.capitalize() + right.capitalize()
     return left + right.capitalize()

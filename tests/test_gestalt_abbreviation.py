@@ -30,16 +30,21 @@ class GestaltAbbreviationPreview(unittest.TestCase):
         self.assertEqual(abbreviate_word("eye"), "'y")
         self.assertEqual(
             abbreviate_compound(["fried", "apple"], contains_proper_name=False),
+            "fryd'Ppl",
+        )
+        self.assertNotEqual(
+            abbreviate_compound(["fried", "apple"], contains_proper_name=False),
             'fryd"ppl',
         )
         self.assertEqual(
             abbreviate_compound(["brick", "apple"], contains_proper_name=False),
-            'brck"ppl',
+            "brck'Ppl",
         )
-        self.assertNotEqual(
-            abbreviate_compound(["fried", "apple"], contains_proper_name=False),
-            'frd"ppl',
-        )
+        self.assertEqual(abbreviate_word("field"), 'f"ld')
+        self.assertNotEqual(abbreviate_word("field"), "fld")
+        self.assertEqual(abbreviate_word("piece"), 'p"c')
+        self.assertNotIn("friend", OVERRIDES)
+        self.assertNotIn("science", OVERRIDES)
 
     def test_open_edges_are_refused(self):
         cases = (
