@@ -23,6 +23,7 @@ class GestaltAbbreviationPreview(unittest.TestCase):
 
     def test_fried_apple_uses_owner_override(self):
         self.assertEqual(abbreviate_word("fried"), "fryd")
+        self.assertEqual(abbreviate_word("eye"), "'y")
         self.assertEqual(
             abbreviate_compound(["fried", "apple"], contains_proper_name=False),
             'fryd"ppl',

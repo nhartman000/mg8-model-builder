@@ -1,8 +1,9 @@
 {
   "schema": "mg8.gestalt-abbrev-overrides.v1",
   "owner_only": true,
-  "note": "New entries are owner-only. Add a word only when Nick Hartman states its skeleton. The default abbreviation rule does not invent a y to preserve a vowel sound.",
+  "note": "New entries are owner-only. Nick Hartman's rule for adding an entry is: write y when a long-I sound, a hard I as in the pronoun I, must be preserved, and use ' to annotate a vowel sound without writing the vowel. Spelling alone does not decide this. The default abbreviation rule does not invent a y.",
   "words": {
+    "eye": "'y",
     "fried": "fryd"
   }
 }
