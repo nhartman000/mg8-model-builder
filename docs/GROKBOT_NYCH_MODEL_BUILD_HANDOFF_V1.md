@@ -109,7 +109,7 @@ Do not ask Nick to decide again on items already approved. Use the decision inte
 - TOTE migration 002 merged to source control; no existing database applied or conformance-tested yet.
 - Weight pruning deferred to Builder Pro V2.
 - Repositories are private; no public release implied.
-- One GitSON handoff per module boundary must be under 500,000 bytes (owner-stated constraint); the exact validator/schema is still pending.
+- One GitSON handoff per module boundary must be under 500,000 bytes (owner-stated constraint). Catalog v3.12 freezes that check in `schemas/gitson-boundary-declaration.v1.schema.json` and the offline `gitson_boundary` validator. D13 is not approved yet. The canon-bundle splitter in `nhartman000/gitson-` and mg8-engine `src/mg8_engine/gitson.py` is transport only and does not validate these declarations.
 
 ### Pending owner choices to surface in the interface
 
@@ -123,7 +123,7 @@ Do not ask Nick to decide again on items already approved. Use the decision inte
 | Output head | D10 | B10–B11 | Approved at catalog v3.10. Tied embeddings, full-vocabulary logits, stable softmax, and next-token cross-entropy stay as recorded. The verification sidecar is included. |
 | Neural corpus and training | D11 | B11 | Approved at catalog v3.11: Common Corpus (https://huggingface.co/datasets/PleIAs/common_corpus), English selected by the dataset language field, distinct from the typo-statistics corpus. License review uses the dataset card: uncopyrighted or freely licensed data, per-document license field preserved, documents without a clear open license excluded. Deduplicated fixed split, no prompt logs, recorded hashes/config/seed/hardware, and a standard baseline on the same split. |
 | Inspector evidence bar | D12 | All merges | Approve contract coverage, negative/boundary/adversarial tests, reproducibility, exact digests, and baseline comparison; missing evidence blocks PASS? |
-| GitSON contract/runtime | D13 | Integration | Approve interface-versioned per-boundary GitSON, exact artifact and upstream PASS digests, trusted host validation, <500,000-byte cap? |
+| GitSON contract/runtime | D13 | Integration | Catalog v3.12 records the frozen schema `schemas/gitson-boundary-declaration.v1.schema.json` and offline validator `python -m gitson_boundary`. One declaration per boundary: source/target ids, interface versions, artifact digests, upstream PASS evidence, trusted-host validation, strictly under 500,000 bytes. Awaiting owner approval. |
 | Tiny-model size and resource budget | New D14 | B7–B11 training | Choose a parameter-count band, memory/latency target, and available training hardware. Do not invent “tiny” as a numeric size. |
 | Benchmark and success criteria | New D15 | B11/release | Choose minimum NYCH structural fidelity, semantic preservation, OOV/typo behavior, next-token metrics, latency, and baseline comparison measures. Report these separately. |
 | Packaging/release target | New D16 | Final build | Choose downloadable format and supported runtime/device. Keep private until an explicit release decision. |
