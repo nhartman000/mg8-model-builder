@@ -2,7 +2,7 @@
 
 Catalog v3.13 fills the remaining open D14, D15, and D16 fields from one public reference. Those values are recommendations. They are not approvals. D12 and D13 were already complete and were not changed. Approved decisions D0, D1-context, and D4 through D11 were not edited.
 
-Questions 1 and 2 are answered below. Both records live on pending D15. Catalog v3.16 adds the owner's later clarification: keep c, use `modOp`, and write object tags as `obj_` plus the abbreviated surface token with value `gst`. D6, D8, and D10 were not edited, because those decisions are already approved.
+Questions 1 and 2 are answered below. Both records live on pending D15. Catalog v3.16 adds the owner's later clarification: keep c, use `modOp`, and write object tags as `obj_` plus the abbreviated surface token with value `gst`. Catalog v3.17 records vowel-initial words: a leading `'` replaces the initial vowel, and a doubled consonant immediately after that vowel is kept, so apple is `'ppl` and opal is `'pl`. D6, D8, and D10 were not edited, because those decisions are already approved.
 
 The reference is Ronen Eldan and Yuanzhi Li, TinyStories (2023), https://arxiv.org/abs/2305.07759, plus the float32 checkpoint configs at https://huggingface.co/roneneldan/TinyStories-1M/raw/main/config.json and https://huggingface.co/roneneldan/TinyStories-2Layers-33M/raw/main/config.json. It supplies a small-model training scale, a single-V100 hardware class, float32 packaging, and the practice of tracking evaluation loss separately from other scores. It does not supply NYCH symbol rules.
 
@@ -31,9 +31,11 @@ Verbatim: "drop vowels and double consonants keep y and capitalize if compound w
 
 Interpretation, flagged as interpretation: gestalt-ID abbreviation uses the same consonant skeleton as D3 (drop a, e, i, o, u; keep y; collapse doubled consonants). Compounds are joined with no separator. A compound containing a proper name capitalizes every part (PascalCase), for example Fibonacci sequence -> FbncSqnc. A compound without a name keeps the first part lowercase and capitalizes later parts (camelCase), for example brick layer -> brkLyr and computer programmer -> cmptrPrgrmr. B3, B6, and B8 would consume this as a hard string rule once the pending field is approved.
 
-Owner clarification, verbatim: "just dont drop the c and modOp is better and (object_k) can be (obj_k) but yes it could be (obj_bmp=gst) (obj_k=gst)". Applied to this question: do not drop c. Only vowels are dropped, and identical adjacent letters collapse. The earlier brkLyr reading of brick layer is superseded. brick layer is brckLyr. FbncSqnc and cmptrPrgrmr stay. The helper `nych_preview/gestalt_abbreviation.py` follows this clarification and is not wired into any Builder.
+Owner clarification, verbatim: "just dont drop the c and modOp is better and (object_k) can be (obj_k) but yes it could be (obj_bmp=gst) (obj_k=gst)". Applied to this question: do not drop c. Only vowels are dropped, and identical adjacent letters collapse. The earlier brkLyr reading of brick layer is superseded. brick layer is brckLyr. FbncSqnc and cmptrPrgrmr stay.
 
-Still open, and not decided: a word starting with a vowel; compounds of 3 or more parts. A single proper-name word, an all-vowel word, and a hyphenated compound were not resolved either.
+Owner clarification, verbatim: "any word that starts with a vowel gets an ' and if it starts with a vowel and that vowel is followed by a double dont drop the double so apple = 'ppl that distinguishes it from opal = 'pl". A vowel-initial word is prefixed with `'` in place of the dropped initial vowel. If that vowel is immediately followed by a doubled consonant, both letters of that double are kept. apple is `'ppl`. opal is `'pl`. The helper `nych_preview/gestalt_abbreviation.py` follows these clarifications and is not wired into any Builder.
+
+Still open, and not decided: whether the double-keep applies only right after the initial vowel or anywhere; how capitalization interacts with `'` in a compound (for example a second part `'ppl` versus `'Ppl`); a y-initial word (y is kept, so it may take no apostrophe); all-vowel words; compounds of 3 or more parts. A single proper-name word and a hyphenated compound were not resolved either.
 
 ### 2. What must a NYCH output get right before the sidecar can go? — Answered, not approved
 

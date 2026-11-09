@@ -1,6 +1,6 @@
 import unittest
 
-from nych_preview.gestalt_abbreviation import GestaltAbbrevError, abbreviate_compound
+from nych_preview.gestalt_abbreviation import GestaltAbbrevError, abbreviate_compound, abbreviate_word
 
 
 class GestaltAbbreviationPreview(unittest.TestCase):
@@ -17,6 +17,10 @@ class GestaltAbbreviationPreview(unittest.TestCase):
             "cmptrPrgrmr",
         )
 
+    def test_vowel_initial_words(self):
+        self.assertEqual(abbreviate_word("apple"), "'ppl")
+        self.assertEqual(abbreviate_word("opal"), "'pl")
+
     def test_open_edges_are_refused(self):
         cases = (
             (["Fibonacci"], True),
@@ -25,6 +29,10 @@ class GestaltAbbreviationPreview(unittest.TestCase):
             (["brick", "layer", "wall"], False),
             (["brick-layer", "course"], False),
         )
+        for word in ("yellow", "a", "Io"):
+            with self.subTest(word=word):
+                with self.assertRaises(GestaltAbbrevError):
+                    abbreviate_word(word)
         for words, named in cases:
             with self.subTest(words=words):
                 with self.assertRaises(GestaltAbbrevError):
