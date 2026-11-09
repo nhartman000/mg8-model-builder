@@ -9,10 +9,9 @@ class GestaltAbbreviationPreview(unittest.TestCase):
             abbreviate_compound(["Fibonacci", "sequence"], contains_proper_name=True),
             "FbncSqnc",
         )
-        self.assertEqual(
-            abbreviate_compound(["brick", "layer"], contains_proper_name=False),
-            "brkLyr",
-        )
+        brick = abbreviate_compound(["brick", "layer"], contains_proper_name=False)
+        self.assertEqual(brick, "brckLyr")
+        self.assertNotEqual(brick, "brkLyr")
         self.assertEqual(
             abbreviate_compound(["computer", "programmer"], contains_proper_name=False),
             "cmptrPrgrmr",

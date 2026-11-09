@@ -1,0 +1,890 @@
+{
+  "schema": "mg8.decision-catalog.v3",
+  "catalog_version": "3.16",
+  "cross_constraints": [
+    {
+      "kind": "equals",
+      "left": {
+        "decision": "D1-context",
+        "field": "window_tokens"
+      },
+      "right": {
+        "decision": "D7",
+        "field": "position_limit"
+      }
+    },
+    {
+      "kind": "equals",
+      "left": {
+        "decision": "D7",
+        "field": "d_model"
+      },
+      "right": {
+        "decision": "D8",
+        "field": "model_width"
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D0",
+      "title": "Model objective",
+      "question": "Confirm deterministic NYCH encoder plus tiny decoder-only causal LM predicting the next NYCH token/symbol sequence?",
+      "modules": [
+        "B7",
+        "B8",
+        "B9",
+        "B10",
+        "B11"
+      ],
+      "depends_on": [],
+      "round": "objective/size/context",
+      "contract": {
+        "encoder": {
+          "kind": "text",
+          "recommended": "deterministic NYCH encoder",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "model_family": {
+          "kind": "text",
+          "recommended": "tiny decoder-only causal LM",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "prediction_target": {
+          "kind": "text",
+          "recommended": "next NYCH token/symbol sequence",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "assurance_separation": {
+          "kind": "text",
+          "recommended": "symbolic assurance results kept distinct from probabilistic output",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D1-context",
+      "title": "Context window",
+      "question": "Approve tokens per window and ordered splitting of longer accepted input?",
+      "modules": [
+        "B2",
+        "B7",
+        "B8",
+        "B9",
+        "B10",
+        "B11"
+      ],
+      "depends_on": [],
+      "round": "objective/size/context",
+      "contract": {
+        "window_tokens": {
+          "kind": "integer",
+          "recommended": 1024,
+          "owner_input_required": false,
+          "unit": "tokens",
+          "minimum": 1,
+          "maximum": null,
+          "step": 1
+        },
+        "overflow_policy": {
+          "kind": "choice",
+          "recommended": "split_into_ordered_windows",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "split_into_ordered_windows"
+          ]
+        },
+        "truncation": {
+          "kind": "choice",
+          "recommended": "never",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "never"
+          ]
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D4",
+      "title": "Domain lexicon seed and thresholds",
+      "question": "Seed lexicon, lookup order, unresolved domain, confidence rule, and tie policy are recorded. This decision is specified and is not approved.",
+      "modules": [
+        "B4",
+        "B5"
+      ],
+      "depends_on": [],
+      "round": "semantics/domain",
+      "contract": {
+        "method": {
+          "kind": "text",
+          "recommended": "versioned local associative lexicon; no LLM calls; ranked multi-label evidence; if unresolvable, write unresolved domain; no forced symbol",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "seed_lexicon": {
+          "kind": "text",
+          "recommended": "The professional TLD list at https://tld-list.com/tld-categories/professional is primary. If a domain exists on that list, it is domain-specific and tied to that .domain extension; a host of websites therefore exist from which terminology and structures can be extracted easily. If the domain is not part of the professional domain list, fall back to the attached NYCH taxonomy lexicon committed at icm/MG8PK/lexicons/nych-professional-domain-taxonomy.md. That lexicon will be updated with every proper NYCH update.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "scoring_rubric": {
+          "kind": "text",
+          "recommended": "The professional TLD list at https://tld-list.com/tld-categories/professional is primary. If a domain exists on that list, it is domain-specific and tied to that .domain extension; a host of websites therefore exist from which terminology and structures can be extracted easily. If the domain is not part of the professional domain list, fall back to the attached NYCH taxonomy lexicon committed at icm/MG8PK/lexicons/nych-professional-domain-taxonomy.md. That lexicon will be updated with every proper NYCH update.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "rule_module": {
+          "kind": "text",
+          "recommended": "The actual rules for domain decisions will be an extensive module needing expansion, and will be an entire evening of work one day. For now, the current rule and lists will suffice. If unresolvable, write unresolved domain.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "confidence_rule": {
+          "kind": "text",
+          "recommended": "A 100% letter-for-letter match equals confidence 10 (100%). If one to three letters are off, and those differences are likely suffixes \"ing\", \"ion\", \"ed\", or \"er\", confidence remains high at 80–85%. After that, confidence of 75% or lower is unacceptable and results in writing unresolved domain. A confidence at or below 0.75 writes unresolved domain.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "confidence_threshold": {
+          "kind": "number",
+          "recommended": 0.75,
+          "owner_input_required": false,
+          "unit": "fraction",
+          "minimum": 0,
+          "maximum": 1,
+          "step": null
+        },
+        "tie_policy": {
+          "kind": "text",
+          "recommended": "In the strange case of matching — a tie, when two or more domains receive the same score — include both (or all tied domains) and do not prune either domain. Instead use both as possible root domains and reason within both.",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D5",
+      "title": "GST context assembly and lookup",
+      "question": "B5 GST v2 and additive TOTE migration 002, including request-scoped GST, the GST schema path, and gst_context.py as source of truth (historical approval stands on the prior snapshot; existing-database application and conformance tests remain deferred).",
+      "modules": [
+        "B5"
+      ],
+      "depends_on": [],
+      "round": "semantics/domain",
+      "contract": {
+        "storage": {
+          "kind": "text",
+          "recommended": "Additive TOTE SQLite v2 (migration 002)",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "user_version": {
+          "kind": "integer",
+          "recommended": 2,
+          "owner_input_required": false,
+          "unit": null,
+          "minimum": 2,
+          "maximum": 2,
+          "step": 1
+        },
+        "lookup": {
+          "kind": "text",
+          "recommended": "exact canonical domain_id + action_key; ambiguity is cache miss",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "gst_format": {
+          "kind": "text",
+          "recommended": "versioned GST JSON",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "origin_policy": {
+          "kind": "text",
+          "recommended": "HUMAN_AUTHORED automatic structural/invariant validation; HOW_TO_EXTRACTED requires matching human approval; unknown origins fail closed",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "gst_scope": {
+          "kind": "text",
+          "recommended": "request-scoped",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "gst_schema_path": {
+          "kind": "text",
+          "recommended": "nych-language-model/schemas/gst-context-v1.schema.json",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "gst_source_of_truth": {
+          "kind": "text",
+          "recommended": "nych-language-model/src/nych_language_model/pipeline/gst_context.py",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "existing_db_migration_002": {
+          "kind": "text",
+          "recommended": "deferred; not applied to an existing database",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "migration_002_conformance_tests": {
+          "kind": "text",
+          "recommended": "deferred; not run",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D6",
+      "title": "Symbol-selection call contract",
+      "question": "Behavioral symbol-selection contract and emoji-library endpoint are recorded. TOTE write policy is still required, so this decision is not approved.",
+      "modules": [
+        "B6"
+      ],
+      "depends_on": [
+        "D5"
+      ],
+      "round": "semantics/domain",
+      "contract": {
+        "inputs": {
+          "kind": "text",
+          "recommended": "B5 GST and complete natural-language prompt as separate inputs",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "literal_fallback": {
+          "kind": "text",
+          "recommended": "faithfully unrepresentable words remain literal",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "request_response_schema": {
+          "kind": "text",
+          "recommended": "Symbol selection chooses an emoji/gestalt to represent each word, or compounds multiple words when they form a single idea.\n\nIf a compounded idea contains a name, the name-exclusion rule is ignored and the idea is compounded and embedded. Owner example: \"fibbonacci sequence\" embeds as `FbncSqnc`. The capitalized F indicates a name; the later capitalized S indicates a new word.\n\nIn normal gestalt selection, the shortened word is appended at the end of the id string, separated by `_`. Owner example: word becomes `_wrd`. If a second word is compounded to form a single idea, that second word is capitalized. Owner example: \"word smith\" becomes `wrdSmth`.\n\nThe chosen gestalt/emoji should best approximate the gestalt of the word. Owner examples: football = `ftbl` plus the ellipse-on-an-angle football emoji; hammer uses the hammer emoji. This will not always produce the most obvious gestalt; the word embedding gives enough of a clue to negate collisions and provide context by observing neighboring gestalt IDs.\n\nA legend is printed atop the chat for domain-tree symbol mappings, because there are far more domains than emoji and unique choices cannot exist in an invariant lexicon. The current domain is identified and all subdomains are preserved. Gestalts as emoji are chosen according to the current domain. If the domain is switched, a marker is placed for indexing and the new legend is transmitted.\n\nInvariants that never change per prompt or chat, and are universal to all NYCH uses and users, must be canonized in these contract terms: modality operators; narrative perspective and tense; time of day if any; and the grammatical invariants.\n\nEverything that is not invariant is domain-selected. Unrelated domains are pruned until they are referenced by chat or inferred by actions.\n\nAt the point the LLM call is made to choose the gestalt emoji, NYCH symbols are chosen per word. This happens after the domain has been identified and the lookup has given subdomains and related structure. Those symbols are temporary or unique to this chat. They will eventually become normalized because of the legend and the LLM preference for stability. Per domain there will not be much variance, but some domains will require the same symbols. For example, computers and word processing may both use the computer-screen gestalt as the best match, and that symbol will represent something different in each domain. That on-the-fly sharing is the reason for choosing symbols this way.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "endpoint": {
+          "kind": "text",
+          "recommended": "The endpoint is the common emoji library. https://unicode.org/emoji/charts/full-emoji-list.html (Unicode Full Emoji List, v18.0). https://www.unicode.org/emoji/charts-18.0/ (Unicode Emoji Charts v18.0).",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "tote_write_policy": {
+          "kind": "text",
+          "recommended": "The modality operator is invariant and symbolic, but the TOTE loop database is inherently not symbolic, because symbols are chosen by domain. The TOTE loop library is the words organized in cells, rows, and columns: domain-specific, subdomain, and technique. Then the TOTE loop describes the technique with a minimum of 1 actor, 1 action, 1 object, and 1 modality operator.\n\nWord organizing in the database will preserve the domain organization and the TOTE loop sequence, and allow all but the modality operators to be dynamically chosen.",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D7",
+      "title": "Embeddings and position",
+      "question": "Approve embedding/position settings?",
+      "modules": [
+        "B7",
+        "B8",
+        "B9",
+        "B10"
+      ],
+      "depends_on": [
+        "D0"
+      ],
+      "round": "model architecture",
+      "contract": {
+        "d_model": {
+          "kind": "integer",
+          "recommended": 128,
+          "owner_input_required": false,
+          "unit": "dimensions",
+          "minimum": 1,
+          "maximum": null,
+          "step": 1
+        },
+        "embeddings": {
+          "kind": "choice",
+          "recommended": "learned_token_symbol",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "learned_token_symbol"
+          ]
+        },
+        "positional_encoding": {
+          "kind": "choice",
+          "recommended": "RoPE",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "RoPE"
+          ]
+        },
+        "position_limit": {
+          "kind": "integer",
+          "recommended": 1024,
+          "owner_input_required": false,
+          "unit": "positions",
+          "minimum": 1,
+          "maximum": null,
+          "step": 1
+        },
+        "dtype": {
+          "kind": "choice",
+          "recommended": "float32",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "float32"
+          ]
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D8",
+      "title": "Attention",
+      "question": "Owner attention and primacy specification is recorded. The starting attention mix is 30/30/20/20 and is adjusted through natural-language testing until optimal.",
+      "modules": [
+        "B8",
+        "B9",
+        "B10"
+      ],
+      "depends_on": [
+        "D7"
+      ],
+      "round": "model architecture",
+      "contract": {
+        "layers": {
+          "kind": "integer",
+          "recommended": 2,
+          "owner_input_required": false,
+          "unit": "decoder layers",
+          "minimum": 1,
+          "maximum": null,
+          "step": 1
+        },
+        "heads": {
+          "kind": "integer",
+          "recommended": 4,
+          "owner_input_required": false,
+          "unit": "heads",
+          "minimum": 1,
+          "maximum": null,
+          "step": 1
+        },
+        "head_width": {
+          "kind": "integer",
+          "recommended": 32,
+          "owner_input_required": false,
+          "unit": "dimensions",
+          "minimum": 1,
+          "maximum": null,
+          "step": 1
+        },
+        "model_width": {
+          "kind": "integer",
+          "recommended": 128,
+          "owner_input_required": false,
+          "unit": "dimensions",
+          "minimum": 1,
+          "maximum": null,
+          "step": 1
+        },
+        "mask": {
+          "kind": "choice",
+          "recommended": "causal",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "causal"
+          ]
+        },
+        "kv_cache": {
+          "kind": "choice",
+          "recommended": "none_in_reference",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "none_in_reference"
+          ]
+        },
+        "primacy_tradeoff": {
+          "kind": "text",
+          "recommended": "Until patterns are recognized from repetition, the abbreviated words appended on the gestalt ID string are primary. A tradeoff rule determines when the dynamic domain lexicons have stabilized; only then may the switch to symbolic (gestalt) primary be made. Words are not discarded; they remain appended on the ID string.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "attention_mixture": {
+          "kind": "text",
+          "recommended": "Attention weights the current ID and its neighbors as follows, as a starting mix: 30% the current gestalt, 30% the current abbreviated word, 20% neighboring gestalts, and 20% neighboring abbreviated words (the remaining 40% neighboring signal split 20/20). If that mix does not work, readjust the percentages and ratios. Adjust until optimal percentages and ratios are obtained through testing on natural language (\"nat lang\"). The 30% current gestalt / 30% current abbreviated word / 20% neighboring gestalts / 20% neighboring abbreviated words mix is the starting point, not a frozen optimum.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "abbreviation_to_gestalt_training": {
+          "kind": "text",
+          "recommended": "Part of training this model is training from word abbreviations to stabilized gestalt dynamics. This is unique to the NYCH language model.",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [
+        {
+          "kind": "product_equals",
+          "target": "model_width",
+          "factors": [
+            "heads",
+            "head_width"
+          ]
+        }
+      ],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D9",
+      "title": "Transformer block",
+      "question": "Owner mixing-console specification is recorded. This decision is not approved.",
+      "modules": [
+        "B9",
+        "B10"
+      ],
+      "depends_on": [
+        "D8"
+      ],
+      "round": "model architecture",
+      "contract": {
+        "norm": {
+          "kind": "choice",
+          "recommended": "pre_rmsnorm",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "pre_rmsnorm"
+          ]
+        },
+        "residual": {
+          "kind": "choice",
+          "recommended": "yes",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "yes"
+          ]
+        },
+        "ffn": {
+          "kind": "choice",
+          "recommended": "SwiGLU",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "SwiGLU"
+          ]
+        },
+        "ffn_hidden_width": {
+          "kind": "integer",
+          "recommended": 512,
+          "owner_input_required": false,
+          "unit": "units",
+          "minimum": 1,
+          "maximum": null,
+          "step": 1
+        },
+        "dropout_training": {
+          "kind": "number",
+          "recommended": 0.1,
+          "owner_input_required": false,
+          "unit": "fraction",
+          "minimum": 0,
+          "maximum": 1,
+          "step": null
+        },
+        "dropout_inference": {
+          "kind": "number",
+          "recommended": 0.0,
+          "owner_input_required": false,
+          "unit": "fraction",
+          "minimum": 0,
+          "maximum": 1,
+          "step": null
+        },
+        "mixing_console": {
+          "kind": "text",
+          "recommended": "A dynamic mixing console adjusts these numbers in real time like an audio mixer and finds the intended balance. An AI may perform the mixing under human observation. The console does not have to be used to obtain the live parameters at first. The mix channels being balanced are the current gestalt, the current abbreviated word, neighboring gestalts, and neighboring abbreviated words, starting from the D8 mix of 30/30/20/20, plus the D9 block numbers (especially feed-forward width and training dropout) that affect how those signals are mixed. Inference dropout remains 0.0 and is not a mix channel.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "repeatability": {
+          "kind": "text",
+          "recommended": "The console must produce repeatable outcomes. The same recipe — operator (human or AI observed), observation seed, mix-channel values, and D9 block settings — must yield the same mix and the same digest, and the same seed plus starting mix must replay the same observed AI moves.",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D10",
+      "title": "Output head",
+      "question": "Owner verification-sidecar specification is recorded. This decision is not approved.",
+      "modules": [
+        "B10",
+        "B11"
+      ],
+      "depends_on": [
+        "D9"
+      ],
+      "round": "model architecture",
+      "contract": {
+        "tied_embeddings": {
+          "kind": "choice",
+          "recommended": "yes",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "yes"
+          ]
+        },
+        "logits": {
+          "kind": "choice",
+          "recommended": "full_vocabulary",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "full_vocabulary"
+          ]
+        },
+        "softmax": {
+          "kind": "choice",
+          "recommended": "numerically_stable",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "numerically_stable"
+          ]
+        },
+        "loss": {
+          "kind": "choice",
+          "recommended": "next_token_cross_entropy",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "next_token_cross_entropy"
+          ]
+        },
+        "hard_output_constraints": {
+          "kind": "choice",
+          "recommended": "none_until_specified",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "none_until_specified"
+          ]
+        },
+        "verification_sidecar": {
+          "kind": "text",
+          "recommended": "The production D10 path still scores next NYCH tokens — gestalt IDs with the abbreviated word appended on the ID string — not full English words. To be sure that path is working, a parallel unmodified (\"standard\") version must ride the whole process alongside the abbreviated-word and gestalt mix as a faithfulness check. The mixed NYCH path should remain faithful if it is running alongside that proper unmodified companion. Once the D10 step is proven, delete the standard version. This sidecar is required verification, not an optional extra: it exists so the mixed path can be checked before it is trusted on its own.",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D11",
+      "title": "Neural corpus and training",
+      "question": "Select license-cleared English corpus distinct from typo-statistics corpus.",
+      "modules": [
+        "B11"
+      ],
+      "depends_on": [
+        "D0"
+      ],
+      "round": "data/training/evaluation",
+      "contract": {
+        "policy": {
+          "kind": "text",
+          "recommended": "deduplicated fixed split; no prompt logs; recorded hashes/config/seed/hardware; standard baseline on same split",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "corpus": {
+          "kind": "text",
+          "recommended": "Common Corpus (https://huggingface.co/datasets/PleIAs/common_corpus). English text is selected using the dataset's language field. This is the neural-training corpus and must remain distinct from the typo-statistics corpus.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "license_review": {
+          "kind": "text",
+          "recommended": "License review of Common Corpus as published on the dataset card: the collection contains only data that is uncopyrighted or freely licensed (public domain, U.S. federal public domain, CC0, Creative Commons, MIT, French Licence ouverte, and similar). Each document has a license field. The dataset is multilingual, so English documents must be filtered by that language metadata. Licensing information is based on available metadata; the per-document license field should be preserved, and documents without a clear open license should be excluded.",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D12",
+      "title": "Inspector evidence bar",
+      "question": "Approve inspector pass bar?",
+      "modules": [
+        "ALL"
+      ],
+      "depends_on": [],
+      "round": "assurance/wiring/release",
+      "contract": {
+        "bar": {
+          "kind": "text",
+          "recommended": "separate Inspector per Builder; exact contract match; positive/negative/boundary/adversarial cases; reproducible evidence; exact digest; reference comparison where applicable",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "missing_evidence": {
+          "kind": "choice",
+          "recommended": "INTERMEDIATE",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "INTERMEDIATE"
+          ]
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D13",
+      "title": "GitSON contract/runtime",
+      "question": "Approve per-boundary GitSON contract?",
+      "modules": [
+        "INTEGRATION"
+      ],
+      "depends_on": [
+        "D12"
+      ],
+      "round": "assurance/wiring/release",
+      "contract": {
+        "direction": {
+          "kind": "text",
+          "recommended": "one declaration per module boundary with source/target IDs, interface versions, artifact digests, upstream PASS evidence, trusted host validation",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "max_bytes_exclusive": {
+          "kind": "integer",
+          "recommended": 500000,
+          "owner_input_required": false,
+          "unit": "bytes",
+          "minimum": 1,
+          "maximum": 500000,
+          "step": 1
+        },
+        "schema_validator_runtime": {
+          "kind": "text",
+          "recommended": "Offline deterministic validator gitson_boundary (CLI: python -m gitson_boundary <declaration.json>). Frozen closed schema schemas/gitson-boundary-declaration.v1.schema.json digest sha256:4761edfc48d1242ec36d768dde81633cc084877d5c94563ff6f26a28f3115a72. Schema id mg8.gitson-boundary-declaration.v1. Checks one declaration per module boundary: source and target module ids (B1-B11 or INTEGRATION; source must differ from target), interface versions on both sides, source and target artifact digests, upstream Inspector PASS evidence (inspector I1-I11 paired to module B1-B11; verdict PASS only; exact contract match; positive, negative, boundary, and adversarial cases; reproducible evidence; exact digest; reference comparison recorded or not applicable), and a trusted-host PASS record digest. Serialized UTF-8 size must be strictly under 500000 bytes. Rejects unknown fields, bad digests, missing or non-PASS upstream evidence, and forbidden raw-prompt keys (prompt, raw_prompt, user_example, example_prompt). Does not split or validate canon bundles; size-limited .gitson transport remains nhartman000/gitson- and mg8-engine src/mg8_engine/gitson.py.",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D14",
+      "title": "Tiny-model size and resource budget",
+      "question": "Choose parameter band, memory/latency target, training hardware.",
+      "modules": [
+        "B7",
+        "B8",
+        "B9",
+        "B10",
+        "B11"
+      ],
+      "depends_on": [
+        "D0"
+      ],
+      "round": "objective/size/context",
+      "contract": {
+        "parameter_band": {
+          "kind": "text",
+          "recommended": "Reference-derived recommendation from Ronen Eldan and Yuanzhi Li, TinyStories (2023), https://arxiv.org/abs/2305.07759. This is not a copy of their GPT-Neo checkpoint. The approved NYCH shape stays d_model 128, 2 layers, 4 heads, head width 32, SwiGLU width 512, RoPE, position limit 1024, float32, and tied embeddings. Non-embedding count assumes no linear bias, RMSNorm scale only, one pre-norm on attention and one on SwiGLU in each layer, one final RMSNorm, and zero RoPE parameters: 2*(4*128*128 + 3*128*512 + 2*128)+128 = 524928. Vocabulary size is not frozen. The band uses the two vocab sizes that source states: 10000 (paper footnote: keep the top 10K GPT-Neo tokens) and 50257 (vocab_size in the TinyStories-1M and TinyStories-2Layers-33M config.json files at https://huggingface.co/roneneldan/TinyStories-1M/raw/main/config.json and https://huggingface.co/roneneldan/TinyStories-2Layers-33M/raw/main/config.json). Tied embeddings add 128*V once, so the band is 1804928 parameters at V=10000 and 6957824 parameters at V=50257. This is a reference-derived size band for owner review, not a claim that NYCH uses the GPT-Neo vocabulary.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "memory_latency_target": {
+          "kind": "text",
+          "recommended": "Reference-derived recommendation from Eldan and Li, TinyStories (2023), https://arxiv.org/abs/2305.07759. Float32 weights are 4 bytes per parameter: 7219712 bytes at 1804928 parameters and 27831296 bytes at 6957824 parameters. A float32 Adam training lower bound, excluding activations, is 16 bytes per parameter (weights, gradient, first moment, and second moment): 28878848 bytes and 111325184 bytes at those ends. Activation bytes are not capped here. The paper does not publish a millisecond latency, and D8 records no KV cache in the reference, so this is not a cached-decode budget. The wall-clock class is the one the paper states for models of about 1M to 35M parameters and 1 to 8 layers: training on a single V100 in at most 30 hours. This is a reference-derived starting budget for owner review.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "training_hardware": {
+          "kind": "text",
+          "recommended": "Reference-derived recommendation: one NVIDIA V100 GPU. Eldan and Li, TinyStories (2023), https://arxiv.org/abs/2305.07759, state that their models in the roughly 1M to 35M parameter range, with 1 to 8 layers, can all be trained on a single V100 within at most 30 hours, and that this training is typically less than a day on a single GPU. The computed NYCH band, 1804928 to 6957824 parameters, sits inside that range. This records no measured NYCH training run.",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D15",
+      "title": "Benchmark and success criteria",
+      "question": "Choose measures and thresholds.",
+      "modules": [
+        "B11"
+      ],
+      "depends_on": [
+        "D0"
+      ],
+      "round": "data/training/evaluation",
+      "contract": {
+        "reporting": {
+          "kind": "text",
+          "recommended": "report each measure separately against a standard baseline",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "thresholds": {
+          "kind": "text",
+          "recommended": "Reference-derived starting value for owner review. It is not a cutoff printed in the paper. Report validation cross-entropy and perplexity separately against the unmodified standard path on the same held-out split. That reporting follows Eldan and Li, TinyStories (2023), https://arxiv.org/abs/2305.07759, who track evaluation loss and separate grammar, creativity, and consistency scores, and who report that those scores rise as evaluation loss falls. Delete the D10 unmodified verification sidecar only when the mixed NYCH path's validation cross-entropy is less than or equal to 1.05 times the unmodified companion's validation cross-entropy, on that same split, for 3 consecutive evaluations, both losses are finite, and both paths were scored on the same documents. Perplexity is reported beside the loss and is not a second deletion cutoff. Until this starting rule is met, keep the sidecar. The rule does not define NYCH structural correctness.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "gestalt_id_abbreviation": {
+          "kind": "text",
+          "recommended": "Owner-stated answer from Nick Hartman. Not an approval. Verbatim: \"drop vowels and double consonants keep y and capitalize if compound with a name like Fibonacci sequence gets FbncSqnc or compounded without name gets brick layer to brkLyr or computer programmer to cmptrPrgrmr\". Interpretation, flagged as interpretation: gestalt-ID abbreviation uses the same consonant skeleton as D3 (drop a, e, i, o, u; keep y; collapse doubled consonants). Compounds are joined with no separator. A compound containing a proper name capitalizes every part (PascalCase), for example Fibonacci sequence -> FbncSqnc. A compound without a name keeps the first part lowercase and capitalizes later parts (camelCase), for example brick layer -> brkLyr and computer programmer -> cmptrPrgrmr. Stored on pending D15 because D6 and D8 are approved and their field text was not edited. Once approved, B3, B6, and B8 consume it as a hard string rule. Preview helper nych_preview/gestalt_abbreviation.py reproduces the three owner examples and is not wired into any Builder. Owner clarification, verbatim in full: \"just dont drop the c and modOp is better and (object_k) can be (obj_k) but yes it could be (obj_bmp=gst) (obj_k=gst)\". Applied here: do not drop c. Only vowels are dropped and identical adjacent letters collapse. The earlier brkLyr reading of brick layer is superseded. brick layer is brckLyr. FbncSqnc and cmptrPrgrmr stay as recorded. The preview helper follows this clarification and is still not wired into any Builder. Open and not decided: a single proper-name word (for example Fibonacci alone -> Fbnc?); a word starting with a vowel (for example apple -> ppl?); all-vowel words; hyphenated compounds; compounds of 3 or more parts.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "interlinear_annotation": {
+          "kind": "text",
+          "recommended": "Owner-stated answer from Nick Hartman. Not an approval. Verbatim: \"what I would like is a sort of info tree to exist interlinear so before gestalts are picked the nych output is still words but the info exists above in a sub-line interlinear style.\" Example given:\n(domain=building_subdom=carpentry)(modalityOp=kine-int)(past-t)\nthe carpenter                                               freaked  out           after               he took the bump of k.\nInterpretation, flagged as interpretation, alignment unconfirmed by the owner: before gestalt selection, NYCH output is the original words on a base line, and an interlinear annotation line above carries span-aligned tags. In the example, domain=building and subdom=carpentry are read over \"the carpenter\", modalityOp=kine-int over \"freaked out\", and past-t possibly over \"after\" or over the clause. This interlinear structure is what structural correctness checks should test, together with the existing D15 loss rule. Stored on pending D15 because D10 is approved and its verification_sidecar text was not edited. Module reading, interpretation only: B4 would produce the domain and subdomain tags; B5 or B6 would produce modalityOp from the TOTE modality operator; the source of tense (past-t) is unknown and stays open. Owner addendum, confirmed: \"he took the bump of k\" also gets tags. Verbatim example:\n(pronoun)(modOp=kine-ext)(object=gestalt)(object_k=gestalt)\nhe took the bump of k\nInterpretation, flagged as interpretation: \"he\" maps to (pronoun); \"took\" maps to (modOp=kine-ext); \"the bump\" maps to (object=gestalt); \"k\" maps to (object_k=gestalt). The full sentence above remains the first interlinear test fixture (nych_preview/fixtures/interlinear_examples.json, entry full-sentence). Open and not decided: the exact span alignment of each tag on the full sentence; the tag syntax grammar; whether tense is an existing modality operator or a new tag type; whether the interlinear line persists after gestalts are picked. Owner clarification, verbatim: \"just dont drop the c and modOp is better and (object_k) can be (obj_k) but yes it could be (obj_bmp=gst) (obj_k=gst)\". Canonical modality tag key is modOp. The carpenter fixture's original verbatim text used modalityOp and is kept unchanged. Normalized form of that fixture, using modOp, is:\n(domain=building_subdom=carpentry)(modOp=kine-int)(past-t)\nthe carpenter                                               freaked  out           after               he took the bump of k.\nObject tags are owner-confirmed: the key prefix is obj_ followed by the object's abbreviated surface token, and the value gst means gestalt. For example, (obj_bmp=gst) for \"the bump\" and (obj_k=gst) for \"k\". Interpretation, flagged as interpretation: bmp is the consonant skeleton of bump, and gst abbreviates gestalt. Normalized form of \"he took the bump of k\":\n(pronoun)(modOp=kine-ext)(obj_bmp=gst)(obj_k=gst)\nhe took the bump of k\nThe full carpenter sentence with its original modalityOp spelling remains the first interlinear test fixture.",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    },
+    {
+      "id": "D16",
+      "title": "Packaging/release target",
+      "question": "Choose downloadable format and supported runtime/device.",
+      "modules": [
+        "B11"
+      ],
+      "depends_on": [
+        "D15"
+      ],
+      "round": "assurance/wiring/release",
+      "contract": {
+        "visibility": {
+          "kind": "choice",
+          "recommended": "private_until_explicit_release",
+          "owner_input_required": false,
+          "unit": null,
+          "options": [
+            "private_until_explicit_release"
+          ]
+        },
+        "format": {
+          "kind": "text",
+          "recommended": "Reference-derived recommendation: a private versioned package with float32 weights and a JSON config recording the approved NYCH shape (d_model 128, 2 layers, 4 heads, head width 32, SwiGLU width 512, RoPE, position limit 1024, tied embeddings), the actual vocabulary size, the parameter-count assumptions, and the catalog digest. The float32 dtype follows the TinyStories checkpoints whose config.json sets torch_dtype to float32: https://huggingface.co/roneneldan/TinyStories-1M/raw/main/config.json and https://huggingface.co/roneneldan/TinyStories-2Layers-33M/raw/main/config.json, from Eldan and Li, TinyStories (2023), https://arxiv.org/abs/2305.07759. The package is not a GPT-Neo checkpoint. Visibility stays private_until_explicit_release.",
+          "owner_input_required": false,
+          "unit": null
+        },
+        "runtime_device": {
+          "kind": "text",
+          "recommended": "Reference-derived recommendation: train and evaluate the float32 reference on one NVIDIA V100-class GPU. Eldan and Li, TinyStories (2023), https://arxiv.org/abs/2305.07759, trained the roughly 1M to 35M parameter models on a single V100 in at most 30 hours. Inference in this recommendation adds no KV cache, consistent with the approved D8 reference. This is a reference-derived device class for owner review, not a measured NYCH run. Visibility stays private_until_explicit_release.",
+          "owner_input_required": false,
+          "unit": null
+        }
+      },
+      "constraints": [],
+      "historical_approval": null,
+      "sources": [
+        "icm/MG8PK/DECISION_REGISTER.md",
+        "docs/GROKBOT_NYCH_MODEL_BUILD_HANDOFF_V1.md"
+      ]
+    }
+  ]
+}

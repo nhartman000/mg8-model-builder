@@ -1,9 +1,8 @@
 """Gestalt-ID abbreviation preview. Not wired into any Builder.
 
-This reproduces Nick Hartman's three compound examples and refuses the
-open cases he has not decided. The ``ck`` -> ``k`` step is a flagged
-interpretation: identical-letter collapse alone turns "brick" into "brck",
-but the owner example is "brkLyr".
+Vowels a, e, i, o, and u are dropped. Identical adjacent letters collapse.
+The letter c is kept, so brick layer is brckLyr. The earlier brkLyr reading
+is superseded. Open cases still raise.
 """
 from __future__ import annotations
 
@@ -25,9 +24,6 @@ def _skeleton(word: str) -> str:
         if low in VOWELS:
             continue
         if chars and chars[-1] == low:
-            continue
-        if low == "k" and chars and chars[-1] == "c":
-            chars[-1] = "k"
             continue
         chars.append(low)
     if not chars:

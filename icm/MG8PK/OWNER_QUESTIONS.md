@@ -2,7 +2,7 @@
 
 Catalog v3.13 fills the remaining open D14, D15, and D16 fields from one public reference. Those values are recommendations. They are not approvals. D12 and D13 were already complete and were not changed. Approved decisions D0, D1-context, and D4 through D11 were not edited.
 
-Questions 1 and 2 are answered below. Question 1 is stored on pending D15 `gestalt_id_abbreviation` in catalog v3.14. Question 2, including the later tag addendum, is stored on the same pending field `interlinear_annotation`, now in catalog v3.15. D6, D8, and D10 were not edited, because those decisions are already approved.
+Questions 1 and 2 are answered below. Both records live on pending D15. Catalog v3.16 adds the owner's later clarification: keep c, use `modOp`, and write object tags as `obj_` plus the abbreviated surface token with value `gst`. D6, D8, and D10 were not edited, because those decisions are already approved.
 
 The reference is Ronen Eldan and Yuanzhi Li, TinyStories (2023), https://arxiv.org/abs/2305.07759, plus the float32 checkpoint configs at https://huggingface.co/roneneldan/TinyStories-1M/raw/main/config.json and https://huggingface.co/roneneldan/TinyStories-2Layers-33M/raw/main/config.json. It supplies a small-model training scale, a single-V100 hardware class, float32 packaging, and the practice of tracking evaluation loss separately from other scores. It does not supply NYCH symbol rules.
 
@@ -31,9 +31,9 @@ Verbatim: "drop vowels and double consonants keep y and capitalize if compound w
 
 Interpretation, flagged as interpretation: gestalt-ID abbreviation uses the same consonant skeleton as D3 (drop a, e, i, o, u; keep y; collapse doubled consonants). Compounds are joined with no separator. A compound containing a proper name capitalizes every part (PascalCase), for example Fibonacci sequence -> FbncSqnc. A compound without a name keeps the first part lowercase and capitalizes later parts (camelCase), for example brick layer -> brkLyr and computer programmer -> cmptrPrgrmr. B3, B6, and B8 would consume this as a hard string rule once the pending field is approved.
 
-Further interpretation, flagged because identical-letter collapse alone yields brckLyr: the preview helper also treats the adjacent digraph ck as a doubled consonant and keeps k. That step is not a rule for any other digraph. The helper is `nych_preview/gestalt_abbreviation.py`. It is not wired into any Builder.
+Owner clarification, verbatim: "just dont drop the c and modOp is better and (object_k) can be (obj_k) but yes it could be (obj_bmp=gst) (obj_k=gst)". Applied to this question: do not drop c. Only vowels are dropped, and identical adjacent letters collapse. The earlier brkLyr reading of brick layer is superseded. brick layer is brckLyr. FbncSqnc and cmptrPrgrmr stay. The helper `nych_preview/gestalt_abbreviation.py` follows this clarification and is not wired into any Builder.
 
-Still open, and not decided: a single proper-name word (Fibonacci alone -> Fbnc?); a word starting with a vowel (apple -> ppl?); all-vowel words; hyphenated compounds; compounds of 3 or more parts.
+Still open, and not decided: a word starting with a vowel; compounds of 3 or more parts. A single proper-name word, an all-vowel word, and a hyphenated compound were not resolved either.
 
 ### 2. What must a NYCH output get right before the sidecar can go? — Answered, not approved
 
@@ -61,9 +61,25 @@ he took the bump of k
 
 Interpretation, flagged as interpretation: "he" maps to (pronoun); "took" maps to (modOp=kine-ext); "the bump" maps to (object=gestalt); "k" maps to (object_k=gestalt).
 
-The full carpenter sentence, kept above this addendum, is the first interlinear test fixture (`nych_preview/fixtures/interlinear_examples.json`, entry `full-sentence`).
+The full carpenter sentence, kept above this addendum, is the first interlinear test fixture (`nych_preview/fixtures/interlinear_examples.json`, entry `full-sentence`). Its verbatim annotation uses `modalityOp`. That verbatim text is kept.
 
-Still open, and not decided: the exact span alignment of each tag on the full sentence; the tag syntax grammar; whether tense is an existing modality operator or a new tag type; whether the interlinear line persists after gestalts are picked. The owner used both `modalityOp=` and `modOp=`; which spelling is canonical is open. `object_k` appears to name the object by its surface token; whether that is the convention is open.
+Owner clarification, verbatim: "just dont drop the c and modOp is better and (object_k) can be (obj_k) but yes it could be (obj_bmp=gst) (obj_k=gst)". Canonical modality tag key is `modOp`. Object tags use the prefix `obj_` plus the object's abbreviated surface token, and the value `gst` means gestalt. Owner-confirmed examples: `(obj_bmp=gst)` for "the bump" and `(obj_k=gst)` for "k". Interpretation, flagged as interpretation: `bmp` is the consonant skeleton of bump, and `gst` abbreviates gestalt.
+
+Normalized carpenter line, beside the verbatim `modalityOp` fixture:
+
+```
+(domain=building_subdom=carpentry)(modOp=kine-int)(past-t)
+the carpenter                                               freaked  out           after               he took the bump of k.
+```
+
+Normalized form of "he took the bump of k":
+
+```
+(pronoun)(modOp=kine-ext)(obj_bmp=gst)(obj_k=gst)
+he took the bump of k
+```
+
+Still open, and not decided: the exact span alignment of each tag; the tag syntax grammar; whether tense is an existing modality operator or a new tag type; whether the interlinear line persists after gestalts are picked.
 
 ### 3. What is the technical and scientific lexicon source?
 
