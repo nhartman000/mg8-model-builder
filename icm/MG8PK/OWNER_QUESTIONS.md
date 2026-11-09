@@ -2,7 +2,7 @@
 
 Catalog v3.13 fills the remaining open D14, D15, and D16 fields from one public reference. Those values are recommendations. They are not approvals. D12 and D13 were already complete and were not changed. Approved decisions D0, D1-context, and D4 through D11 were not edited.
 
-Questions 1 and 2 are answered below. Both records live on pending D15. Catalog v3.16 adds the owner's later clarification: keep c, use `modOp`, and write object tags as `obj_` plus the abbreviated surface token with value `gst`. Catalog v3.17 records vowel-initial words: a leading `'` replaces the initial vowel, and a doubled consonant immediately after that vowel is kept, so apple is `'ppl` and opal is `'pl`. D6, D8, and D10 were not edited, because those decisions are already approved.
+Questions 1 and 2 are answered below. Both records live on pending D15. Catalog v3.16 adds the owner's later clarification: keep c, use `modOp`, and write object tags as `obj_` plus the abbreviated surface token with value `gst`. Catalog v3.17 records vowel-initial words: a leading `'` replaces the initial vowel, and a doubled consonant immediately after that vowel is kept, so apple is `'ppl` and opal is `'pl`. Catalog v3.18 records the fried-apple example and the discretionary y override. D6, D8, and D10 were not edited, because those decisions are already approved.
 
 The reference is Ronen Eldan and Yuanzhi Li, TinyStories (2023), https://arxiv.org/abs/2305.07759, plus the float32 checkpoint configs at https://huggingface.co/roneneldan/TinyStories-1M/raw/main/config.json and https://huggingface.co/roneneldan/TinyStories-2Layers-33M/raw/main/config.json. It supplies a small-model training scale, a single-V100 hardware class, float32 packaging, and the practice of tracking evaluation loss separately from other scores. It does not supply NYCH symbol rules.
 
@@ -35,7 +35,11 @@ Owner clarification, verbatim: "just dont drop the c and modOp is better and (ob
 
 Owner clarification, verbatim: "any word that starts with a vowel gets an ' and if it starts with a vowel and that vowel is followed by a double dont drop the double so apple = 'ppl that distinguishes it from opal = 'pl". A vowel-initial word is prefixed with `'` in place of the dropped initial vowel. If that vowel is immediately followed by a doubled consonant, both letters of that double are kept. apple is `'ppl`. opal is `'pl`. The helper `nych_preview/gestalt_abbreviation.py` follows these clarifications and is not wired into any Builder.
 
-Still open, and not decided: whether the double-keep applies only right after the initial vowel or anywhere; how capitalization interacts with `'` in a compound (for example a second part `'ppl` versus `'Ppl`); a y-initial word (y is kept, so it may take no apostrophe); all-vowel words; compounds of 3 or more parts. A single proper-name word and a hyphenated compound were not resolved either.
+Owner example, verbatim: "fried apple  fryd"ppl". Interpretation, flagged as interpretation: in a compound, a vowel-initial later part joins with `"` instead of the apostrophe, and is not capitalized (`"ppl`, not `'Ppl`).
+
+Owner answer, verbatim: "yes i thought about it and sometimes it just makes sense to preserve the sound and not introduce vowels by using a y". Interpretation, flagged as interpretation: a y may preserve a vowel sound without introducing vowels. It is discretionary ("sometimes"), so it is not a general algorithmic rule. The helper consults `nych_preview/fixtures/gestalt-abbrev-overrides.v1.json` before the default rule. That owner-only list starts with fried -> fryd, and fried apple is `fryd"ppl`. New override entries are owner-only. The default rule is unchanged for every other word.
+
+Still open, and not decided: whether the double-keep applies only right after the initial vowel or anywhere; a y-initial word; all-vowel words; compounds of 3 or more parts; capitalization of a vowel-initial first part. A single proper-name word and a hyphenated compound were not resolved either.
 
 ### 2. What must a NYCH output get right before the sidecar can go? — Answered, not approved
 

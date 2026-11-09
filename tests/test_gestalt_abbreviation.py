@@ -21,6 +21,21 @@ class GestaltAbbreviationPreview(unittest.TestCase):
         self.assertEqual(abbreviate_word("apple"), "'ppl")
         self.assertEqual(abbreviate_word("opal"), "'pl")
 
+    def test_fried_apple_uses_owner_override(self):
+        self.assertEqual(abbreviate_word("fried"), "fryd")
+        self.assertEqual(
+            abbreviate_compound(["fried", "apple"], contains_proper_name=False),
+            'fryd"ppl',
+        )
+        self.assertEqual(
+            abbreviate_compound(["brick", "apple"], contains_proper_name=False),
+            'brck"ppl',
+        )
+        self.assertNotEqual(
+            abbreviate_compound(["fried", "apple"], contains_proper_name=False),
+            'frd"ppl',
+        )
+
     def test_open_edges_are_refused(self):
         cases = (
             (["Fibonacci"], True),

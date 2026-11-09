@@ -3,16 +3,42 @@
 Vowels a, e, i, o, and u are dropped. Identical adjacent letters collapse.
 The letter c is kept. A word that starts with a vowel is prefixed with '
 in place of that vowel. A doubled consonant immediately after that vowel
-is kept in full. y-initial words, all-vowel words, and apostrophes inside
-compounds are still open and raise.
+is kept in full. In a compound, a vowel-initial later part joins with "
+and is not capitalized.
+
+An owner-only override list is consulted before that default rule. New
+entries are added only when Nick Hartman states them. y-initial words,
+all-vowel words, and a vowel-initial first part of a compound still raise.
 """
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 VOWELS = frozenset("aeiou")
+OVERRIDES_PATH = Path(__file__).resolve().parent / "fixtures" / "gestalt-abbrev-overrides.v1.json"
 
 
 class GestaltAbbrevError(ValueError):
     """Raised when an input is an owner-open edge or otherwise unsupported."""
+
+
+def _load_overrides(path: Path = OVERRIDES_PATH) -> dict[str, str]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    words = data.get("words")
+    if not isinstance(words, dict) or not words:
+        raise GestaltAbbrevError("override list must map words to skeletons")
+    out: dict[str, str] = {}
+    for key, skeleton in words.items():
+        if not isinstance(key, str) or key != key.lower() or not key.isalpha():
+            raise GestaltAbbrevError("override keys are lowercase words")
+        if not isinstance(skeleton, str) or not skeleton:
+            raise GestaltAbbrevError("override skeleton must be a non-empty string")
+        out[key] = skeleton
+    return out
+
+
+OVERRIDES = _load_overrides()
 
 
 def _collapse(text: str) -> str:
@@ -28,9 +54,12 @@ def _collapse(text: str) -> str:
 
 
 def abbreviate_word(word: str) -> str:
-    """Abbreviate one word. Vowel-initial words start with an apostrophe."""
+    """Abbreviate one word. Owner overrides win before the default rule."""
     if not word or any(not ch.isalpha() for ch in word):
         raise GestaltAbbrevError("open edge or unsupported word; not decided")
+    override = OVERRIDES.get(word.lower())
+    if override is not None:
+        return override
     first = word[0].lower()
     if first == "y":
         raise GestaltAbbrevError("y-initial word; not decided")
@@ -55,24 +84,39 @@ def abbreviate_word(word: str) -> str:
 
 
 def abbreviate_compound(words: list[str], *, contains_proper_name: bool) -> str:
-    """Join abbreviated parts with no separator.
+    """Join two abbreviated parts.
 
-    ``contains_proper_name`` True capitalizes every part. False keeps the
-    first part lowercase and capitalizes the later parts. Only two-part
-    compounds of consonant-initial words are accepted. A vowel-initial part
-    is refused because capitalization next to the apostrophe is not decided.
+    A vowel-initial later part is joined with a double quote and is not
+    capitalized. A vowel-initial or y-initial first part stays undecided
+    unless that word is in the owner override list.
     """
     if not isinstance(contains_proper_name, bool):
         raise GestaltAbbrevError("contains_proper_name must be true or false")
     if len(words) != 2:
         raise GestaltAbbrevError("compound length other than 2 is not decided")
-    parts: list[str] = []
-    for word in words:
-        if not word or not word[0].isalpha():
-            raise GestaltAbbrevError("open edge or unsupported word; not decided")
-        if word[0].lower() in VOWELS or word[0].lower() == "y":
-            raise GestaltAbbrevError("apostrophe or y-initial part in a compound is not decided")
-        parts.append(abbreviate_word(word))
+    left_word, right_word = words
+    if (
+        not left_word
+        or not right_word
+        or any(not ch.isalpha() for ch in left_word)
+        or any(not ch.isalpha() for ch in right_word)
+    ):
+        raise GestaltAbbrevError("open edge or unsupported word; not decided")
+    if left_word[0].lower() in VOWELS or left_word[0].lower() == "y":
+        if left_word.lower() not in OVERRIDES:
+            raise GestaltAbbrevError("vowel-initial or y-initial first part in a compound is not decided")
+    if right_word[0].lower() == "y" and right_word.lower() not in OVERRIDES:
+        raise GestaltAbbrevError("y-initial word; not decided")
+    left = abbreviate_word(left_word)
+    right = abbreviate_word(right_word)
+    if right_word[0].lower() in VOWELS or right.startswith("'"):
+        if right.startswith("'"):
+            right = right[1:]
+        if not right:
+            raise GestaltAbbrevError("all-vowel word; not decided")
+        if contains_proper_name and left[:1].isalpha():
+            left = left.capitalize()
+        return left + '"' + right
     if contains_proper_name:
-        return "".join(part.capitalize() for part in parts)
-    return parts[0] + parts[1].capitalize()
+        return left.capitalize() + right.capitalize()
+    return left + right.capitalize()

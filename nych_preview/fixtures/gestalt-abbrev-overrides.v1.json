@@ -1,0 +1,8 @@
+{
+  "schema": "mg8.gestalt-abbrev-overrides.v1",
+  "owner_only": true,
+  "note": "New entries are owner-only. Add a word only when Nick Hartman states its skeleton. The default abbreviation rule does not invent a y to preserve a vowel sound.",
+  "words": {
+    "fried": "fryd"
+  }
+}
