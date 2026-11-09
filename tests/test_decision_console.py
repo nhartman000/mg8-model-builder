@@ -14,6 +14,7 @@ REAL34 = json.loads((ROOT / "console/fixtures/catalog.v3.4.json").read_text())
 REAL35 = json.loads((ROOT / "console/fixtures/catalog.v3.5.json").read_text())
 REAL36 = json.loads((ROOT / "console/fixtures/catalog.v3.6.json").read_text())
 REAL37 = json.loads((ROOT / "console/fixtures/catalog.v3.7.json").read_text())
+REAL38 = json.loads((ROOT / "console/fixtures/catalog.v3.8.json").read_text())
 REAL_EVENTS = [json.loads(l) for l in (ROOT / "console/fixtures/events.v2.jsonl").read_text().splitlines() if l]
 O, T = "owner-synthetic", "2026-01-01T00:00:00Z"
 INCOMPLETE_REAL = {"D11", "D13", "D14", "D15", "D16"}
@@ -61,8 +62,9 @@ class Core(unittest.TestCase):
     def test_real_d8_constraint(self):
         d8 = [d for d in REAL["decisions"] if d["id"] == "D8"][0]
         self.assertEqual(d8["constraints"][0]["target"], "model_width")
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37)], REAL_EVENTS)
-        bad = dict(heads=4, head_width=32, model_width=96, layers=2, mask="causal", kv_cache="none_in_reference")
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38)], REAL_EVENTS)
+        bad = _rec(REAL38, "D8")
+        bad.update(heads=4, head_width=32, model_width=96)
         with self.assertRaises(DecisionError): l.record("D8", "CHOOSE_OTHER", value=bad, owner=O, timestamp=T)
 
     def test_catalog_rejects_guessed_owner_value(self):
@@ -213,10 +215,10 @@ class Core(unittest.TestCase):
 
 class RealFixture(unittest.TestCase):
     def test_approved_before_d7_only(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38)], REAL_EVENTS)
         st = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         approved = {i for i, d in st.items() if d["state"] == "APPROVED"}
-        self.assertEqual(approved, {"D0", "D1-context", "D4", "D5", "D6"})
+        self.assertEqual(approved, {"D0", "D1-context", "D4", "D5", "D6", "D8"})
         for i in approved:
             self.assertTrue(st[i]["recorded_against_current_definition"])
             self.assertEqual(st[i]["value"], st[i]["recommended"])
@@ -234,7 +236,7 @@ class RealFixture(unittest.TestCase):
         self.assertEqual(d5["value"], REAL_EVENTS[0]["value"])
 
     def test_bulk_on_real_never_approves_placeholders_or_unblocks_all(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38)], REAL_EVENTS)
         r = l.approve_all_recommended(owner=O, timestamp=T)
         self.assertEqual(set(r["skipped_incomplete"]), INCOMPLETE_REAL)
         for d in INCOMPLETE_REAL: self.assertEqual(l.state(d), "PENDING")
@@ -243,7 +245,7 @@ class RealFixture(unittest.TestCase):
         for m in ("B1", "B2", "B3", "B7", "B11", "INTEGRATION"): self.assertIn(m, rd["blocked"])
 
     def test_generated_outputs_match_committed(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38)], REAL_EVENTS)
         out = ROOT / "console/out"
         self.assertEqual((out / "DECISION_REGISTER.generated.md").read_text("utf-8"), project_register_md(l))
         self.assertEqual(json.loads((out / "owner-decisions.v1.json").read_text("utf-8")), project_owner_decisions(l))
@@ -277,7 +279,7 @@ def _rec(cat, did):
 
 
 def _stack():
-    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37)], REAL_EVENTS)
+    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38)], REAL_EVENTS)
 
 
 def _int_field(rec, minimum=0, maximum=None, step=1):
@@ -400,7 +402,7 @@ class CrossBoundsAndD5(unittest.TestCase):
 
     def test_real_width_and_context_equalities(self):
         l = _stack()
-        wide = _rec(REAL3, "D8")
+        wide = _rec(REAL38, "D8")
         wide.update(heads=8, head_width=32, model_width=256)
         l.record("D8", "CHOOSE_OTHER", value=wide, owner=O, timestamp=T)  # D7 still pending
         with self.assertRaisesRegex(DecisionError, "cross-decision"):
@@ -411,11 +413,11 @@ class CrossBoundsAndD5(unittest.TestCase):
 
         l = _stack()
         l.record("D7", "APPROVE_RECOMMENDATION", owner=O, timestamp=T)
-        narrow = _rec(REAL3, "D8")
+        narrow = _rec(REAL38, "D8")
         narrow.update(heads=2, head_width=32, model_width=64)
         with self.assertRaisesRegex(DecisionError, "cross-decision"):
             l.record("D8", "CHOOSE_OTHER", value=narrow, owner=O, timestamp=T)
-        broken = _rec(REAL3, "D8")
+        broken = _rec(REAL38, "D8")
         broken["model_width"] = 100
         with self.assertRaises(DecisionError):
             l.record("D8", "CHOOSE_OTHER", value=broken, owner=O, timestamp=T)
@@ -444,7 +446,8 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(l.events[0]["event_id"], D5_EVENT)
         vals = {e["decision_id"]: e["value"] for e in r["events"]}
         d1 = next(e for e in reversed(l.events) if e["decision_id"] == "D1-context")
-        self.assertEqual(vals["D7"]["d_model"], vals["D8"]["model_width"])
+        d8 = next(e for e in reversed(l.events) if e["decision_id"] == "D8")
+        self.assertEqual(vals["D7"]["d_model"], d8["value"]["model_width"])
         self.assertEqual(d1["value"]["window_tokens"], vals["D7"]["position_limit"])
         self.assertFalse(l.readiness()["readiness_authoritative"])
         for did in INCOMPLETE_REAL:
@@ -452,14 +455,14 @@ class CrossBoundsAndD5(unittest.TestCase):
 
     def test_bulk_conflict_writes_nothing(self):
         l = _stack()
+        n = len(l.events)
         odd = _rec(REAL3, "D7")
         odd["d_model"] = 64
-        l.record("D7", "CHOOSE_OTHER", value=odd, owner=O, timestamp=T)
-        n = len(l.events)
         with self.assertRaisesRegex(DecisionError, "cross-decision"):
-            l.approve_all_recommended(owner=O, timestamp=T)
+            l.record("D7", "CHOOSE_OTHER", value=odd, owner=O, timestamp=T)
         self.assertEqual(len(l.events), n)
-        self.assertEqual(l.state("D8"), "PENDING")
+        self.assertEqual(l.state("D7"), "PENDING")
+        self.assertEqual(l.state("D8"), "APPROVED")
         self.assertEqual(l.state("D12"), "PENDING")
 
     def test_real_numeric_bounds(self):
@@ -470,11 +473,12 @@ class CrossBoundsAndD5(unittest.TestCase):
             with self.assertRaises(DecisionError):
                 l.record("D9", "CHOOSE_OTHER", value=v, owner=O, timestamp=T)
         l.record("D9", "CHOOSE_OTHER", value=dict(d9, dropout_training=0.05, dropout_inference=1), owner=O, timestamp=T)
+        d7 = next(d for d in REAL38["decisions"] if d["id"] == "D7")
+        self.assertIsNone(d7["contract"]["d_model"]["maximum"])
         huge = _rec(REAL3, "D7")
-        huge["d_model"] = 10 ** 6  # no documented architecture cap; equality is the cross-check
-        l.record("D7", "CHOOSE_OTHER", value=huge, owner=O, timestamp=T)
+        huge["d_model"] = 10 ** 6
         with self.assertRaisesRegex(DecisionError, "cross-decision"):
-            l.record("D8", "APPROVE_RECOMMENDATION", owner=O, timestamp=T)
+            l.record("D7", "CHOOSE_OTHER", value=huge, owner=O, timestamp=T)
 
         d4 = _rec(REAL35, "D4")
         self.assertEqual(d4["confidence_threshold"], 0.75)
@@ -517,9 +521,9 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(REAL_EVENTS[0]["catalog_digest"], D5_V2_DIGEST)
         self.assertEqual(sha256_hex(REAL), D5_V2_DIGEST)
         self.assertNotEqual(sha256_hex(REAL3), D5_V2_DIGEST)
-        self.assertEqual([e["decision_id"] for e in REAL_EVENTS], ["D5", "D0", "D1-context", "D5", "D4", "D6"])
+        self.assertEqual([e["decision_id"] for e in REAL_EVENTS], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8"])
         self.assertEqual([e["action"] for e in REAL_EVENTS],
-                         ["HISTORICAL_APPROVAL", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION"])
+                         ["HISTORICAL_APPROVAL", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION"])
         old = next(d for d in REAL["decisions"] if d["id"] == "D5")["historical_approval"]["value"]
         new = next(d for d in REAL3["decisions"] if d["id"] == "D5")
         self.assertIsNone(new["historical_approval"])
@@ -539,13 +543,13 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D5"]["recommended"], rec)
         self.assertEqual(p["D0"]["state"], "APPROVED")
         self.assertEqual(p["D1-context"]["value"]["window_tokens"], 1024)
-        for did in ("D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "D16"):
+        for did in ("D7", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "D16"):
             self.assertEqual(p[did]["state"], "PENDING", did)
         self.assertNotIn("D5", l.readiness()["blocked"]["B5"])
         self.assertFalse(l.readiness()["readiness_authoritative"])
         with self.assertRaises(DecisionError):
             l.import_historical("D5", timestamp=T, rationale="do not mint")
-        self.assertEqual(len(l.events), 6)
+        self.assertEqual(len(l.events), 7)
         with self.assertRaises(DecisionError):
             DecisionLog.load(copy.deepcopy(REAL3), REAL_EVENTS)
         with self.assertRaises(DecisionError):
@@ -598,7 +602,7 @@ class CrossBoundsAndD5(unittest.TestCase):
                        "grammatical invariants"):
             self.assertIn(phrase, text)
         l = _stack()
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8"])
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertTrue(p["D6"]["contract_complete"])
@@ -611,7 +615,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         for name in ("seed_lexicon", "confidence_threshold", "tie_policy"):
             self.assertIsNone(d4["contract"][name]["recommended"])
             self.assertTrue(d4["contract"][name]["owner_input_required"])
-        self.assertEqual(len(l.events), 6)
+        self.assertEqual(len(l.events), 7)
         self.assertIn("D6", [e["decision_id"] for e in l.events])
         md = project_register_md(l)
         row = [x for x in md.splitlines() if x.startswith("| D6 ")][0]
@@ -653,7 +657,7 @@ class CrossBoundsAndD5(unittest.TestCase):
             self.assertIsNone(new["contract"][name]["recommended"])
             self.assertTrue(new["contract"][name]["owner_input_required"])
         l = _stack()
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8"])
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         self.assertEqual(p["D4"]["state"], "APPROVED")
         self.assertTrue(p["D4"]["contract_complete"])
@@ -663,7 +667,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         for did in ("D0", "D1-context", "D5"):
             self.assertEqual(p[did]["state"], "APPROVED")
             self.assertTrue(p[did]["recorded_against_current_definition"])
-        self.assertEqual(len(l.events), 6)
+        self.assertEqual(len(l.events), 7)
         row = [x for x in project_register_md(l).splitlines() if x.startswith("| D4 ")][0]
         self.assertIn("| APPROVED |", row)
         self.assertNotIn("awaiting owner approval", row)
@@ -696,7 +700,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D4"]["state"], "APPROVED")
         self.assertEqual(p["D4"]["value"]["tie_policy"], p["D4"]["recommended"]["tie_policy"])
         self.assertEqual(p["D4"]["owner_input_required"], [])
-        self.assertEqual(len(l.events), 6)
+        self.assertEqual(len(l.events), 7)
 
     def test_d4_confidence_and_d6_endpoint_not_approvals(self):
         self.assertEqual(REAL34["catalog_version"], "3.4")
@@ -732,7 +736,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
         self.assertEqual(p["D4"]["owner_input_required"], [])
         self.assertEqual(p["D6"]["owner_input_required"], [])
-        self.assertEqual(len(l.events), 6)
+        self.assertEqual(len(l.events), 7)
         self.assertIn("D6", [e["decision_id"] for e in l.events])
 
     def test_d6_write_policy_recorded_not_approved(self):
@@ -761,7 +765,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
         self.assertTrue(p["D6"]["recommended"]["tote_write_policy"].startswith(text + "\n\n"))
         self.assertEqual(p["D4"]["state"], "APPROVED")
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8"])
 
     def test_d6_chat_local_symbols_appended_not_approved(self):
         self.assertEqual(REAL37["catalog_version"], "3.7")
@@ -832,7 +836,62 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(d4_event["action"], "APPROVE_RECOMMENDATION")
         self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertEqual(p["D6"]["owner_input_required"], [])
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8"])
+
+    def test_d8_attention_primacy_approved(self):
+        self.assertEqual(REAL38["catalog_version"], "3.8")
+        for a, b in zip(REAL37["decisions"], REAL38["decisions"]):
+            if a["id"] != "D8":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL37["decisions"] if d["id"] == "D8")
+        new = next(d for d in REAL38["decisions"] if d["id"] == "D8")
+        for name in ("layers", "heads", "head_width", "model_width", "mask", "kv_cache"):
+            self.assertEqual(new["contract"][name], old["contract"][name])
+        self.assertEqual(new["constraints"], old["constraints"])
+        self.assertEqual(new["contract"]["layers"]["recommended"], 2)
+        self.assertEqual(new["contract"]["heads"]["recommended"], 4)
+        self.assertEqual(new["contract"]["head_width"]["recommended"], 32)
+        self.assertEqual(new["contract"]["model_width"]["recommended"], 128)
+        self.assertEqual(new["contract"]["mask"]["recommended"], "causal")
+        self.assertEqual(new["contract"]["kv_cache"]["recommended"], "none_in_reference")
+        self.assertEqual(
+            new["contract"]["primacy_tradeoff"]["recommended"],
+            "Until patterns are recognized from repetition, the abbreviated words appended on the gestalt ID string are primary. "
+            "A tradeoff rule determines when the dynamic domain lexicons have stabilized; only then may the switch to symbolic (gestalt) primary be made. "
+            "Words are not discarded; they remain appended on the ID string.",
+        )
+        self.assertEqual(
+            new["contract"]["attention_mixture"]["recommended"],
+            "Attention weights the current ID and its neighbors as follows, as a starting mix: "
+            "30% the current gestalt, 30% the current abbreviated word, 20% neighboring gestalts, and 20% neighboring abbreviated words "
+            "(the remaining 40% neighboring signal split 20/20). If that mix does not work, readjust the percentages and ratios. "
+            "Adjust until optimal percentages and ratios are obtained through testing on natural language (\"nat lang\"). "
+            "The 30% current gestalt / 30% current abbreviated word / 20% neighboring gestalts / 20% neighboring abbreviated words mix is the starting point, not a frozen optimum.",
+        )
+        self.assertEqual(
+            new["contract"]["abbreviation_to_gestalt_training"]["recommended"],
+            "Part of training this model is training from word abbreviations to stabilized gestalt dynamics. "
+            "This is unique to the NYCH language model.",
+        )
+        for name in ("primacy_tradeoff", "attention_mixture", "abbreviation_to_gestalt_training"):
+            self.assertFalse(new["contract"][name]["owner_input_required"])
+        self.assertNotIn("stabilized at", new["contract"]["primacy_tradeoff"]["recommended"])
+        l = _stack()
+        p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D8"]["state"], "APPROVED")
+        self.assertTrue(p["D8"]["recorded_against_current_definition"])
+        self.assertEqual(p["D8"]["value"], p["D8"]["recommended"])
+        self.assertEqual(p["D7"]["state"], "PENDING")
+        self.assertEqual(p["D9"]["state"], "PENDING")
+        self.assertIsNone(p["D7"]["value"])
+        event = l.events[-1]
+        self.assertEqual(event["decision_id"], "D8")
+        self.assertEqual(event["action"], "APPROVE_RECOMMENDATION")
+        self.assertEqual(event["event_id"], "sha256:2797129d115485f3c20851afdd73b17320f8ed2edd899b5f3095ebcf06105a88")
+        self.assertEqual(event["catalog_digest"], sha256_hex(REAL38))
+        self.assertEqual(event["owner"], "Nick Hartman")
+        self.assertEqual(event["timestamp"], "2026-11-09T01:13:00Z")
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8"])
 
 
 if __name__ == "__main__":
