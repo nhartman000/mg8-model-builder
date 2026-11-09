@@ -17,9 +17,10 @@ REAL37 = json.loads((ROOT / "console/fixtures/catalog.v3.7.json").read_text())
 REAL38 = json.loads((ROOT / "console/fixtures/catalog.v3.8.json").read_text())
 REAL39 = json.loads((ROOT / "console/fixtures/catalog.v3.9.json").read_text())
 REAL310 = json.loads((ROOT / "console/fixtures/catalog.v3.10.json").read_text())
+REAL311 = json.loads((ROOT / "console/fixtures/catalog.v3.11.json").read_text())
 REAL_EVENTS = [json.loads(l) for l in (ROOT / "console/fixtures/events.v2.jsonl").read_text().splitlines() if l]
 O, T = "owner-synthetic", "2026-01-01T00:00:00Z"
-INCOMPLETE_REAL = {"D11", "D13", "D14", "D15", "D16"}
+INCOMPLETE_REAL = {"D13", "D14", "D15", "D16"}
 
 
 def rehash(e):
@@ -64,7 +65,7 @@ class Core(unittest.TestCase):
     def test_real_d8_constraint(self):
         d8 = [d for d in REAL["decisions"] if d["id"] == "D8"][0]
         self.assertEqual(d8["constraints"][0]["target"], "model_width")
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311)], REAL_EVENTS)
         bad = _rec(REAL38, "D8")
         bad.update(heads=4, head_width=32, model_width=96)
         with self.assertRaises(DecisionError): l.record("D8", "CHOOSE_OTHER", value=bad, owner=O, timestamp=T)
@@ -217,10 +218,10 @@ class Core(unittest.TestCase):
 
 class RealFixture(unittest.TestCase):
     def test_approved_before_d7_only(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311)], REAL_EVENTS)
         st = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         approved = {i for i, d in st.items() if d["state"] == "APPROVED"}
-        self.assertEqual(approved, {"D0", "D1-context", "D4", "D5", "D6", "D7", "D8", "D9", "D10"})
+        self.assertEqual(approved, {"D0", "D1-context", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11"})
         for i in approved:
             self.assertTrue(st[i]["recorded_against_current_definition"])
             self.assertEqual(st[i]["value"], st[i]["recommended"])
@@ -234,8 +235,9 @@ class RealFixture(unittest.TestCase):
         self.assertEqual(st["D7"]["value"]["position_limit"], 1024)
         self.assertEqual(st["D9"]["state"], "APPROVED")
         self.assertEqual(st["D10"]["state"], "APPROVED")
-        self.assertEqual(st["D11"]["state"], "PENDING")
-        self.assertIsNone(st["D11"]["value"])
+        self.assertEqual(st["D11"]["state"], "APPROVED")
+        self.assertIn("Common Corpus", st["D11"]["value"]["corpus"])
+        self.assertIsNone(st["D12"]["value"])
         self.assertEqual({k for k, d in st.items() if not d["contract_complete"]}, INCOMPLETE_REAL)
         self.assertTrue(all(st[i]["state"] == "PENDING" for i in INCOMPLETE_REAL))
         hist = DecisionLog.load(copy.deepcopy(REAL), REAL_EVENTS[:1])
@@ -244,7 +246,7 @@ class RealFixture(unittest.TestCase):
         self.assertEqual(d5["value"], REAL_EVENTS[0]["value"])
 
     def test_bulk_on_real_never_approves_placeholders_or_unblocks_all(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311)], REAL_EVENTS)
         r = l.approve_all_recommended(owner=O, timestamp=T)
         self.assertEqual(set(r["skipped_incomplete"]), INCOMPLETE_REAL)
         for d in INCOMPLETE_REAL: self.assertEqual(l.state(d), "PENDING")
@@ -253,7 +255,7 @@ class RealFixture(unittest.TestCase):
         for m in ("B1", "B2", "B3", "B7", "B11", "INTEGRATION"): self.assertIn(m, rd["blocked"])
 
     def test_generated_outputs_match_committed(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311)], REAL_EVENTS)
         out = ROOT / "console/out"
         self.assertEqual((out / "DECISION_REGISTER.generated.md").read_text("utf-8"), project_register_md(l))
         self.assertEqual(json.loads((out / "owner-decisions.v1.json").read_text("utf-8")), project_owner_decisions(l))
@@ -287,7 +289,7 @@ def _rec(cat, did):
 
 
 def _stack():
-    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310)], REAL_EVENTS)
+    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311)], REAL_EVENTS)
 
 
 def _int_field(rec, minimum=0, maximum=None, step=1):
@@ -523,16 +525,17 @@ class CrossBoundsAndD5(unittest.TestCase):
                 fresh.record(did, "APPROVE_RECOMMENDATION", owner=O, timestamp=T)
         self.assertEqual(len(fresh.events), len(REAL_EVENTS))
         self.assertEqual(fresh.state("D7"), "APPROVED")
-        self.assertEqual(fresh.state("D11"), "PENDING")
+        self.assertEqual(fresh.state("D11"), "APPROVED")
+        self.assertEqual(fresh.state("D12"), "PENDING")
 
     def test_d5_expansion_keeps_historical_event(self):
         self.assertEqual(REAL_EVENTS[0]["event_id"], D5_EVENT)
         self.assertEqual(REAL_EVENTS[0]["catalog_digest"], D5_V2_DIGEST)
         self.assertEqual(sha256_hex(REAL), D5_V2_DIGEST)
         self.assertNotEqual(sha256_hex(REAL3), D5_V2_DIGEST)
-        self.assertEqual([e["decision_id"] for e in REAL_EVENTS], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10"])
+        self.assertEqual([e["decision_id"] for e in REAL_EVENTS], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11"])
         self.assertEqual([e["action"] for e in REAL_EVENTS],
-                         ["HISTORICAL_APPROVAL"] + ["APPROVE_RECOMMENDATION"] * 9)
+                         ["HISTORICAL_APPROVAL"] + ["APPROVE_RECOMMENDATION"] * 10)
         old = next(d for d in REAL["decisions"] if d["id"] == "D5")["historical_approval"]["value"]
         new = next(d for d in REAL3["decisions"] if d["id"] == "D5")
         self.assertIsNone(new["historical_approval"])
@@ -552,13 +555,13 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D5"]["recommended"], rec)
         self.assertEqual(p["D0"]["state"], "APPROVED")
         self.assertEqual(p["D1-context"]["value"]["window_tokens"], 1024)
-        for did in ("D11", "D12", "D13", "D14", "D15", "D16"):
+        for did in ("D12", "D13", "D14", "D15", "D16"):
             self.assertEqual(p[did]["state"], "PENDING", did)
         self.assertNotIn("D5", l.readiness()["blocked"]["B5"])
         self.assertFalse(l.readiness()["readiness_authoritative"])
         with self.assertRaises(DecisionError):
             l.import_historical("D5", timestamp=T, rationale="do not mint")
-        self.assertEqual(len(l.events), 10)
+        self.assertEqual(len(l.events), 11)
         with self.assertRaises(DecisionError):
             DecisionLog.load(copy.deepcopy(REAL3), REAL_EVENTS)
         with self.assertRaises(DecisionError):
@@ -611,7 +614,7 @@ class CrossBoundsAndD5(unittest.TestCase):
                        "grammatical invariants"):
             self.assertIn(phrase, text)
         l = _stack()
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11"])
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertTrue(p["D6"]["contract_complete"])
@@ -624,7 +627,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         for name in ("seed_lexicon", "confidence_threshold", "tie_policy"):
             self.assertIsNone(d4["contract"][name]["recommended"])
             self.assertTrue(d4["contract"][name]["owner_input_required"])
-        self.assertEqual(len(l.events), 10)
+        self.assertEqual(len(l.events), 11)
         self.assertIn("D6", [e["decision_id"] for e in l.events])
         md = project_register_md(l)
         row = [x for x in md.splitlines() if x.startswith("| D6 ")][0]
@@ -666,7 +669,7 @@ class CrossBoundsAndD5(unittest.TestCase):
             self.assertIsNone(new["contract"][name]["recommended"])
             self.assertTrue(new["contract"][name]["owner_input_required"])
         l = _stack()
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11"])
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         self.assertEqual(p["D4"]["state"], "APPROVED")
         self.assertTrue(p["D4"]["contract_complete"])
@@ -676,7 +679,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         for did in ("D0", "D1-context", "D5"):
             self.assertEqual(p[did]["state"], "APPROVED")
             self.assertTrue(p[did]["recorded_against_current_definition"])
-        self.assertEqual(len(l.events), 10)
+        self.assertEqual(len(l.events), 11)
         row = [x for x in project_register_md(l).splitlines() if x.startswith("| D4 ")][0]
         self.assertIn("| APPROVED |", row)
         self.assertNotIn("awaiting owner approval", row)
@@ -709,7 +712,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D4"]["state"], "APPROVED")
         self.assertEqual(p["D4"]["value"]["tie_policy"], p["D4"]["recommended"]["tie_policy"])
         self.assertEqual(p["D4"]["owner_input_required"], [])
-        self.assertEqual(len(l.events), 10)
+        self.assertEqual(len(l.events), 11)
 
     def test_d4_confidence_and_d6_endpoint_not_approvals(self):
         self.assertEqual(REAL34["catalog_version"], "3.4")
@@ -745,7 +748,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
         self.assertEqual(p["D4"]["owner_input_required"], [])
         self.assertEqual(p["D6"]["owner_input_required"], [])
-        self.assertEqual(len(l.events), 10)
+        self.assertEqual(len(l.events), 11)
         self.assertIn("D6", [e["decision_id"] for e in l.events])
 
     def test_d6_write_policy_recorded_not_approved(self):
@@ -774,7 +777,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
         self.assertTrue(p["D6"]["recommended"]["tote_write_policy"].startswith(text + "\n\n"))
         self.assertEqual(p["D4"]["state"], "APPROVED")
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11"])
 
     def test_d6_chat_local_symbols_appended_not_approved(self):
         self.assertEqual(REAL37["catalog_version"], "3.7")
@@ -845,7 +848,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(d4_event["action"], "APPROVE_RECOMMENDATION")
         self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertEqual(p["D6"]["owner_input_required"], [])
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11"])
 
     def test_d8_attention_primacy_approved(self):
         self.assertEqual(REAL38["catalog_version"], "3.8")
@@ -900,7 +903,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(event["catalog_digest"], sha256_hex(REAL38))
         self.assertEqual(event["owner"], "Nick Hartman")
         self.assertEqual(event["timestamp"], "2026-11-09T01:13:00Z")
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11"])
 
     def test_d9_mixing_console_recorded_not_approved(self):
         self.assertEqual(REAL39["catalog_version"], "3.9")
@@ -941,7 +944,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("D9", [e["decision_id"] for e in l.events])
         self.assertEqual(p["D7"]["state"], "APPROVED")
         self.assertEqual(p["D8"]["state"], "APPROVED")
-        self.assertEqual(l.events[-1]["decision_id"], "D10")
+        self.assertEqual(l.events[-1]["decision_id"], "D11")
         row = [x for x in project_register_md(l).splitlines() if x.startswith("| D9 ")][0]
         self.assertIn("| APPROVED |", row)
 
@@ -976,9 +979,46 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("D10", [e["decision_id"] for e in l.events])
         self.assertEqual(p["D7"]["state"], "APPROVED")
         self.assertEqual(p["D9"]["state"], "APPROVED")
-        self.assertEqual(l.events[-1]["decision_id"], "D10")
+        self.assertEqual(l.events[-1]["decision_id"], "D11")
         row = [x for x in project_register_md(l).splitlines() if x.startswith("| D10 ")][0]
         self.assertIn("| APPROVED |", row)
+
+    def test_d11_common_corpus_approved(self):
+        self.assertEqual(REAL311["catalog_version"], "3.11")
+        for a, b in zip(REAL310["decisions"], REAL311["decisions"]):
+            if a["id"] != "D11":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL310["decisions"] if d["id"] == "D11")
+        new = next(d for d in REAL311["decisions"] if d["id"] == "D11")
+        self.assertEqual(new["contract"]["policy"], old["contract"]["policy"])
+        corpus = "Common Corpus (https://huggingface.co/datasets/PleIAs/common_corpus). English text is selected using the dataset's language field. This is the neural-training corpus and must remain distinct from the typo-statistics corpus."
+        license_review = (
+            "License review of Common Corpus as published on the dataset card: the collection contains only data that is uncopyrighted or freely licensed "
+            "(public domain, U.S. federal public domain, CC0, Creative Commons, MIT, French Licence ouverte, and similar). "
+            "Each document has a license field. The dataset is multilingual, so English documents must be filtered by that language metadata. "
+            "Licensing information is based on available metadata; the per-document license field should be preserved, and documents without a clear open license should be excluded."
+        )
+        self.assertEqual(new["contract"]["corpus"]["recommended"], corpus)
+        self.assertEqual(new["contract"]["license_review"]["recommended"], license_review)
+        self.assertFalse(new["contract"]["corpus"]["owner_input_required"])
+        self.assertFalse(new["contract"]["license_review"]["owner_input_required"])
+        l = _stack()
+        p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D11"]["state"], "APPROVED")
+        self.assertEqual(p["D11"]["value"]["corpus"], corpus)
+        self.assertEqual(p["D11"]["value"]["license_review"], license_review)
+        self.assertEqual(p["D11"]["owner_input_required"], [])
+        for did in ("D12", "D13", "D14", "D15", "D16"):
+            self.assertEqual(p[did]["state"], "PENDING")
+            self.assertIsNone(p[did]["value"])
+        event = l.events[-1]
+        self.assertEqual(event["decision_id"], "D11")
+        self.assertEqual(event["event_id"], "sha256:b7b4ff2f0e9d95eb399bc4ad1e36124fff66e8491e9776a24c51628d3c684aad")
+        self.assertEqual(event["catalog_digest"], sha256_hex(REAL311))
+        self.assertEqual(event["timestamp"], "2026-11-09T02:04:00Z")
+        row = [x for x in project_register_md(l).splitlines() if x.startswith("| D11 ")][0]
+        self.assertIn("| APPROVED |", row)
+        self.assertNotIn("INCOMPLETE", row)
 
 
 if __name__ == "__main__":
