@@ -15,6 +15,7 @@ REAL35 = json.loads((ROOT / "console/fixtures/catalog.v3.5.json").read_text())
 REAL36 = json.loads((ROOT / "console/fixtures/catalog.v3.6.json").read_text())
 REAL37 = json.loads((ROOT / "console/fixtures/catalog.v3.7.json").read_text())
 REAL38 = json.loads((ROOT / "console/fixtures/catalog.v3.8.json").read_text())
+REAL39 = json.loads((ROOT / "console/fixtures/catalog.v3.9.json").read_text())
 REAL_EVENTS = [json.loads(l) for l in (ROOT / "console/fixtures/events.v2.jsonl").read_text().splitlines() if l]
 O, T = "owner-synthetic", "2026-01-01T00:00:00Z"
 INCOMPLETE_REAL = {"D11", "D13", "D14", "D15", "D16"}
@@ -62,7 +63,7 @@ class Core(unittest.TestCase):
     def test_real_d8_constraint(self):
         d8 = [d for d in REAL["decisions"] if d["id"] == "D8"][0]
         self.assertEqual(d8["constraints"][0]["target"], "model_width")
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39)], REAL_EVENTS)
         bad = _rec(REAL38, "D8")
         bad.update(heads=4, head_width=32, model_width=96)
         with self.assertRaises(DecisionError): l.record("D8", "CHOOSE_OTHER", value=bad, owner=O, timestamp=T)
@@ -215,7 +216,7 @@ class Core(unittest.TestCase):
 
 class RealFixture(unittest.TestCase):
     def test_approved_before_d7_only(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39)], REAL_EVENTS)
         st = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         approved = {i for i, d in st.items() if d["state"] == "APPROVED"}
         self.assertEqual(approved, {"D0", "D1-context", "D4", "D5", "D6", "D8"})
@@ -236,7 +237,7 @@ class RealFixture(unittest.TestCase):
         self.assertEqual(d5["value"], REAL_EVENTS[0]["value"])
 
     def test_bulk_on_real_never_approves_placeholders_or_unblocks_all(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39)], REAL_EVENTS)
         r = l.approve_all_recommended(owner=O, timestamp=T)
         self.assertEqual(set(r["skipped_incomplete"]), INCOMPLETE_REAL)
         for d in INCOMPLETE_REAL: self.assertEqual(l.state(d), "PENDING")
@@ -245,7 +246,7 @@ class RealFixture(unittest.TestCase):
         for m in ("B1", "B2", "B3", "B7", "B11", "INTEGRATION"): self.assertIn(m, rd["blocked"])
 
     def test_generated_outputs_match_committed(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39)], REAL_EVENTS)
         out = ROOT / "console/out"
         self.assertEqual((out / "DECISION_REGISTER.generated.md").read_text("utf-8"), project_register_md(l))
         self.assertEqual(json.loads((out / "owner-decisions.v1.json").read_text("utf-8")), project_owner_decisions(l))
@@ -279,7 +280,7 @@ def _rec(cat, did):
 
 
 def _stack():
-    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38)], REAL_EVENTS)
+    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39)], REAL_EVENTS)
 
 
 def _int_field(rec, minimum=0, maximum=None, step=1):
@@ -467,7 +468,7 @@ class CrossBoundsAndD5(unittest.TestCase):
 
     def test_real_numeric_bounds(self):
         l = _stack()
-        d9 = _rec(REAL3, "D9")
+        d9 = _rec(REAL39, "D9")
         for bad in (1.1, -0.01):
             v = dict(d9, dropout_training=bad)
             with self.assertRaises(DecisionError):
@@ -892,6 +893,50 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(event["owner"], "Nick Hartman")
         self.assertEqual(event["timestamp"], "2026-11-09T01:13:00Z")
         self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8"])
+
+    def test_d9_mixing_console_recorded_not_approved(self):
+        self.assertEqual(REAL39["catalog_version"], "3.9")
+        for a, b in zip(REAL38["decisions"], REAL39["decisions"]):
+            if a["id"] != "D9":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL38["decisions"] if d["id"] == "D9")
+        new = next(d for d in REAL39["decisions"] if d["id"] == "D9")
+        for name in ("norm", "residual", "ffn", "ffn_hidden_width", "dropout_training", "dropout_inference"):
+            self.assertEqual(new["contract"][name], old["contract"][name])
+        self.assertEqual(new["contract"]["norm"]["recommended"], "pre_rmsnorm")
+        self.assertEqual(new["contract"]["residual"]["recommended"], "yes")
+        self.assertEqual(new["contract"]["ffn"]["recommended"], "SwiGLU")
+        self.assertEqual(new["contract"]["ffn_hidden_width"]["recommended"], 512)
+        self.assertEqual(new["contract"]["dropout_training"]["recommended"], 0.1)
+        self.assertEqual(new["contract"]["dropout_inference"]["recommended"], 0.0)
+        self.assertEqual(
+            new["contract"]["mixing_console"]["recommended"],
+            "A dynamic mixing console adjusts these numbers in real time like an audio mixer and finds the intended balance. "
+            "An AI may perform the mixing under human observation. The console does not have to be used to obtain the live parameters at first. "
+            "The mix channels being balanced are the current gestalt, the current abbreviated word, neighboring gestalts, and neighboring abbreviated words, "
+            "starting from the D8 mix of 30/30/20/20, plus the D9 block numbers (especially feed-forward width and training dropout) that affect how those signals are mixed. "
+            "Inference dropout remains 0.0 and is not a mix channel.",
+        )
+        self.assertEqual(
+            new["contract"]["repeatability"]["recommended"],
+            "The console must produce repeatable outcomes. The same recipe — operator (human or AI observed), observation seed, "
+            "mix-channel values, and D9 block settings — must yield the same mix and the same digest, and the same seed plus starting mix "
+            "must replay the same observed AI moves.",
+        )
+        for name in ("mixing_console", "repeatability"):
+            self.assertFalse(new["contract"][name]["owner_input_required"])
+        l = _stack()
+        p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D9"]["state"], "PENDING")
+        self.assertIsNone(p["D9"]["value"])
+        self.assertTrue(p["D9"]["contract_complete"])
+        self.assertNotIn("D9", [e["decision_id"] for e in l.events])
+        self.assertEqual(p["D7"]["state"], "PENDING")
+        self.assertEqual(p["D8"]["state"], "APPROVED")
+        self.assertEqual(l.events[-1]["decision_id"], "D8")
+        row = [x for x in project_register_md(l).splitlines() if x.startswith("| D9 ")][0]
+        self.assertIn("Recommended—awaiting owner approval", row)
+        self.assertNotIn("| APPROVED |", row)
 
 
 if __name__ == "__main__":
