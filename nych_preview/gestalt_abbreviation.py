@@ -4,10 +4,12 @@ The letter sequence ie is written as y before vowels are dropped.
 Vowels a, e, i, o, and u are dropped. Identical adjacent letters collapse.
 The letter c is kept. A word that starts with a vowel is prefixed with '
 in place of that vowel. A doubled consonant immediately after that vowel
-is kept in full. In a compound, a vowel-initial later part joins with "
-and is not capitalized.
+is kept in full. In a compound, a vowel-initial later part keeps '
+and the next letter is capitalized.
 
-An owner-only override list is consulted before that default rule. New
+A standalone word of three letters or fewer is left as written. A short
+part inside a compound is still abbreviated. An owner-only override list
+is consulted before the default rule for longer words. New
 entries are added only when Nick Hartman states them. y-initial words,
 all-vowel words, and a vowel-initial first part of a compound still raise.
 """
@@ -18,6 +20,7 @@ from pathlib import Path
 
 VOWELS = frozenset("aeiou")
 OVERRIDES_PATH = Path(__file__).resolve().parent / "fixtures" / "gestalt-abbrev-overrides.v1.json"
+COMPOUNDS_PATH = Path(__file__).resolve().parent / "fixtures" / "gestalt-compounds.v1.json"
 
 
 class GestaltAbbrevError(ValueError):
@@ -40,6 +43,50 @@ def _load_overrides(path: Path = OVERRIDES_PATH) -> dict[str, str]:
 
 
 OVERRIDES = _load_overrides()
+
+
+def _load_compounds(path: Path = COMPOUNDS_PATH) -> dict[tuple[str, ...], dict]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    items = data.get("compounds")
+    if not isinstance(items, list) or not items:
+        raise GestaltAbbrevError("compound list must be a non-empty list")
+    out: dict[tuple[str, ...], dict] = {}
+    for item in items:
+        words = item.get("words")
+        if not isinstance(words, list) or len(words) != 2:
+            raise GestaltAbbrevError("each compound has two owner-stated words")
+        key = tuple(word.lower() for word in words)
+        if key in out:
+            raise GestaltAbbrevError("duplicate compound")
+        out[key] = item
+    return out
+
+
+COMPOUNDS = _load_compounds()
+
+
+def abbreviate_owner_compound(words: list[str], *, contains_proper_name: bool) -> str:
+    """Abbreviate a pair only when the owner has listed it.
+
+    Unlisted pairs are not guessed. Whether an adjective is required for
+    the gestalt is semantic and is not read from spelling.
+    """
+    key = tuple(word.lower() for word in words)
+    if key not in COMPOUNDS:
+        raise GestaltAbbrevError("pair is not an owner-stated compound")
+    return abbreviate_compound(words, contains_proper_name=contains_proper_name)
+
+
+def render_phrase(words: list[str], *, as_compound: bool) -> str:
+    """Render a phrase as one object or as separate words.
+
+    The compound list is consulted only when ``as_compound`` is true.
+    A literal phrase stays separate words, so a hot dog the animal is
+    "hot dog" and the food object is htDg.
+    """
+    if as_compound:
+        return abbreviate_owner_compound(words, contains_proper_name=False)
+    return " ".join(abbreviate_word(word) for word in words)
 
 
 def _collapse(text: str) -> str:
@@ -72,10 +119,14 @@ def _rewrite_ie(word: str) -> str:
     return "".join(out)
 
 
-def abbreviate_word(word: str) -> str:
-    """Abbreviate one word. Owner overrides win before the default rule."""
+def _require_word(word: str) -> None:
     if not word or any(not ch.isalpha() for ch in word):
         raise GestaltAbbrevError("open edge or unsupported word; not decided")
+
+
+def _abbreviate_token(word: str) -> str:
+    """Abbreviate one token, including a short part inside a compound."""
+    _require_word(word)
     override = OVERRIDES.get(word.lower())
     if override is not None:
         return override
@@ -103,6 +154,14 @@ def abbreviate_word(word: str) -> str:
     return body
 
 
+def abbreviate_word(word: str) -> str:
+    """Abbreviate a standalone word. Three letters or fewer stay as written."""
+    _require_word(word)
+    if len(word) <= 3:
+        return word
+    return _abbreviate_token(word)
+
+
 def abbreviate_compound(words: list[str], *, contains_proper_name: bool) -> str:
     """Join two abbreviated parts.
 
@@ -128,8 +187,8 @@ def abbreviate_compound(words: list[str], *, contains_proper_name: bool) -> str:
             raise GestaltAbbrevError("vowel-initial or y-initial first part in a compound is not decided")
     if right_word[0].lower() == "y" and right_word.lower() not in OVERRIDES:
         raise GestaltAbbrevError("y-initial word; not decided")
-    left = abbreviate_word(left_word)
-    right = abbreviate_word(right_word)
+    left = _abbreviate_token(left_word)
+    right = _abbreviate_token(right_word)
     if right_word[0].lower() in VOWELS or right.startswith("'"):
         if not right.startswith("'"):
             right = "'" + right

@@ -1,0 +1,28 @@
+{
+  "schema": "mg8.gestalt-compounds.v1",
+  "owner_only": true,
+  "note": "Compound an adjective and noun only when Nick Hartman says the gestalt is lost without the adjective. Do not infer pairs from spelling. Entries marked given-before-criterion were supplied before that rule and are not reclassified by it.",
+  "compounds": [
+    {
+      "words": ["hot", "dog"],
+      "status": "owner-stated-under-criterion",
+      "note": "Lost without both words, so it is one object."
+    },
+    {
+      "words": ["Fibonacci", "sequence"],
+      "status": "given-before-criterion"
+    },
+    {
+      "words": ["brick", "layer"],
+      "status": "given-before-criterion"
+    },
+    {
+      "words": ["computer", "programmer"],
+      "status": "given-before-criterion"
+    },
+    {
+      "words": ["fried", "apple"],
+      "status": "given-before-criterion"
+    }
+  ]
+}
