@@ -31,6 +31,7 @@ REAL321 = json.loads((ROOT / "console/fixtures/catalog.v3.21.json").read_text())
 REAL322 = json.loads((ROOT / "console/fixtures/catalog.v3.22.json").read_text())
 REAL323 = json.loads((ROOT / "console/fixtures/catalog.v3.23.json").read_text())
 REAL324 = json.loads((ROOT / "console/fixtures/catalog.v3.24.json").read_text())
+REAL325 = json.loads((ROOT / "console/fixtures/catalog.v3.25.json").read_text())
 REAL_EVENTS = [json.loads(l) for l in (ROOT / "console/fixtures/events.v2.jsonl").read_text().splitlines() if l]
 O, T = "owner-synthetic", "2026-01-01T00:00:00Z"
 INCOMPLETE_REAL = set()
@@ -78,7 +79,7 @@ class Core(unittest.TestCase):
     def test_real_d8_constraint(self):
         d8 = [d for d in REAL["decisions"] if d["id"] == "D8"][0]
         self.assertEqual(d8["constraints"][0]["target"], "model_width")
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324), copy.deepcopy(REAL325)], REAL_EVENTS)
         bad = _rec(REAL38, "D8")
         bad.update(heads=4, head_width=32, model_width=96)
         with self.assertRaises(DecisionError): l.record("D8", "CHOOSE_OTHER", value=bad, owner=O, timestamp=T)
@@ -231,7 +232,7 @@ class Core(unittest.TestCase):
 
 class RealFixture(unittest.TestCase):
     def test_approved_before_d7_only(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324), copy.deepcopy(REAL325)], REAL_EVENTS)
         st = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         approved = {i for i, d in st.items() if d["state"] == "APPROVED"}
         self.assertEqual(approved, {"D0", "D1-context", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11"})
@@ -259,7 +260,7 @@ class RealFixture(unittest.TestCase):
         self.assertEqual(d5["value"], REAL_EVENTS[0]["value"])
 
     def test_bulk_on_real_never_approves_placeholders_or_unblocks_all(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324), copy.deepcopy(REAL325)], REAL_EVENTS)
         r = l.approve_all_recommended(owner=O, timestamp=T)
         self.assertEqual(set(r["skipped_incomplete"]), INCOMPLETE_REAL)
         for d in INCOMPLETE_REAL: self.assertEqual(l.state(d), "PENDING")
@@ -273,7 +274,7 @@ class RealFixture(unittest.TestCase):
         self.assertNotIn("D11", [e["decision_id"] for e in r["events"]])
 
     def test_generated_outputs_match_committed(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324), copy.deepcopy(REAL325)], REAL_EVENTS)
         out = ROOT / "console/out"
         self.assertEqual((out / "DECISION_REGISTER.generated.md").read_text("utf-8"), project_register_md(l))
         self.assertEqual(json.loads((out / "owner-decisions.v1.json").read_text("utf-8")), project_owner_decisions(l))
@@ -307,7 +308,7 @@ def _rec(cat, did):
 
 
 def _stack():
-    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324)], REAL_EVENTS)
+    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324), copy.deepcopy(REAL325)], REAL_EVENTS)
 
 
 def _int_field(rec, minimum=0, maximum=None, step=1):
@@ -1409,6 +1410,26 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("dom><N versus dom>N", text)
         self.assertIn("superseded", text)
         self.assertIn("auto-reverts", text)
+        l = _stack()
+        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "PENDING")
+        self.assertIsNone(p["D15"]["value"])
+
+    def test_v325_temporary_domain_duration_stays_pending(self):
+        self.assertEqual(REAL325["catalog_version"], "3.25")
+        for a, b in zip(REAL324["decisions"], REAL325["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL324["decisions"] if d["id"] == "D15")
+        new = next(d for d in REAL325["decisions"] if d["id"] == "D15")
+        self.assertEqual(new["contract"]["gestalt_id_abbreviation"], old["contract"]["gestalt_id_abbreviation"])
+        text = new["contract"]["interlinear_annotation"]["recommended"]
+        self.assertIn("temp is dom>12 and lands interlinear where it occurs", text)
+        self.assertIn("superseding dom><N", text)
+        self.assertIn("dom><global", text)
+        self.assertIn("how the target domain is named", text)
+        self.assertNotIn("dom><N versus dom>N", text)
         l = _stack()
         self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
