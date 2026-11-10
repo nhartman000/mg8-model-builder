@@ -82,7 +82,8 @@ def stage_report() -> dict:
             },
             "proper_names": {
                 "status": "provisional",
-                "note": "Owner-stated capital-letter rule replaces the pending Wikidata list. Not approved. Capitalized words stay undecided; sentence-initial, possible dictionary-word, and all-caps cases are flagged.",
+                "note": "Not approved. A mid-sentence capital is an interpreted name. A sentence-initial capital stays undecided because the dictionary is not chosen. All-caps stays open. The surface form is not rewritten.",
+                "interpreted_names": sum(row["verdict"] == "name" for row in names),
                 "undecided": sum(row["verdict"] == "undecided" for row in names),
                 "not_capitalized": sum(row["verdict"] == "not-capitalized" for row in names),
             },

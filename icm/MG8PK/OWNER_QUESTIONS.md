@@ -159,17 +159,19 @@ This stated rule replaces the pending Wikidata names list. It is not an approval
 
 The repo has no English dictionary file. It has the domain taxonomy `icm/MG8PK/lexicons/nych-professional-domain-taxonomy.md` and a specified but absent Wikipedia dump. Neither is selected here as the dictionary in question (a).
 
+Owner answer, verbatim, 2026-11-10 at 4:02 AM ET: "first word of a sentence should be in the dictionary. Names that are ordinary words will be capitalized mid sentence and names that are also common words and are the first word in a sentence will be subject to gestalt translation but it will not matter as ling as the name is preserved like the case of apple  if that was someones name".
+
+This answer is owner-stated. It is not an approval, and no Decision Console approval event was written.
+
+Interpretation, flagged as interpretation: (b) a sentence-initial capitalized word that is in the dictionary is an ordinary word, not a name. If it is not in the dictionary, the base rule applies. (c) a mid-sentence capitalized word is a name even when it is also a dictionary word, such as Apple or Rose. A sentence-initial name that is also a common word goes through ordinary gestalt translation. The owner accepts that, provided the original surface form, the name itself, is preserved.
+
 Open, and unanswered:
 
 (a) Which dictionary? Is it the existing tokenizer/English lexicon in the repo, if there is one?
 
-(b) Sentence-initial words: capitalized there anyway.
-
-(c) Names that are also dictionary words (Rose, Bill, Apple).
-
 (d) All-caps words and acronyms (NASA).
 
-The smoke step `nych_smoke/proper_names.py` is provisional. A word that does not begin with a capital is not a name under the stated rule. A capitalized word is left undecided. Sentence-initial words, possible dictionary words, and all-caps words are flagged and not decided.
+The smoke step `nych_smoke/proper_names.py` is provisional and applies that interpretation. A mid-sentence capitalized word that is not all-caps is an interpreted name, not an approval. A sentence-initial capitalized word stays undecided because the dictionary is not chosen. An all-caps word stays undecided. No gestalt is applied. The surface form is left as written.
 
 ## What each module does
 

@@ -1,9 +1,9 @@
 """Provisional proper-name step for the owner-stated capital-letter rule.
 
-The rule is not approved. Verbatim: if it begins with a capital letter and
-isn't in the dictionary, it's a name. No dictionary is selected, so a
-capitalized word is never classified as a name. Sentence-initial words,
-possible dictionary words, and all-caps words are flagged and left open.
+The rule and the later sentence answers are not approved. No dictionary is
+selected. A mid-sentence capital that is not all-caps is an interpreted name.
+A sentence-initial capital stays undecided. An all-caps word stays undecided.
+The surface form is not rewritten.
 """
 from __future__ import annotations
 
@@ -30,25 +30,32 @@ def classify_names(text: str) -> list[dict]:
 def _row(index: int, word: str, sentence_initial: bool) -> dict:
     letters = [char for char in word if char.isalpha()]
     capitalized = bool(letters) and letters[0].isupper()
-    if not capitalized:
-        return {
-            "token_index": index,
-            "text": word,
-            "approved": False,
-            "provisional": True,
-            "verdict": "not-capitalized",
-            "flags": [],
-        }
-    flags = ["dictionary-unknown", "dictionary-word-case-open"]
-    if sentence_initial:
-        flags.append("sentence-initial")
-    if len(letters) >= 2 and all(char.isupper() for char in letters):
-        flags.append("all-caps")
-    return {
+    base = {
         "token_index": index,
         "text": word,
         "approved": False,
         "provisional": True,
-        "verdict": "undecided",
-        "flags": flags,
+        "interpreted": False,
+    }
+    if not capitalized:
+        return {**base, "verdict": "not-capitalized", "flags": []}
+    all_caps = len(letters) >= 2 and all(char.isupper() for char in letters)
+    if all_caps:
+        flags = ["all-caps", "dictionary-unknown"]
+        if sentence_initial:
+            flags.append("sentence-initial")
+        return {**base, "verdict": "undecided", "flags": flags}
+    if sentence_initial:
+        return {
+            **base,
+            "verdict": "undecided",
+            "flags": ["sentence-initial", "dictionary-unknown"],
+            "surface_form": word,
+        }
+    return {
+        **base,
+        "interpreted": True,
+        "verdict": "name",
+        "flags": ["mid-sentence-capital"],
+        "surface_form": word,
     }
