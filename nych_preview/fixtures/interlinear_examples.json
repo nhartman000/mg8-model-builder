@@ -25,5 +25,15 @@
     "normalizes": "continuation-tags",
     "annotation": "(pronoun)(modOp=kine-ext)(obj_bmp=gst)(obj_k=gst)",
     "base": "he took the bump of k"
+  },
+  {
+    "id": "domain-switch-interpreted",
+    "role": "interpreted",
+    "status": "interpreted-not-owner-confirmed",
+    "supersedes": "dom>N",
+    "open": "dom>x=food",
+    "close": "x=12",
+    "global": "dom><global",
+    "note": "Interpreted from the owner statement. Not owner-confirmed. Placement, reversion, how dom><global names a domain, and nesting are open."
   }
 ]
