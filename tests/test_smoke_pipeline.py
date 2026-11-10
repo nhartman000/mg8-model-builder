@@ -41,7 +41,7 @@ class SmokePipeline(unittest.TestCase):
         sample = load_english_sample()
         self.assertEqual(sample["language"], "English")
         self.assertIn("Open Parliament", sample["license"])
-        result = train_sample()
+        result = train_sample(device="cpu")
         self.assertEqual(result["device"], "cpu")
         self.assertFalse(result["cuda"])
         self.assertFalse(result["v100"])
@@ -53,6 +53,18 @@ class SmokePipeline(unittest.TestCase):
         self.assertEqual(N_LAYER, 2)
         self.assertEqual(N_HEAD, 4)
         self.assertEqual(non_embedding_parameters.__name__, "non_embedding_parameters")
+
+    def test_rope_stays_on_the_activation_device(self):
+        import torch
+        from nych_smoke.tiny_train import HEAD_DIM, N_HEAD, SmokeBlock
+
+        block = SmokeBlock()
+        states = torch.randn(4, N_HEAD, HEAD_DIM)
+        rotated = block._rope(states)
+        self.assertEqual(rotated.device, states.device)
+        hidden = torch.randn(4, 128)
+        output = block(hidden)
+        self.assertEqual(output.device.type, "cpu")
 
     def test_stage_report_names_what_did_not_run(self):
         report = stage_report()

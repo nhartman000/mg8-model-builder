@@ -34,24 +34,48 @@ if ! python3 -c "import torch" >/dev/null 2>&1; then
   fi
 fi
 
-bash scripts/fetch_wordlists.sh | tee build_results/fetch.log
+failed=0
 
-python3 -m unittest discover -s tests | tee build_results/unittest.log
+if bash scripts/fetch_wordlists.sh | tee build_results/fetch.log; then
+  echo "ran fetch_wordlists"
+else
+  echo "failed fetch_wordlists"
+  failed=1
+fi
 
-python3 - << 'PY'
+if python3 -m unittest discover -s tests | tee build_results/unittest.log; then
+  echo "ran unittest"
+else
+  echo "failed unittest"
+  failed=1
+fi
+
+if python3 - << 'PY'
 import json
+import subprocess
+import sys
 from pathlib import Path
 
-from nych_smoke.report import stage_report
-from nych_smoke.tiny_train import train_sample
-
 out = Path("build_results")
-report = stage_report()
-(out / "smoke.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+failed = False
+
+def write(name, payload):
+    (out / name).write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+try:
+    from nych_smoke.report import stage_report
+    report = stage_report()
+    write("smoke.json", report)
+    print("ran smoke")
+except Exception as err:
+    failed = True
+    write("smoke.json", {"action": "failed", "error": str(err)})
+    print(f"failed smoke: {err}")
+    report = {"stages": {}}
 
 runnable = {"wired and passing", "provisional"}
 stages = []
-for name, stage in report["stages"].items():
+for name, stage in report.get("stages", {}).items():
     status = stage.get("status", "")
     entry = {"stage": name, "status": status}
     if status not in runnable:
@@ -62,34 +86,65 @@ for name, stage in report["stages"].items():
         print(f"ran {name}: {status}")
     stages.append(entry)
 
-cpu = train_sample(device="cpu")
-(out / "train_cpu.json").write_text(json.dumps(cpu, indent=2), encoding="utf-8")
-gpu_action = "skipped"
+try:
+    from nych_smoke.tiny_train import train_sample
+    cpu = train_sample(device="cpu")
+    cpu["action"] = "ran"
+    write("train_cpu.json", cpu)
+    print("ran train_cpu")
+except Exception as err:
+    failed = True
+    cpu = None
+    write("train_cpu.json", {"action": "failed", "device": "cpu", "error": str(err)})
+    print(f"failed train_cpu: {err}")
+
 gpu = None
+gpu_action = "skipped"
 try:
     import torch
     if torch.cuda.is_available():
+        from nych_smoke.tiny_train import train_sample
         gpu = train_sample(device="cuda")
+        gpu["action"] = "ran"
         gpu_action = "ran"
+        write("train_gpu.json", gpu)
+        print("ran train_gpu")
     else:
-        print("skipped gpu training: CUDA is not available")
+        write("train_gpu.json", {"action": "skipped", "reason": "CUDA is not available"})
+        print("skipped train_gpu: CUDA is not available")
 except Exception as err:
-    print(f"skipped gpu training: {err}")
-if gpu is not None:
-    (out / "train_gpu.json").write_text(json.dumps(gpu, indent=2), encoding="utf-8")
-else:
-    (out / "train_gpu.json").write_text(json.dumps({"action": "skipped"}, indent=2), encoding="utf-8")
+    failed = True
+    gpu_action = "failed"
+    write("train_gpu.json", {"action": "failed", "device": "cuda", "error": str(err)})
+    print(f"failed train_gpu: {err}")
 
+commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
 metrics = {
-    "commit": __import__("subprocess").check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+    "commit": commit,
+    "failed": failed,
     "stages": stages,
-    "cpu_device": cpu["device"],
-    "cpu_losses": cpu["losses"],
+    "cpu_device": None if cpu is None else cpu.get("device"),
+    "cpu_losses": None if cpu is None else cpu.get("losses"),
     "gpu_action": gpu_action,
-    "gpu_losses": None if gpu is None else gpu["losses"],
+    "gpu_losses": None if gpu is None else gpu.get("losses"),
 }
-(out / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
-(out / "stages.json").write_text(json.dumps(stages, indent=2), encoding="utf-8")
+write("metrics.json", metrics)
+write("stages.json", stages)
+sys.exit(1 if failed else 0)
 PY
+then
+  echo "ran smoke and training"
+else
+  echo "failed smoke or training"
+  failed=1
+fi
+
+for name in smoke.json train_cpu.json train_gpu.json; do
+  if [[ ! -f "build_results/$name" ]]; then
+    printf '%s\n' "{\"action\":\"failed\",\"error\":\"$name was not written\"}" > "build_results/$name"
+    failed=1
+  fi
+done
 
 echo "results in $(pwd)/build_results"
+exit "$failed"

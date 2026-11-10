@@ -52,7 +52,10 @@ class SmokeBlock(nn.Module):
         key = self._rope(self.wk(hidden).view(length, N_HEAD, HEAD_DIM))
         value = self.wv(hidden).view(length, N_HEAD, HEAD_DIM)
         scores = torch.einsum("thd,shd->hts", query, key) / (HEAD_DIM ** 0.5)
-        causal = torch.triu(torch.ones(length, length, dtype=torch.bool), diagonal=1)
+        causal = torch.triu(
+            torch.ones(length, length, dtype=torch.bool, device=hidden.device),
+            diagonal=1,
+        )
         scores = scores.masked_fill(causal, torch.finfo(scores.dtype).min)
         weights = torch.softmax(scores, dim=-1)
         mixed = torch.einsum("hts,shd->thd", weights, value).reshape(length, D_MODEL)
@@ -60,8 +63,10 @@ class SmokeBlock(nn.Module):
 
     def _rope(self, states: torch.Tensor) -> torch.Tensor:
         half = HEAD_DIM // 2
-        positions = torch.arange(states.shape[0], dtype=torch.float32)
-        freq = SMOKE_ROPE_BASE ** (-torch.arange(half, dtype=torch.float32) / half)
+        device = states.device
+        dtype = states.dtype
+        positions = torch.arange(states.shape[0], device=device, dtype=dtype)
+        freq = SMOKE_ROPE_BASE ** (-torch.arange(half, device=device, dtype=dtype) / half)
         angles = positions[:, None] * freq[None, :]
         cos = torch.cos(angles)[:, None, :]
         sin = torch.sin(angles)[:, None, :]
@@ -88,11 +93,9 @@ def non_embedding_parameters(model: SmokeModel) -> int:
     return sum(param.numel() for param in model.parameters() if id(param) != tied)
 
 
-def train_sample(steps: int = SMOKE_STEPS) -> dict:
-    if torch.cuda.is_available():
-        device = "cuda"
-    else:
-        device = "cpu"
+def train_sample(steps: int = SMOKE_STEPS, device: str | None = None) -> dict:
+    if device is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
     sample = load_english_sample()
     report = run_text(sample["text"])
     surfaces = [token["text"] for token in report["tokens"]]
