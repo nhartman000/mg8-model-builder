@@ -64,7 +64,9 @@ class SmokePipeline(unittest.TestCase):
         self.assertFalse(stages["training"]["detail"]["v100"])
         self.assertEqual(stages["gitson_validator"]["validator_verdict"], "PASS")
         self.assertEqual(stages["emoji_inventory"]["status"], "wired and passing")
-        for name in ("typo_compendium", "wikidata_names", "inspector", "b1_ingest", "b5_gst", "b6_symbol_call"):
+        self.assertEqual(stages["proper_names"]["status"], "provisional")
+        self.assertGreater(stages["proper_names"]["undecided"], 0)
+        for name in ("typo_compendium", "inspector", "b1_ingest", "b5_gst", "b6_symbol_call"):
             self.assertEqual(stages[name]["status"], "not runnable here", name)
         self.assertEqual(stages["domain_switch"]["status"], "not wired")
         self.assertGreater(report["open_gestalt_count"], 0)

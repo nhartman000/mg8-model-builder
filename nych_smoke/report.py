@@ -7,6 +7,7 @@ from gitson_boundary import SCHEMA_DIGEST, validate_declaration
 from gitson_boundary.validator import canonical_json
 
 from nych_smoke.pipeline import artifact_digest, load_english_sample, run_text
+from nych_smoke.proper_names import classify_names
 from nych_smoke.tiny_train import train_sample
 
 
@@ -52,6 +53,7 @@ def stage_report() -> dict:
     sample = load_english_sample()
     text_report = run_text(sample["text"])
     open_gestalts = [row for row in text_report["gestalts"] if str(row["status"]).startswith("open:")]
+    names = classify_names(sample["text"])
     training = train_sample()
     validator = _validator_check()
     return {
@@ -78,9 +80,11 @@ def stage_report() -> dict:
                 "status": "not runnable here",
                 "note": "Needs the enwiki-20261001 dump, the n-gram compendium, and the 99% precision gate.",
             },
-            "wikidata_names": {
-                "status": "not runnable here",
-                "note": "Needs a dated Wikidata dump. The technical lexicon source is still pending.",
+            "proper_names": {
+                "status": "provisional",
+                "note": "Owner-stated capital-letter rule replaces the pending Wikidata list. Not approved. Capitalized words stay undecided; sentence-initial, possible dictionary-word, and all-caps cases are flagged.",
+                "undecided": sum(row["verdict"] == "undecided" for row in names),
+                "not_capitalized": sum(row["verdict"] == "not-capitalized" for row in names),
             },
             "trace_id": {
                 "status": "wired and passing",

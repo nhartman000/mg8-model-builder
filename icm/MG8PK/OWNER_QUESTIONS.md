@@ -151,6 +151,26 @@ Later owner statement, verbatim, 2026-11-10 at 3:55 AM ET: "use most current ver
 
 This is a stated source change. It is not an approval, and no Decision Console approval event was written. The newest file Unicode publishes at https://unicode.org/Public/emoji/latest/emoji-test.txt is version 18.0. There is no numbered `/Public/emoji/18.0/` directory; that `latest` file is the released data, and its header says version 18.0. The chart at https://unicode.org/emoji/charts/full-emoji-list.html is titled Full Emoji List, v18.0. Both were retrieved on 2026-11-10. The inventory keeps fully-qualified code points, the CLDR short name, and the group and subgroup. Skin-tone sequences are their own fully-qualified rows and are not folded. It does not assign a NYCH gestalt. Version 18.0 is the same version already named by the approved D6 endpoint.
 
+## Proper-name rule — owner-stated, not approved
+
+Owner statement, verbatim, 2026-11-10 at 3:56 AM ET: "or easy rule instead of a list of names \"If it begins with a capital letter and isnt in the dictionary, its a name\"".
+
+This stated rule replaces the pending Wikidata names list. It is not an approval, and no Decision Console approval event was written. The earlier builder card still describes a Wikidata candidate list; that card was not rewritten, because this statement is not an approval.
+
+The repo has no English dictionary file. It has the domain taxonomy `icm/MG8PK/lexicons/nych-professional-domain-taxonomy.md` and a specified but absent Wikipedia dump. Neither is selected here as the dictionary in question (a).
+
+Open, and unanswered:
+
+(a) Which dictionary? Is it the existing tokenizer/English lexicon in the repo, if there is one?
+
+(b) Sentence-initial words: capitalized there anyway.
+
+(c) Names that are also dictionary words (Rose, Bill, Apple).
+
+(d) All-caps words and acronyms (NASA).
+
+The smoke step `nych_smoke/proper_names.py` is provisional. A word that does not begin with a capital is not a name under the stated rule. A capitalized word is left undecided. Sentence-initial words, possible dictionary words, and all-caps words are flagged and not decided.
+
 ## What each module does
 
 These lines are taken from the worker and inspector cards in this repository.
