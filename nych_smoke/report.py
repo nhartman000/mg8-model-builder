@@ -82,7 +82,7 @@ def stage_report() -> dict:
             },
             "proper_names": {
                 "status": "provisional",
-                "note": "Not approved. A mid-sentence capital is an interpreted name. A sentence-initial capital stays undecided because the dictionary is not chosen. All-caps stays open. The surface form is not rewritten.",
+                "note": "Not approved. A mid-sentence capital is an interpreted name. An all-caps word of at least two letters is an interpreted acronym and is not gestalted. A sentence-initial capital stays undecided because no Merriam-Webster word list is in hand.",
                 "interpreted_names": sum(row["verdict"] == "name" for row in names),
                 "undecided": sum(row["verdict"] == "undecided" for row in names),
                 "not_capitalized": sum(row["verdict"] == "not-capitalized" for row in names),

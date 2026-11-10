@@ -2,8 +2,9 @@
 
 The rule and the later sentence answers are not approved. No dictionary is
 selected. A mid-sentence capital that is not all-caps is an interpreted name.
-A sentence-initial capital stays undecided. An all-caps word stays undecided.
-The surface form is not rewritten.
+A sentence-initial capital stays undecided until a dictionary is in hand.
+A word of at least two letters that is all capitals is an interpreted acronym.
+Acronyms keep their surface form and are excluded from gestalting.
 """
 from __future__ import annotations
 
@@ -15,6 +16,11 @@ SENTENCE_END = {".", "!", "?"}
 def classify_names(text: str) -> list[dict]:
     """Return one provisional row per word token. Nothing here is approved."""
     _raw, tokens = tokenize(text)
+    return classify_token_rows(tokens)
+
+
+def classify_token_rows(tokens) -> list[dict]:
+    """Classify already-tokenized words. Nothing here is approved."""
     rows: list[dict] = []
     sentence_start = True
     for index, token in enumerate(tokens):
@@ -41,10 +47,14 @@ def _row(index: int, word: str, sentence_initial: bool) -> dict:
         return {**base, "verdict": "not-capitalized", "flags": []}
     all_caps = len(letters) >= 2 and all(char.isupper() for char in letters)
     if all_caps:
-        flags = ["all-caps", "dictionary-unknown"]
-        if sentence_initial:
-            flags.append("sentence-initial")
-        return {**base, "verdict": "undecided", "flags": flags}
+        return {
+            **base,
+            "interpreted": True,
+            "verdict": "acronym",
+            "flags": ["all-caps"],
+            "surface_form": word,
+            "gestalt": "excluded",
+        }
     if sentence_initial:
         return {
             **base,

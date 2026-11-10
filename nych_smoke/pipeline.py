@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 
 from nych_preview.gestalt_abbreviation import COMPOUNDS, GestaltAbbrevError, abbreviate_owner_compound, abbreviate_word
+from nych_smoke.proper_names import classify_token_rows
 from nych_smoke.tokenize import Token, tokenize
 from nych_smoke.trace_id import consonant_suffix, input_digest, trace_id
 
@@ -47,16 +48,32 @@ def run_text(text: str) -> dict:
         "byte_length": len(raw),
         "input_sha256": "sha256:" + digest.hex(),
         "tokens": traced,
-        "gestalts": _gestalts(tokens),
+        "gestalts": _gestalts(tokens, _acronym_indexes(tokens)),
     }
 
 
-def _gestalts(tokens: tuple[Token, ...]) -> list[dict]:
+def _acronym_indexes(tokens: tuple[Token, ...]) -> set[int]:
+    return {row["token_index"] for row in classify_token_rows(tokens) if row["verdict"] == "acronym"}
+
+
+def _gestalts(tokens: tuple[Token, ...], acronyms: set[int]) -> list[dict]:
     words = [(index, token.text) for index, token in enumerate(tokens) if token.kind == "word"]
     rows: list[dict] = []
     position = 0
     while position < len(words):
-        if position + 1 < len(words):
+        index, word = words[position]
+        if index in acronyms:
+            rows.append(
+                {
+                    "token_indexes": [index],
+                    "surface": [word],
+                    "abbrev": None,
+                    "status": "acronym-excluded",
+                }
+            )
+            position += 1
+            continue
+        if position + 1 < len(words) and words[position + 1][0] not in acronyms:
             pair = [words[position][1], words[position + 1][1]]
             if tuple(word.lower() for word in pair) in COMPOUNDS:
                 try:

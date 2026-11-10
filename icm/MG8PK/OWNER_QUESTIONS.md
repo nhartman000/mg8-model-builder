@@ -165,13 +165,17 @@ This answer is owner-stated. It is not an approval, and no Decision Console appr
 
 Interpretation, flagged as interpretation: (b) a sentence-initial capitalized word that is in the dictionary is an ordinary word, not a name. If it is not in the dictionary, the base rule applies. (c) a mid-sentence capitalized word is a name even when it is also a dictionary word, such as Apple or Rose. A sentence-initial name that is also a common word goes through ordinary gestalt translation. The owner accepts that, provided the original surface form, the name itself, is preserved.
 
-Open, and unanswered:
+Owner answer, verbatim, 2026-11-10 at 4:04 AM ET: "Acronyms are all caps and excluded from gestalting. Miriam Websters dictionary and websters Crossword dictionary".
 
-(a) Which dictionary? Is it the existing tokenizer/English lexicon in the repo, if there is one?
+This answer is owner-stated. It is not an approval, and no Decision Console approval event was written.
 
-(d) All-caps words and acronyms (NASA).
+Interpretation, flagged as interpretation: the dictionary is Merriam-Webster's dictionary plus Merriam-Webster's crossword dictionary. The owner wrote "Miriam Websters" and "websters Crossword". A word that is all capitals and at least two letters long is an acronym. Acronyms keep their surface form and are excluded from gestalting.
 
-The smoke step `nych_smoke/proper_names.py` is provisional and applies that interpretation. A mid-sentence capitalized word that is not all-caps is an interpreted name, not an approval. A sentence-initial capitalized word stays undecided because the dictionary is not chosen. An all-caps word stays undecided. No gestalt is applied. The surface form is left as written.
+(a) stays provisional. A check on 2026-11-10 of https://dictionaryapi.com/ found a per-word JSON lookup, not a downloadable headword list. The published non-commercial terms allow 1,000 queries a day for each API key and reference, and at most two references, after registering an account and confirming email. Those terms forbid automated or recorded queries unless Merriam-Webster approves them in writing, and they forbid copying the service. A key and a written license would be required before any lookup is wired. Merriam-Webster's Crossword Puzzle Dictionary is sold as a print book and a Kindle book. No official machine-readable word list or API for that book was found. No dictionary text was downloaded or committed.
+
+(d) is answered by the statement above. The smoke step treats those all-caps words as interpreted acronyms.
+
+The smoke step `nych_smoke/proper_names.py` remains provisional for dictionary membership. A mid-sentence capitalized word that is not all-caps is an interpreted name. A sentence-initial capitalized word that is not all-caps stays undecided because no dictionary file is in hand. An acronym is not gestalted, and its surface form is left as written.
 
 ## What each module does
 
