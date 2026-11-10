@@ -1,4 +1,4 @@
-"""Unicode Emoji 12.0 inventory from the fully-qualified rows of emoji-test.txt.
+"""Unicode Emoji 18.0 inventory from the fully-qualified rows of emoji-test.txt.
 
 This is the owner-stated source recorded on 2026-11-10. It is not approved.
 Entries carry code points, the CLDR short name, and group/subgroup.
@@ -7,8 +7,11 @@ There is no NYCH gestalt and no alias folding.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
+
+_CLDR_NAME = re.compile(r"\sE\d+\.\d+\s+(.*)$")
 
 ROOT = Path(__file__).resolve().parent / "emoji"
 TEST_PATH = ROOT / "emoji-test.txt"
@@ -50,8 +53,10 @@ def load_emoji() -> tuple[EmojiEntry, ...]:
             continue
         sequence = tuple(int(piece, 16) for piece in codepoints.split())
         comment = right.strip()
-        name = comment.split(" ", 1)[1] if " " in comment else comment
-        entries.append(EmojiEntry(sequence, name, group, subgroup))
+        match = _CLDR_NAME.search(comment)
+        if match is None:
+            raise ValueError(f"emoji-test comment has no CLDR name: {comment}")
+        entries.append(EmojiEntry(sequence, match.group(1), group, subgroup))
     return tuple(entries)
 
 

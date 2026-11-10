@@ -72,7 +72,7 @@ def stage_report() -> dict:
             },
             "emoji_inventory": {
                 "status": "wired and passing",
-                "note": "Owner-stated Unicode Emoji 12.0 fully-qualified inventory. Not approved. No NYCH gestalt is assigned.",
+                "note": "Owner-stated Unicode Emoji 18.0 fully-qualified inventory, including skin-tone sequences as their own rows. Not approved. No NYCH gestalt is assigned.",
             },
             "typo_compendium": {
                 "status": "not runnable here",

@@ -5,7 +5,7 @@ punctuation as its own token, apostrophes and hyphens kept inside a word,
 each ordinary space as <SPACE>, and distinct tab and line-break tokens.
 Repeated whitespace stays repeated tokens.
 
-A fully-qualified sequence from the owner-stated Unicode Emoji 12.0 inventory
+A fully-qualified sequence from the owner-stated Unicode Emoji 18.0 inventory
 is one atomic token. That inventory is not approved, and it does not fold
 skin tones or assign a NYCH gestalt.
 

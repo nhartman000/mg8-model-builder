@@ -12,23 +12,26 @@ class EmojiInventory(unittest.TestCase):
     def test_sources_are_recorded_and_not_approved(self):
         sources = load_sources()
         self.assertEqual(sources["status"], "owner-stated-not-approved")
-        self.assertEqual(sources["version"], "12.0")
-        self.assertEqual(sources["chart_url"], "https://unicode.org/emoji/charts-12.0/full-emoji-list.html")
-        self.assertEqual(sources["emoji_test_url"], "https://unicode.org/Public/emoji/12.0/emoji-test.txt")
+        self.assertEqual(sources["version"], "18.0")
+        self.assertEqual(sources["chart_url"], "https://unicode.org/emoji/charts/full-emoji-list.html")
+        self.assertEqual(sources["emoji_test_url"], "https://unicode.org/Public/emoji/latest/emoji-test.txt")
+        self.assertEqual(sources["verbatim"], "use most current version of emoticon library.")
         self.assertEqual(sources["retrieved"], "2026-11-10")
         digest = hashlib.sha256(TEST_PATH.read_bytes()).hexdigest()
         self.assertEqual(digest, sources["files"]["emoji-test.txt"]["sha256"])
-        self.assertEqual(sources["files"]["full-emoji-list.html"]["sha256"], "c186d6f012625f456fb433e68aca1cb3b42823dda49494ffa7f12c10d99dedf4")
-        self.assertIn("skin-tone", " ".join(sources["discrepancies"]))
+        self.assertEqual(sources["files"]["full-emoji-list.html"]["sha256"], "efb28f5e51450fbb7462a2c6372d4abd6e15e639c312d715b82511c213f46f49")
+        self.assertIn("own inventory row", sources["skin_tone_handling"])
         questions = (ROOT / "icm/MG8PK/OWNER_QUESTIONS.md").read_text(encoding="utf-8")
         register = (ROOT / "icm/MG8PK/DECISION_REGISTER.md").read_text(encoding="utf-8")
-        self.assertIn("not an approval", questions)
-        self.assertIn("https://unicode.org/emoji/charts-12.0/full-emoji-list.html", register)
+        self.assertIn("use most current version of emoticon library.", questions)
+        self.assertIn("use most current version of emoticon library.", register)
         self.assertIn("Owner-stated, not approved", register)
 
     def test_fully_qualified_count_and_known_rows(self):
         entries = load_emoji()
-        self.assertEqual(len(entries), 3010)
+        self.assertEqual(len(entries), 3963)
+        skin = [entry for entry in entries if any(0x1F3FB <= cp <= 0x1F3FF for cp in entry.codepoints)]
+        self.assertEqual(len(skin), 2040)
         by_name = {entry.name: entry for entry in entries}
         grinning = by_name["grinning face"]
         self.assertEqual(grinning.codepoints, (0x1F600,))

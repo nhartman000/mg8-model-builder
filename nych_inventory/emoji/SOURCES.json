@@ -1,33 +1,30 @@
 {
   "status": "owner-stated-not-approved",
   "owner": "Nick Hartman",
-  "stated_at": "2026-11-10T03:46:00-05:00",
-  "verbatim": "on 2026-11-10 at 3:46 AM ET Nick gave the emoji inventory source as this URL: https://unicode.org/emoji/charts-12.0/full-emoji-list.html (Unicode Emoji 12.0 full emoji list).",
-  "version": "12.0",
+  "stated_at": "2026-11-10T03:55:00-05:00",
+  "verbatim": "use most current version of emoticon library.",
+  "earlier_verbatim": "on 2026-11-10 at 3:46 AM ET Nick gave the emoji inventory source as this URL: https://unicode.org/emoji/charts-12.0/full-emoji-list.html (Unicode Emoji 12.0 full emoji list).",
+  "version": "18.0",
+  "version_source": "The header of emoji-test.txt says Version: 18.0. Unicode's directory index lists numbered releases through 16.0, and /Public/emoji/18.0/ returns 404. The newest released file is https://unicode.org/Public/emoji/latest/emoji-test.txt.",
   "retrieved": "2026-11-10",
-  "chart_url": "https://unicode.org/emoji/charts-12.0/full-emoji-list.html",
-  "emoji_test_url": "https://unicode.org/Public/emoji/12.0/emoji-test.txt",
+  "chart_url": "https://unicode.org/emoji/charts/full-emoji-list.html",
+  "chart_title": "Full Emoji List, v18.0",
+  "emoji_test_url": "https://unicode.org/Public/emoji/latest/emoji-test.txt",
   "files": {
     "emoji-test.txt": {
-      "sha256": "93b5476b4d3b5381a57336c138bcabb1a53a4288d604249535b0a694a0030db7",
-      "bytes": 394898,
+      "sha256": "8f3735cda1f92a779d78af67cf86066bb1f07143dc22f2ac29394d9bc57ab21a",
+      "bytes": 671655,
       "committed": true
     },
     "full-emoji-list.html": {
-      "sha256": "c186d6f012625f456fb433e68aca1cb3b42823dda49494ffa7f12c10d99dedf4",
-      "bytes": 51029332,
+      "sha256": "efb28f5e51450fbb7462a2c6372d4abd6e15e639c312d715b82511c213f46f49",
+      "bytes": 8488970,
       "committed": false,
-      "reason": "The chart is a 51 MB HTML rendering. Its hash is recorded. The committed source is emoji-test.txt."
+      "reason": "The v18.0 chart HTML is hashed and not committed. The committed source is emoji-test.txt."
     }
   },
-  "fully_qualified_count": 3010,
-  "chart_row_count": 1719,
-  "inventory_source": "emoji-test.txt fully-qualified rows",
-  "discrepancies": [
-    "The chart code column omits U+FE0F. emoji-test.txt includes U+FE0F on the fully-qualified sequence. After ignoring U+FE0F, 1715 chart rows match a fully-qualified emoji-test sequence, the same group, and the same subgroup.",
-    "73 chart CLDR names add a leading ⊛. The name matches emoji-test.txt once that marker is removed.",
-    "Seven chart names differ from the emoji-test.txt CLDR short name: ice vs ice cube; briefs vs swim brief; laptop vs laptop computer; flag: North Macedonia vs flag: Macedonia; flag: ⊖gbeng vs flag: England; flag: ⊖gbsct vs flag: Scotland; flag: ⊖gbwls vs flag: Wales. The inventory keeps the emoji-test.txt name.",
-    "The chart lists four hair-style rows (red hair, curly hair, white hair, bald). emoji-test.txt classifies those as component, not fully-qualified, so they are not in the 3010.",
-    "emoji-test.txt has 1295 additional fully-qualified skin-tone sequences. The v12.0 chart has no skin-tone rows and does not mention U+1F3FB."
-  ]
+  "fully_qualified_count": 3963,
+  "skin_tone_fully_qualified_count": 2040,
+  "skin_tone_handling": "Each fully-qualified skin-tone sequence is its own inventory row. Sequences are not folded to a base emoji and no NYCH gestalt is assigned.",
+  "inventory_source": "emoji-test.txt fully-qualified rows"
 }
