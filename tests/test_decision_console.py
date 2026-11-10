@@ -236,7 +236,7 @@ class RealFixture(unittest.TestCase):
         l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324), copy.deepcopy(REAL325), copy.deepcopy(REAL326)], REAL_EVENTS)
         st = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         approved = {i for i, d in st.items() if d["state"] == "APPROVED"}
-        self.assertEqual(approved, {"D0", "D1-context", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11"})
+        self.assertEqual(approved, {"D0", "D1-context", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D15"})
         for i in approved:
             self.assertTrue(st[i]["recorded_against_current_definition"])
             self.assertEqual(st[i]["value"], st[i]["recommended"])
@@ -553,9 +553,9 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(REAL_EVENTS[0]["catalog_digest"], D5_V2_DIGEST)
         self.assertEqual(sha256_hex(REAL), D5_V2_DIGEST)
         self.assertNotEqual(sha256_hex(REAL3), D5_V2_DIGEST)
-        self.assertEqual([e["decision_id"] for e in REAL_EVENTS], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11"])
+        self.assertEqual([e["decision_id"] for e in REAL_EVENTS], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11", "D15"])
         self.assertEqual([e["action"] for e in REAL_EVENTS],
-                         ["HISTORICAL_APPROVAL"] + ["APPROVE_RECOMMENDATION"] * 10)
+                         ["HISTORICAL_APPROVAL"] + ["APPROVE_RECOMMENDATION"] * 11)
         old = next(d for d in REAL["decisions"] if d["id"] == "D5")["historical_approval"]["value"]
         new = next(d for d in REAL3["decisions"] if d["id"] == "D5")
         self.assertIsNone(new["historical_approval"])
@@ -575,13 +575,14 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D5"]["recommended"], rec)
         self.assertEqual(p["D0"]["state"], "APPROVED")
         self.assertEqual(p["D1-context"]["value"]["window_tokens"], 1024)
-        for did in ("D12", "D13", "D14", "D15", "D16"):
+        for did in ("D12", "D13", "D14", "D16"):
             self.assertEqual(p[did]["state"], "PENDING", did)
+        self.assertEqual(p["D15"]["state"], "APPROVED")
         self.assertNotIn("D5", l.readiness()["blocked"]["B5"])
         self.assertFalse(l.readiness()["readiness_authoritative"])
         with self.assertRaises(DecisionError):
             l.import_historical("D5", timestamp=T, rationale="do not mint")
-        self.assertEqual(len(l.events), 11)
+        self.assertEqual(len(l.events), 12)
         with self.assertRaises(DecisionError):
             DecisionLog.load(copy.deepcopy(REAL3), REAL_EVENTS)
         with self.assertRaises(DecisionError):
@@ -634,7 +635,7 @@ class CrossBoundsAndD5(unittest.TestCase):
                        "grammatical invariants"):
             self.assertIn(phrase, text)
         l = _stack()
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11", "D15"])
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertTrue(p["D6"]["contract_complete"])
@@ -647,7 +648,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         for name in ("seed_lexicon", "confidence_threshold", "tie_policy"):
             self.assertIsNone(d4["contract"][name]["recommended"])
             self.assertTrue(d4["contract"][name]["owner_input_required"])
-        self.assertEqual(len(l.events), 11)
+        self.assertEqual(len(l.events), 12)
         self.assertIn("D6", [e["decision_id"] for e in l.events])
         md = project_register_md(l)
         row = [x for x in md.splitlines() if x.startswith("| D6 ")][0]
@@ -689,7 +690,7 @@ class CrossBoundsAndD5(unittest.TestCase):
             self.assertIsNone(new["contract"][name]["recommended"])
             self.assertTrue(new["contract"][name]["owner_input_required"])
         l = _stack()
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11", "D15"])
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         self.assertEqual(p["D4"]["state"], "APPROVED")
         self.assertTrue(p["D4"]["contract_complete"])
@@ -699,7 +700,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         for did in ("D0", "D1-context", "D5"):
             self.assertEqual(p[did]["state"], "APPROVED")
             self.assertTrue(p[did]["recorded_against_current_definition"])
-        self.assertEqual(len(l.events), 11)
+        self.assertEqual(len(l.events), 12)
         row = [x for x in project_register_md(l).splitlines() if x.startswith("| D4 ")][0]
         self.assertIn("| APPROVED |", row)
         self.assertNotIn("awaiting owner approval", row)
@@ -732,7 +733,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D4"]["state"], "APPROVED")
         self.assertEqual(p["D4"]["value"]["tie_policy"], p["D4"]["recommended"]["tie_policy"])
         self.assertEqual(p["D4"]["owner_input_required"], [])
-        self.assertEqual(len(l.events), 11)
+        self.assertEqual(len(l.events), 12)
 
     def test_d4_confidence_and_d6_endpoint_not_approvals(self):
         self.assertEqual(REAL34["catalog_version"], "3.4")
@@ -768,7 +769,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
         self.assertEqual(p["D4"]["owner_input_required"], [])
         self.assertEqual(p["D6"]["owner_input_required"], [])
-        self.assertEqual(len(l.events), 11)
+        self.assertEqual(len(l.events), 12)
         self.assertIn("D6", [e["decision_id"] for e in l.events])
 
     def test_d6_write_policy_recorded_not_approved(self):
@@ -797,7 +798,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
         self.assertTrue(p["D6"]["recommended"]["tote_write_policy"].startswith(text + "\n\n"))
         self.assertEqual(p["D4"]["state"], "APPROVED")
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11", "D15"])
 
     def test_d6_chat_local_symbols_appended_not_approved(self):
         self.assertEqual(REAL37["catalog_version"], "3.7")
@@ -868,7 +869,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(d4_event["action"], "APPROVE_RECOMMENDATION")
         self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertEqual(p["D6"]["owner_input_required"], [])
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11", "D15"])
 
     def test_d8_attention_primacy_approved(self):
         self.assertEqual(REAL38["catalog_version"], "3.8")
@@ -923,7 +924,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(event["catalog_digest"], sha256_hex(REAL38))
         self.assertEqual(event["owner"], "Nick Hartman")
         self.assertEqual(event["timestamp"], "2026-11-09T01:13:00Z")
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11", "D15"])
 
     def test_d9_mixing_console_recorded_not_approved(self):
         self.assertEqual(REAL39["catalog_version"], "3.9")
@@ -964,7 +965,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("D9", [e["decision_id"] for e in l.events])
         self.assertEqual(p["D7"]["state"], "APPROVED")
         self.assertEqual(p["D8"]["state"], "APPROVED")
-        self.assertEqual(l.events[-1]["decision_id"], "D11")
+        self.assertEqual(next(e["decision_id"] for e in l.events if e["seq"] == 10), "D11")
         row = [x for x in project_register_md(l).splitlines() if x.startswith("| D9 ")][0]
         self.assertIn("| APPROVED |", row)
 
@@ -999,7 +1000,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("D10", [e["decision_id"] for e in l.events])
         self.assertEqual(p["D7"]["state"], "APPROVED")
         self.assertEqual(p["D9"]["state"], "APPROVED")
-        self.assertEqual(l.events[-1]["decision_id"], "D11")
+        self.assertEqual(next(e["decision_id"] for e in l.events if e["seq"] == 10), "D11")
         row = [x for x in project_register_md(l).splitlines() if x.startswith("| D10 ")][0]
         self.assertIn("| APPROVED |", row)
 
@@ -1028,10 +1029,11 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D11"]["value"]["corpus"], corpus)
         self.assertEqual(p["D11"]["value"]["license_review"], license_review)
         self.assertEqual(p["D11"]["owner_input_required"], [])
-        for did in ("D12", "D13", "D14", "D15", "D16"):
+        for did in ("D12", "D13", "D14", "D16"):
             self.assertEqual(p[did]["state"], "PENDING")
             self.assertIsNone(p[did]["value"])
-        event = l.events[-1]
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        event = next(e for e in l.events if e["decision_id"] == "D11")
         self.assertEqual(event["decision_id"], "D11")
         self.assertEqual(event["event_id"], "sha256:b7b4ff2f0e9d95eb399bc4ad1e36124fff66e8491e9776a24c51628d3c684aad")
         self.assertEqual(event["catalog_digest"], sha256_hex(REAL311))
@@ -1057,7 +1059,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("python -m gitson_boundary <declaration.json>", runtime["recommended"])
         self.assertIn("Offline deterministic", runtime["recommended"])
         l = _stack()
-        self.assertEqual(len(l.events), 11)
+        self.assertEqual(len(l.events), 12)
         self.assertFalse(any(e["decision_id"] == "D13" for e in l.events))
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         self.assertTrue(p["D13"]["contract_complete"])
@@ -1066,9 +1068,10 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIsNone(p["D13"]["value"])
         self.assertEqual(p["D13"]["recommended"]["schema_validator_runtime"], runtime["recommended"])
         self.assertEqual(p["D13"]["recommended"]["max_bytes_exclusive"], 500000)
-        for did in ("D12", "D14", "D15", "D16"):
+        for did in ("D12", "D14", "D16"):
             self.assertEqual(p[did]["state"], "PENDING")
             self.assertIsNone(p[did]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
         row = [x for x in project_register_md(l).splitlines() if x.startswith("| D13 ")][0]
         self.assertIn("PENDING (Recommended—awaiting owner approval)", row)
         self.assertIn("| complete |", row)
@@ -1126,9 +1129,9 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("no KV cache", new16["contract"]["runtime_device"]["recommended"])
         l = _stack()
         self.assertEqual(len(l.events), len(REAL_EVENTS))
-        self.assertFalse(any(e["decision_id"] in {"D12", "D13", "D14", "D15", "D16"} for e in l.events))
+        self.assertFalse(any(e["decision_id"] in {"D12", "D13", "D14", "D16"} for e in l.events))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        for did in ("D14", "D15", "D16"):
+        for did in ("D14", "D16"):
             self.assertTrue(p[did]["contract_complete"])
             self.assertEqual(p[did]["state"], "PENDING")
             self.assertIsNone(p[did]["value"])
@@ -1136,6 +1139,11 @@ class CrossBoundsAndD5(unittest.TestCase):
             row = [line for line in project_register_md(l).splitlines() if line.startswith(f"| {did} ")][0]
             self.assertIn("PENDING (Recommended—awaiting owner approval)", row)
             self.assertNotIn("| APPROVED |", row)
+        self.assertTrue(p["D15"]["contract_complete"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+        d15row = [line for line in project_register_md(l).splitlines() if line.startswith("| D15 ")][0]
+        self.assertIn("| APPROVED |", d15row)
         self.assertEqual(p["D12"]["state"], "PENDING")
         self.assertEqual(p["D13"]["state"], "PENDING")
         questions = (ROOT / "icm/MG8PK/OWNER_QUESTIONS.md").read_text("utf-8")
@@ -1173,16 +1181,19 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("source of tense", inter["recommended"])
         l = _stack()
         self.assertEqual(len(l.events), len(REAL_EVENTS))
-        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D15"]["state"], "PENDING")
-        self.assertIsNone(p["D15"]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
         self.assertTrue(p["D15"]["contract_complete"])
         self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertEqual(p["D8"]["state"], "APPROVED")
         self.assertEqual(p["D10"]["state"], "APPROVED")
         questions = (ROOT / "icm/MG8PK/OWNER_QUESTIONS.md").read_text("utf-8")
-        self.assertIn("Answered, not approved", questions)
+        self.assertIn("approved at catalog v3.26", questions)
+        self.assertIn("Open questions remain unresolved", questions)
         self.assertIn("FbncSqnc", questions)
 
     def test_v315_q2_addendum_stays_on_same_field(self):
@@ -1213,10 +1224,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn(fixtures[0]["base"], text)
         self.assertIn(fixtures[1]["base"], text)
         l = _stack()
-        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D15"]["state"], "PENDING")
-        self.assertIsNone(p["D15"]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
 
     def test_v316_keeps_c_and_normalizes_tags(self):
         self.assertEqual(REAL316["catalog_version"], "3.16")
@@ -1249,10 +1262,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(fixtures[3]["annotation"], "(pronoun)(modOp=kine-ext)(obj_bmp=gst)(obj_k=gst)")
         self.assertEqual(fixtures[3]["base"], "he took the bump of k")
         l = _stack()
-        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D15"]["state"], "PENDING")
-        self.assertIsNone(p["D15"]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
 
     def test_v317_vowel_initial_abbreviation_stays_pending(self):
         self.assertEqual(REAL317["catalog_version"], "3.17")
@@ -1274,10 +1289,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("only right after the initial vowel or anywhere", text)
         self.assertIn("'ppl versus 'Ppl", text)
         l = _stack()
-        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D15"]["state"], "PENDING")
-        self.assertIsNone(p["D15"]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
 
     def test_v318_fried_override_stays_pending(self):
         self.assertEqual(REAL318["catalog_version"], "3.18")
@@ -1294,10 +1311,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("owner-only", text)
         self.assertIn("fried -> fryd", text)
         l = _stack()
-        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D15"]["state"], "PENDING")
-        self.assertIsNone(p["D15"]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
 
     def test_v319_long_i_override_stays_pending(self):
         self.assertEqual(REAL319["catalog_version"], "3.19")
@@ -1315,10 +1334,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("eye -> 'y", text)
         self.assertIn("not deterministic", text)
         l = _stack()
-        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D15"]["state"], "PENDING")
-        self.assertIsNone(p["D15"]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
 
     def test_v320_ie_to_y_stays_pending(self):
         self.assertEqual(REAL320["catalog_version"], "3.20")
@@ -1332,10 +1353,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("science", text)
         self.assertIn("field", text)
         l = _stack()
-        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D15"]["state"], "PENDING")
-        self.assertIsNone(p["D15"]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
 
     def test_v321_compound_apostrophe_and_field_marker(self):
         self.assertEqual(REAL321["catalog_version"], "3.21")
@@ -1351,10 +1374,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn('piece is p"c', text)
         self.assertIn("not a general default", text)
         l = _stack()
-        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D15"]["state"], "PENDING")
-        self.assertIsNone(p["D15"]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
 
     def test_v322_short_words_stay_pending(self):
         self.assertEqual(REAL322["catalog_version"], "3.22")
@@ -1371,10 +1396,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("with out collision", text)
         self.assertIn("hot dog  as in the dog is hot", text)
         l = _stack()
-        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D15"]["state"], "PENDING")
-        self.assertIsNone(p["D15"]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
 
     def test_v323_domain_switch_tag_stays_pending(self):
         self.assertEqual(REAL323["catalog_version"], "3.23")
@@ -1392,10 +1419,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("auto-reverts", text)
         self.assertIn("htDg", text)
         l = _stack()
-        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D15"]["state"], "PENDING")
-        self.assertIsNone(p["D15"]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
 
     def test_v324_domain_switch_spelling_stays_pending(self):
         self.assertEqual(REAL324["catalog_version"], "3.24")
@@ -1412,10 +1441,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("superseded", text)
         self.assertIn("auto-reverts", text)
         l = _stack()
-        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D15"]["state"], "PENDING")
-        self.assertIsNone(p["D15"]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
 
     def test_v325_temporary_domain_duration_stays_pending(self):
         self.assertEqual(REAL325["catalog_version"], "3.25")
@@ -1432,10 +1463,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("how the target domain is named", text)
         self.assertNotIn("dom><N versus dom>N", text)
         l = _stack()
-        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D15"]["state"], "PENDING")
-        self.assertIsNone(p["D15"]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
 
     def test_v326_variable_domain_switch_stays_pending(self):
         self.assertEqual(REAL326["catalog_version"], "3.26")
@@ -1454,10 +1487,24 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertIn("dom><global", text)
         self.assertIn("nest or overlap", text)
         l = _stack()
-        self.assertFalse(any(e["decision_id"] == "D15" for e in l.events))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
         p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D15"]["state"], "PENDING")
-        self.assertIsNone(p["D15"]["value"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+        event = d15_events[0]
+        self.assertEqual(event["action"], "APPROVE_RECOMMENDATION")
+        self.assertEqual(event["owner"], "Nick Hartman")
+        self.assertEqual(event["timestamp"], "2026-11-10T04:17:00Z")
+        self.assertEqual(event["note"], "approved oets do this")
+        self.assertIn("Open questions remain unresolved", event["rationale"])
+        self.assertIn("interpreted", event["rationale"])
+        self.assertEqual(event["event_id"], "sha256:f4b8d789afc4c173c16569622257d852fe9a5fe37ee40960c68ebff1d086e952")
+        for did in ("D12", "D13", "D14", "D16"):
+            self.assertEqual(p[did]["state"], "PENDING")
+            self.assertIsNone(p[did]["value"])
+            self.assertFalse(any(e["decision_id"] == did for e in l.events))
 
 
 if __name__ == "__main__":
