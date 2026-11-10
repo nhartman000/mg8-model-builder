@@ -175,7 +175,11 @@ Interpretation, flagged as interpretation: the dictionary is Merriam-Webster's d
 
 (d) is answered by the statement above. The smoke step treats those all-caps words as interpreted acronyms.
 
-The smoke step `nych_smoke/proper_names.py` remains provisional for dictionary membership. A mid-sentence capitalized word that is not all-caps is an interpreted name. A sentence-initial capitalized word that is not all-caps stays undecided because no dictionary file is in hand. An acronym is not gestalted, and its surface form is left as written.
+Owner-stated source substitution, verbatim, 2026-11-10 at 4:07 AM ET: "im at 75 percent usage for the week so lets get to this build on google cloud just get whatever dictionary is availble and whatever crossword dictionary you csan find". This is not an approval, and no Decision Console approval event was written.
+
+The substitutes are SCOWL American size 70, built with `mk-list american 70` from the 2020.12.07 release, and Spread the Wordlist. SCOWL's license permits redistribution with its copyright notice, so that list is committed. Spread the Wordlist is CC BY-NC-SA 4.0, so it is downloaded by `scripts/fetch_wordlists.sh` and is not committed. Peter Broda's list publishes no license and was not used. A sentence-initial word found in either substitute list is treated as an ordinary word. A sentence-initial word found in neither is a name under the base rule. These lists are not Merriam-Webster.
+
+The smoke step `nych_smoke/proper_names.py` checks sentence-initial words against those substitutes. A mid-sentence capitalized word that is not all-caps is an interpreted name. An acronym is not gestalted, and its surface form is left as written.
 
 ## What each module does
 

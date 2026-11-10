@@ -5,7 +5,7 @@ from nych_smoke.proper_names import classify_names
 
 class ProvisionalProperNames(unittest.TestCase):
     def test_mid_sentence_capital_is_an_interpreted_name(self):
-        rows = {row["text"]: row for row in classify_names("Zanzibar asked Rose. NASA stayed.")}
+        rows = {row["text"]: row for row in classify_names("Qwxzq asked Rose. NASA stayed.")}
         self.assertEqual(rows["asked"]["verdict"], "not-capitalized")
         self.assertEqual(rows["stayed"]["verdict"], "not-capitalized")
         rose = rows["Rose"]
@@ -14,9 +14,12 @@ class ProvisionalProperNames(unittest.TestCase):
         self.assertFalse(rose["approved"])
         self.assertEqual(rose["surface_form"], "Rose")
         self.assertEqual(rose["flags"], ["mid-sentence-capital"])
-        self.assertEqual(rows["Zanzibar"]["verdict"], "undecided")
-        self.assertIn("sentence-initial", rows["Zanzibar"]["flags"])
-        self.assertIn("dictionary-unknown", rows["Zanzibar"]["flags"])
+        missing = rows["Qwxzq"]
+        self.assertEqual(missing["verdict"], "name")
+        self.assertTrue(missing["interpreted"])
+        self.assertEqual(missing["surface_form"], "Qwxzq")
+        self.assertIn("sentence-initial", missing["flags"])
+        self.assertIn("not-in-substitute-dictionary", missing["flags"])
         nasa = rows["NASA"]
         self.assertEqual(nasa["verdict"], "acronym")
         self.assertTrue(nasa["interpreted"])
@@ -25,11 +28,13 @@ class ProvisionalProperNames(unittest.TestCase):
         self.assertEqual(nasa["gestalt"], "excluded")
         self.assertEqual(nasa["flags"], ["all-caps"])
 
-    def test_sentence_initial_common_word_is_not_decided(self):
+    def test_sentence_initial_dictionary_word_is_ordinary(self):
         rows = {row["text"]: row for row in classify_names("Bill met Apple at the start. I saw NASA.")}
-        self.assertEqual(rows["Bill"]["verdict"], "undecided")
-        self.assertIn("sentence-initial", rows["Bill"]["flags"])
-        self.assertEqual(rows["Bill"]["surface_form"], "Bill")
+        bill = rows["Bill"]
+        self.assertEqual(bill["verdict"], "ordinary")
+        self.assertFalse(bill["interpreted"])
+        self.assertIn("sentence-initial", bill["flags"])
+        self.assertIn("in-substitute-dictionary", bill["flags"])
         apple = rows["Apple"]
         self.assertEqual(apple["verdict"], "name")
         self.assertTrue(apple["interpreted"])
@@ -39,6 +44,11 @@ class ProvisionalProperNames(unittest.TestCase):
         self.assertEqual(nasa["gestalt"], "excluded")
         self.assertEqual(nasa["surface_form"], "NASA")
         self.assertNotIn("sentence-initial", nasa["flags"])
+
+    def test_crossword_only_word_counts_when_supplied(self):
+        rows = {row["text"]: row for row in classify_names("Zzzyx stayed.", dictionary={"zzzyx"})}
+        self.assertEqual(rows["Zzzyx"]["verdict"], "ordinary")
+        self.assertIn("in-substitute-dictionary", rows["Zzzyx"]["flags"])
 
     def test_acronym_is_not_gestalted(self):
         from nych_smoke.pipeline import run_text

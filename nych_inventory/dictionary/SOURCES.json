@@ -1,0 +1,32 @@
+{
+  "status": "owner-stated-substitute-not-approved",
+  "owner_verbatim": "im at 75 percent usage for the week so lets get to this build on google cloud just get whatever dictionary is availble and whatever crossword dictionary you csan find",
+  "stated_at": "2026-11-10T04:07:00-05:00",
+  "substitutes_for": [
+    "Merriam-Webster's dictionary",
+    "Merriam-Webster's crossword dictionary"
+  ],
+  "note": "These are openly licensed substitutes. They are not Merriam-Webster texts. Peter Broda's word list was not used because that site publishes no license.",
+  "lists": {
+    "english": {
+      "name": "SCOWL American size 70",
+      "url": "https://downloads.sourceforge.net/project/wordlist/SCOWL/2020.12.07/scowl-2020.12.07.tar.gz",
+      "build": "perl ./mk-list american 70, then casefolded and deduplicated",
+      "license": "Copyright 2000-2018 Kevin Atkinson. Permission to use, copy, modify, distribute, and sell the word lists and script output without fee, with the copyright and permission notices retained. See COPYRIGHT-SCOWL.txt.",
+      "sha256": "b667e192289f9f0a6350fc0b1b228bee60db8aef21299ecf7b5c7171940fd092",
+      "word_count": 163041,
+      "committed": true,
+      "path": "nych_inventory/dictionary/scowl-en-us-70.txt"
+    },
+    "crossword": {
+      "name": "Spread the Wordlist",
+      "url": "https://www.spreadthewordlist.com/downloads/spreadthewordlist.txt",
+      "license": "CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/). Not committed because the non-commercial and share-alike terms do not fit redistributing the list inside this repository.",
+      "sha256": "e631489d99e222efd2b99bc730cc3c2c515832280f88d842558378fd0694e9c7",
+      "word_count": 304410,
+      "bytes": 4190022,
+      "committed": false,
+      "path": "nych_inventory/dictionary/spreadthewordlist.txt"
+    }
+  }
+}

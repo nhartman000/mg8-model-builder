@@ -82,7 +82,7 @@ def stage_report() -> dict:
             },
             "proper_names": {
                 "status": "provisional",
-                "note": "Not approved. A mid-sentence capital is an interpreted name. An all-caps word of at least two letters is an interpreted acronym and is not gestalted. A sentence-initial capital stays undecided because no Merriam-Webster word list is in hand.",
+                "note": "Not approved. Sentence-initial words are checked against the SCOWL size-70 substitute and, when fetched, Spread the Wordlist. Those lists are not Merriam-Webster. An all-caps word of at least two letters is an interpreted acronym and is not gestalted.",
                 "interpreted_names": sum(row["verdict"] == "name" for row in names),
                 "undecided": sum(row["verdict"] == "undecided" for row in names),
                 "not_capitalized": sum(row["verdict"] == "not-capitalized" for row in names),
