@@ -181,6 +181,14 @@ The substitutes are SCOWL American size 70, built with `mk-list american 70` fro
 
 The smoke step `nych_smoke/proper_names.py` checks sentence-initial words against those substitutes. A mid-sentence capitalized word that is not all-caps is an interpreted name. An acronym is not gestalted, and its surface form is left as written.
 
+## NYCH-only model boundary — owner-stated, not approved
+
+Owner statement, verbatim, 2026-11-10 at 4:28 PM ET: "it is important to note that once nych lang model is working the nych model will eventually ONLY communicate nych and there will be an encode decoder bookending it after and before human interaction. ai 2 ai will need no such translation simply a legend and md document and a point toward already repo".
+
+This is stated. It is not an approval, and no Decision Console approval event was written.
+
+Interpretation, flagged as interpretation: once the NYCH language model is working, the model itself communicates only in NYCH. A human-facing encoder, English to NYCH, comes before the model, and a decoder, NYCH to English, comes after it. An AI-to-AI exchange does not use that translation. It uses a NYCH legend, a markdown reference document, and a pointer to the existing repository.
+
 ## What each module does
 
 These lines are taken from the worker and inspector cards in this repository.
