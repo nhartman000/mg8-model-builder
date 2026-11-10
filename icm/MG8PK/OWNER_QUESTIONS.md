@@ -143,6 +143,12 @@ Consumed by D6 `tote_write_policy` and the B5 GST contract, in B5 and B6.
 
 Applied as a hard closed set. Builders must not invent an operator.
 
+## Emoji inventory source — owner-stated, not approved
+
+Owner statement, recorded 2026-11-10 at 3:46 AM ET: Nick gave the emoji inventory source as https://unicode.org/emoji/charts-12.0/full-emoji-list.html (Unicode Emoji 12.0 full emoji list).
+
+This is a stated source. It is not an approval, and no Decision Console approval event was written. The machine-readable file for that same version is https://unicode.org/Public/emoji/12.0/emoji-test.txt. Both files were retrieved on 2026-11-10. The inventory built from `emoji-test.txt` keeps fully-qualified code points, the CLDR short name, and the group and subgroup. It does not assign a NYCH gestalt or any other mapping. The approved D6 endpoint remains the Unicode Emoji Charts v18.0 URLs already stored on D6. Whether Emoji 12.0 replaces that v18.0 endpoint is still open.
+
 ## What each module does
 
 These lines are taken from the worker and inspector cards in this repository.

@@ -1,0 +1,33 @@
+{
+  "status": "owner-stated-not-approved",
+  "owner": "Nick Hartman",
+  "stated_at": "2026-11-10T03:46:00-05:00",
+  "verbatim": "on 2026-11-10 at 3:46 AM ET Nick gave the emoji inventory source as this URL: https://unicode.org/emoji/charts-12.0/full-emoji-list.html (Unicode Emoji 12.0 full emoji list).",
+  "version": "12.0",
+  "retrieved": "2026-11-10",
+  "chart_url": "https://unicode.org/emoji/charts-12.0/full-emoji-list.html",
+  "emoji_test_url": "https://unicode.org/Public/emoji/12.0/emoji-test.txt",
+  "files": {
+    "emoji-test.txt": {
+      "sha256": "93b5476b4d3b5381a57336c138bcabb1a53a4288d604249535b0a694a0030db7",
+      "bytes": 394898,
+      "committed": true
+    },
+    "full-emoji-list.html": {
+      "sha256": "c186d6f012625f456fb433e68aca1cb3b42823dda49494ffa7f12c10d99dedf4",
+      "bytes": 51029332,
+      "committed": false,
+      "reason": "The chart is a 51 MB HTML rendering. Its hash is recorded. The committed source is emoji-test.txt."
+    }
+  },
+  "fully_qualified_count": 3010,
+  "chart_row_count": 1719,
+  "inventory_source": "emoji-test.txt fully-qualified rows",
+  "discrepancies": [
+    "The chart code column omits U+FE0F. emoji-test.txt includes U+FE0F on the fully-qualified sequence. After ignoring U+FE0F, 1715 chart rows match a fully-qualified emoji-test sequence, the same group, and the same subgroup.",
+    "73 chart CLDR names add a leading ⊛. The name matches emoji-test.txt once that marker is removed.",
+    "Seven chart names differ from the emoji-test.txt CLDR short name: ice vs ice cube; briefs vs swim brief; laptop vs laptop computer; flag: North Macedonia vs flag: Macedonia; flag: ⊖gbeng vs flag: England; flag: ⊖gbsct vs flag: Scotland; flag: ⊖gbwls vs flag: Wales. The inventory keeps the emoji-test.txt name.",
+    "The chart lists four hair-style rows (red hair, curly hair, white hair, bald). emoji-test.txt classifies those as component, not fully-qualified, so they are not in the 3010.",
+    "emoji-test.txt has 1295 additional fully-qualified skin-tone sequences. The v12.0 chart has no skin-tone rows and does not mention U+1F3FB."
+  ]
+}
