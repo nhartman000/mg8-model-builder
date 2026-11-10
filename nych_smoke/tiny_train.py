@@ -97,7 +97,11 @@ def train_sample(steps: int = SMOKE_STEPS, device: str | None = None) -> dict:
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
     sample = load_english_sample()
-    report = run_text(sample["text"])
+    report = run_text(
+        sample["text"].encode("utf-8"),
+        request_id="smoke:" + sample["identifier"],
+        received_at="2026-01-01T00:00:00Z",
+    )
     surfaces = [token["text"] for token in report["tokens"]]
     vocab = {text: index for index, text in enumerate(dict.fromkeys(surfaces))}
     ids = torch.tensor([vocab[text] for text in surfaces], dtype=torch.long)

@@ -1,0 +1,10 @@
+{
+  "schema_version": "mg8.upstream-pins.v1",
+  "sources": [
+    {
+      "repository": "nhartman000/nych-language-model",
+      "commit": "38568417f7df906812fd03d0dab09c6865201a69",
+      "purpose": "Authoritative B1 ingest and B5 GST source for the builder smoke path"
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 
 from gitson_boundary import SCHEMA_DIGEST, validate_declaration
 from gitson_boundary.validator import canonical_json
@@ -51,7 +52,11 @@ def _validator_check() -> dict:
 
 def stage_report() -> dict:
     sample = load_english_sample()
-    text_report = run_text(sample["text"])
+    text_report = run_text(
+        sample["text"].encode("utf-8"),
+        request_id="smoke:" + sample["identifier"],
+        received_at=datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+    )
     open_gestalts = [row for row in text_report["gestalts"] if str(row["status"]).startswith("open:")]
     names = classify_names(sample["text"])
     training = train_sample()
@@ -109,16 +114,19 @@ def stage_report() -> dict:
                 "note": "No separate inspector ran. D12 says missing evidence is INTERMEDIATE.",
             },
             "b1_ingest": {
-                "status": "not runnable here",
-                "note": "B1 is not modeled in the decision console. The smoke hashed the exact input bytes for the D3 payload only.",
+                "status": "wired and passing" if text_report["ingest"]["status"] == "ACCEPTED" else "wired and failing",
+                "note": "Calls the NYCH repo's B1 implementation before tokenization. Only status and digest metadata are reported; accepted text remains in request memory.",
+                "byte_length": text_report["ingest"]["byte_length"],
+                "raw_sha256": text_report["ingest"]["raw_sha256"],
+                "ingest_version": text_report["ingest"]["ingest_version"],
             },
             "b5_gst": {
                 "status": "not runnable here",
-                "note": "The GST module is in nhartman000/nych-language-model, which is not checked out here.",
+                "note": "A read-only bridge calls the NYCH B5 implementation, but this sample has no B4 domain_id/action_key. No domain or action is guessed, so this stage remains skipped.",
             },
             "b6_symbol_call": {
                 "status": "not runnable here",
-                "note": "Needs the approved emoji endpoint and a symbol-selection call. No prompt was sent.",
+                "note": "A test-only stub verifies separate GST and prompt channels and returns literal spans. No symbol-selection model, prompt template, or temperature is approved, so no LLM call was sent.",
             },
             "training": {
                 "status": "wired and passing" if training["losses"] and all(loss == loss for loss in training["losses"]) else "wired and failing",

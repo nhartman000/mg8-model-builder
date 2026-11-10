@@ -23,6 +23,27 @@ LOG="build_results/build.log"
 exec > >(tee -a "$LOG") 2>&1
 
 echo "branch $(git rev-parse --abbrev-ref HEAD) commit $(git rev-parse HEAD)"
+
+# B1 and B5 remain owned by the NYCH implementation repository. Pin that
+# source checkout so the smoke cannot silently test a moving main branch.
+NYCH_MODEL_REPO="${NYCH_MODEL_REPO:-https://github.com/nhartman000/nych-language-model.git}"
+NYCH_MODEL_COMMIT="${NYCH_MODEL_COMMIT:-$(python3 -c 'import json; print(json.load(open("icm/upstream-pins.json", encoding="utf-8"))["sources"][0]["commit"])')}"
+NYCH_MODEL_PATH="${NYCH_MODEL_PATH:-$PWD/build_results/dependencies/nych-language-model}"
+mkdir -p "$(dirname "$NYCH_MODEL_PATH")"
+if [[ ! -d "$NYCH_MODEL_PATH/.git" ]]; then
+  git clone --filter=blob:none --no-checkout "$NYCH_MODEL_REPO" "$NYCH_MODEL_PATH"
+fi
+git -C "$NYCH_MODEL_PATH" fetch --depth 1 origin "$NYCH_MODEL_COMMIT"
+git -C "$NYCH_MODEL_PATH" checkout --detach FETCH_HEAD
+actual_nych_model_commit="$(git -C "$NYCH_MODEL_PATH" rev-parse HEAD)"
+if [[ "$actual_nych_model_commit" != "$NYCH_MODEL_COMMIT" ]]; then
+  echo "NYCH model source pin mismatch: $actual_nych_model_commit" >&2
+  exit 1
+fi
+export NYCH_MODEL_SRC="$NYCH_MODEL_PATH/src"
+printf '{"repository":"%s","commit":"%s"}\n' "$NYCH_MODEL_REPO" "$actual_nych_model_commit" > build_results/upstream.json
+echo "NYCH model source commit $actual_nych_model_commit"
+
 sudo apt-get update
 sudo apt-get install -y python3 python3-pip python3-venv git
 
@@ -121,6 +142,7 @@ except Exception as err:
 commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
 metrics = {
     "commit": commit,
+    "upstream": json.loads(Path("build_results/upstream.json").read_text(encoding="utf-8")),
     "failed": failed,
     "stages": stages,
     "cpu_device": None if cpu is None else cpu.get("device"),

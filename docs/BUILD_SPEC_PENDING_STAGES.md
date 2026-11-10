@@ -1,5 +1,21 @@
 # Build spec: five unwired stages
 
+## Current implementation snapshot
+
+This is the approved build contract; the status below records the current
+builder-repo implementation and does not change any owner decisions.
+
+| Stage | Current smoke status | Boundary |
+|---|---|---|
+| B1 ingest | Wired and passing | Calls the pinned NYCH implementation before tokenization; accepted text remains in memory. |
+| B5 GST | Not runnable for the sample | Read-only bridge calls the NYCH implementation when B4 supplies explicit keys; this smoke sample has no B4 result. |
+| B6 symbolization | Not runnable | Test-only literal stub checks channel separation; no model call is authorized. |
+| Typo compendium | Not runnable | Corpus build and the approved precision gate are not implemented. |
+| D12 inspector | Not runnable | No independent inspector or complete evidence bundle exists. |
+
+The build runner skips stages that are not `wired and passing` or `provisional`.
+Do not promote a blocked stage merely because an adapter or validator exists.
+
 Standalone instructions for a builder that has not seen the decision chat. This repo is `nhartman000/mg8-model-builder`. The NYCH implementation repo is `nhartman000/nych-language-model`. Do not invent owner values. Anything marked **interpreted** is a reading of the sources, not an owner decision. Do not persist raw prompts, and do not put them in tests, logs, reports, or QSON.
 
 The smoke entry point is `python3 -m nych_smoke`. `nych_smoke/report.py` `stage_report()` currently marks these five stages not runnable: `b1_ingest`, `b5_gst`, `b6_symbol_call`, `typo_compendium`, `inspector`. Wire a stage by making that status honest. `scripts/gcp_build.sh` logs any stage whose status is not `wired and passing` or `provisional` as skipped. Do not add fake stages.
@@ -14,7 +30,7 @@ Approved decisions live in `console/fixtures/catalog.v3.26.json` and `console/fi
 
 **Outputs.** On accept: the original bytes unchanged, their SHA-256, and the byte length, held only in request memory. On reject: a failure, no text. No schema file exists in this repo. **Interpreted:** a JSON object `{ "sha256": "sha256:<64 hex>", "byte_length": <int>, "utf8": true }` is enough for the smoke, and it must not be written to QSON.
 
-**Plug-in.** `nych_smoke/pipeline.py` `run_text` currently hashes the UTF-8 bytes with `nych_smoke/trace_id.py` `input_digest(raw: bytes) -> bytes` and then tokenizes. B1 must run first. `trace_id(raw_digest, index, start, end, suffix)` requires that 32-byte digest. Today that hash is only a stand-in; the smoke stage `b1_ingest` must stop saying the ceiling was not checked.
+**Plug-in.** `nych_smoke/pipeline.py` `run_text` hashes the UTF-8 bytes with `nych_smoke/trace_id.py` `input_digest(raw: bytes) -> bytes` and then tokenizes. B1 runs first through the pinned NYCH implementation. `trace_id(raw_digest, index, start, end, suffix)` requires that 32-byte digest. The smoke report records metadata only; it does not include accepted text.
 
 **Rules.** Register: UTF-8 only; maximum 65,536 bytes; reject empty, malformed UTF-8, and oversized input; no normalization and no truncation. No tokenization, trace IDs, domain inference, or semantic encoding (`builder-01.md`).
 

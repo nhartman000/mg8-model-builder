@@ -13,6 +13,7 @@ from nych_preview.gestalt_abbreviation import COMPOUNDS, GestaltAbbrevError, abb
 from nych_smoke.proper_names import classify_token_rows
 from nych_smoke.tokenize import Token, tokenize
 from nych_smoke.trace_id import consonant_suffix, input_digest, trace_id
+from nych_smoke.upstream import ingest_bytes
 
 SAMPLE_PATH = Path(__file__).resolve().parent / "fixtures" / "common_corpus_english_sample.json"
 
@@ -26,8 +27,25 @@ def load_english_sample(path: Path = SAMPLE_PATH) -> dict:
     return sample
 
 
-def run_text(text: str) -> dict:
-    raw, tokens = tokenize(text)
+def run_text(raw: bytes, *, request_id: str, received_at: str) -> dict:
+    """Run B1 before B2 and B3 using the authoritative NYCH B1 implementation.
+
+    The raw request is never included in the returned report. Accepted text is
+    used in memory only, and B1's digest is checked against the original bytes.
+    """
+    if not isinstance(raw, bytes):
+        raise TypeError("run_text requires the exact request bytes")
+    ingress = ingest_bytes(raw, request_id=request_id, received_at=received_at)
+    if ingress.status != "ACCEPTED" or ingress.text is None:
+        raise ValueError(f"B1 rejected request: {ingress.error_code}")
+    if ingress.raw_sha256 != hashlib.sha256(raw).hexdigest():
+        raise RuntimeError("B1 digest does not match original request bytes")
+    if ingress.text.encode("utf-8") != raw:
+        raise RuntimeError("B1 changed accepted request bytes")
+    token_bytes, tokens = tokenize(ingress.text)
+    if token_bytes != raw:
+        raise RuntimeError("B2 did not preserve the B1-accepted bytes")
+    raw = token_bytes
     digest = input_digest(raw)
     traced = []
     for index, token in enumerate(tokens):
@@ -45,6 +63,14 @@ def run_text(text: str) -> dict:
             }
         )
     return {
+        "ingest": {
+            "status": ingress.status,
+            "request_id": ingress.request_id,
+            "encoding": ingress.encoding,
+            "byte_length": ingress.byte_length,
+            "raw_sha256": "sha256:" + ingress.raw_sha256,
+            "ingest_version": ingress.ingest_version,
+        },
         "byte_length": len(raw),
         "input_sha256": "sha256:" + digest.hex(),
         "tokens": traced,

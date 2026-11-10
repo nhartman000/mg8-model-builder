@@ -53,7 +53,11 @@ class ProvisionalProperNames(unittest.TestCase):
     def test_acronym_is_not_gestalted(self):
         from nych_smoke.pipeline import run_text
 
-        report = run_text("NASA stayed")
+        report = run_text(
+            b"NASA stayed",
+            request_id="proper-name-test",
+            received_at="2026-01-01T00:00:00Z",
+        )
         nasa = next(row for row in report["gestalts"] if row["surface"] == ["NASA"])
         self.assertEqual(nasa["status"], "acronym-excluded")
         self.assertIsNone(nasa["abbrev"])
