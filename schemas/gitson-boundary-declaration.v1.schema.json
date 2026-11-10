@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mg8.gitson-boundary-declaration.v1",
+  "title": "Per-boundary GitSON declaration",
+  "description": "One closed declaration for a single module boundary. This is not a .gitson canon bundle (gitson_version / parts). Canon-bundle splitting and reassembly stay in nhartman000/gitson- and mg8-engine src/mg8_engine/gitson.py, which do not validate this declaration. The declaration carries digests and metadata only. Raw prompt text is not a field. The offline validator enforces a serialized UTF-8 size strictly under 500000 bytes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "declaration_id",
+    "source",
+    "target",
+    "artifact_digests",
+    "upstream_evidence",
+    "trusted_host_validation"
+  ],
+  "properties": {
+    "schema": {
+      "const": "mg8.gitson-boundary-declaration.v1"
+    },
+    "declaration_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "description": "Stable boundary label. Not free text and not a prompt."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["module_id", "interface_version"],
+      "properties": {
+        "module_id": {
+          "enum": ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B11", "INTEGRATION"]
+        },
+        "interface_version": {
+          "type": "string",
+          "pattern": "^[0-9A-Za-z][0-9A-Za-z._+-]{0,63}$",
+          "description": "Interface version token for this side of the boundary. Not a semver policy."
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["module_id", "interface_version"],
+      "properties": {
+        "module_id": {
+          "enum": ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B11", "INTEGRATION"]
+        },
+        "interface_version": {
+          "type": "string",
+          "pattern": "^[0-9A-Za-z][0-9A-Za-z._+-]{0,63}$"
+        }
+      }
+    },
+    "artifact_digests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "target"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "target": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "upstream_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 11,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "inspector_id",
+          "module_id",
+          "verdict",
+          "evidence_digest",
+          "contract_match",
+          "case_classes",
+          "reproducible",
+          "exact_digest",
+          "reference_comparison"
+        ],
+        "properties": {
+          "inspector_id": {
+            "enum": ["I1", "I2", "I3", "I4", "I5", "I6", "I7", "I8", "I9", "I10", "I11"]
+          },
+          "module_id": {
+            "enum": ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B11"]
+          },
+          "verdict": {
+            "const": "PASS"
+          },
+          "evidence_digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
+          "contract_match": {
+            "const": true
+          },
+          "case_classes": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "uniqueItems": true,
+            "items": {
+              "enum": ["adversarial", "boundary", "negative", "positive"]
+            }
+          },
+          "reproducible": {
+            "const": true
+          },
+          "exact_digest": {
+            "const": true
+          },
+          "reference_comparison": {
+            "enum": ["compared", "not_applicable"]
+          }
+        }
+      }
+    },
+    "trusted_host_validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host_id", "result", "record_digest"],
+      "properties": {
+        "host_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "result": {
+          "const": "PASS"
+        },
+        "record_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

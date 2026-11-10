@@ -1,0 +1,39 @@
+[
+  {
+    "id": "full-sentence",
+    "role": "first",
+    "annotation": "(domain=building_subdom=carpentry)(modalityOp=kine-int)(past-t)",
+    "base": "the carpenter                                               freaked  out           after               he took the bump of k.",
+    "form": "verbatim"
+  },
+  {
+    "id": "full-sentence-normalized",
+    "role": "normalized",
+    "normalizes": "full-sentence",
+    "annotation": "(domain=building_subdom=carpentry)(modOp=kine-int)(past-t)",
+    "base": "the carpenter                                               freaked  out           after               he took the bump of k."
+  },
+  {
+    "id": "continuation-tags",
+    "annotation": "(pronoun)(modOp=kine-ext)(object=gestalt)(object_k=gestalt)",
+    "base": "he took the bump of k",
+    "form": "verbatim"
+  },
+  {
+    "id": "continuation-tags-normalized",
+    "role": "normalized",
+    "normalizes": "continuation-tags",
+    "annotation": "(pronoun)(modOp=kine-ext)(obj_bmp=gst)(obj_k=gst)",
+    "base": "he took the bump of k"
+  },
+  {
+    "id": "domain-switch-interpreted",
+    "role": "interpreted",
+    "status": "interpreted-not-owner-confirmed",
+    "supersedes": "dom>N",
+    "open": "dom>x=food",
+    "close": "x=12",
+    "global": "dom><global",
+    "note": "Interpreted from the owner statement. Not owner-confirmed. Placement, reversion, how dom><global names a domain, and nesting are open."
+  }
+]

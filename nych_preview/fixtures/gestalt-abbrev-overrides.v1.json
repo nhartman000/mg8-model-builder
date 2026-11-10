@@ -1,0 +1,9 @@
+{
+  "schema": "mg8.gestalt-abbrev-overrides.v1",
+  "owner_only": true,
+  "note": "New entries are owner-only. Nick Hartman must state each skeleton. The default rule writes ie as y before dropping vowels. A standalone word of three letters or fewer is not shortened; a short part inside a compound still is. fried -> fryd comes from the ie rule and is not listed. The v3.19 eye -> 'y entry is superseded and removed. field -> f\"ld and piece -> p\"c are owner-stated. friend and science were given only as phonetics and are not listed. The double-quote marker is not a general default rule.",
+  "words": {
+    "field": "f\"ld",
+    "piece": "p\"c"
+  }
+}

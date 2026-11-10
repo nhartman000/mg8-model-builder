@@ -14,9 +14,28 @@ REAL34 = json.loads((ROOT / "console/fixtures/catalog.v3.4.json").read_text())
 REAL35 = json.loads((ROOT / "console/fixtures/catalog.v3.5.json").read_text())
 REAL36 = json.loads((ROOT / "console/fixtures/catalog.v3.6.json").read_text())
 REAL37 = json.loads((ROOT / "console/fixtures/catalog.v3.7.json").read_text())
+REAL38 = json.loads((ROOT / "console/fixtures/catalog.v3.8.json").read_text())
+REAL39 = json.loads((ROOT / "console/fixtures/catalog.v3.9.json").read_text())
+REAL310 = json.loads((ROOT / "console/fixtures/catalog.v3.10.json").read_text())
+REAL311 = json.loads((ROOT / "console/fixtures/catalog.v3.11.json").read_text())
+REAL312 = json.loads((ROOT / "console/fixtures/catalog.v3.12.json").read_text())
+REAL313 = json.loads((ROOT / "console/fixtures/catalog.v3.13.json").read_text())
+REAL314 = json.loads((ROOT / "console/fixtures/catalog.v3.14.json").read_text())
+REAL315 = json.loads((ROOT / "console/fixtures/catalog.v3.15.json").read_text())
+REAL316 = json.loads((ROOT / "console/fixtures/catalog.v3.16.json").read_text())
+REAL317 = json.loads((ROOT / "console/fixtures/catalog.v3.17.json").read_text())
+REAL318 = json.loads((ROOT / "console/fixtures/catalog.v3.18.json").read_text())
+REAL319 = json.loads((ROOT / "console/fixtures/catalog.v3.19.json").read_text())
+REAL320 = json.loads((ROOT / "console/fixtures/catalog.v3.20.json").read_text())
+REAL321 = json.loads((ROOT / "console/fixtures/catalog.v3.21.json").read_text())
+REAL322 = json.loads((ROOT / "console/fixtures/catalog.v3.22.json").read_text())
+REAL323 = json.loads((ROOT / "console/fixtures/catalog.v3.23.json").read_text())
+REAL324 = json.loads((ROOT / "console/fixtures/catalog.v3.24.json").read_text())
+REAL325 = json.loads((ROOT / "console/fixtures/catalog.v3.25.json").read_text())
+REAL326 = json.loads((ROOT / "console/fixtures/catalog.v3.26.json").read_text())
 REAL_EVENTS = [json.loads(l) for l in (ROOT / "console/fixtures/events.v2.jsonl").read_text().splitlines() if l]
 O, T = "owner-synthetic", "2026-01-01T00:00:00Z"
-INCOMPLETE_REAL = {"D11", "D13", "D14", "D15", "D16"}
+INCOMPLETE_REAL = set()
 
 
 def rehash(e):
@@ -61,8 +80,9 @@ class Core(unittest.TestCase):
     def test_real_d8_constraint(self):
         d8 = [d for d in REAL["decisions"] if d["id"] == "D8"][0]
         self.assertEqual(d8["constraints"][0]["target"], "model_width")
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37)], REAL_EVENTS)
-        bad = dict(heads=4, head_width=32, model_width=96, layers=2, mask="causal", kv_cache="none_in_reference")
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324), copy.deepcopy(REAL325), copy.deepcopy(REAL326)], REAL_EVENTS)
+        bad = _rec(REAL38, "D8")
+        bad.update(heads=4, head_width=32, model_width=96)
         with self.assertRaises(DecisionError): l.record("D8", "CHOOSE_OTHER", value=bad, owner=O, timestamp=T)
 
     def test_catalog_rejects_guessed_owner_value(self):
@@ -213,10 +233,10 @@ class Core(unittest.TestCase):
 
 class RealFixture(unittest.TestCase):
     def test_approved_before_d7_only(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324), copy.deepcopy(REAL325), copy.deepcopy(REAL326)], REAL_EVENTS)
         st = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         approved = {i for i, d in st.items() if d["state"] == "APPROVED"}
-        self.assertEqual(approved, {"D0", "D1-context", "D4", "D5"})
+        self.assertEqual(approved, {"D0", "D1-context", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "D16"})
         for i in approved:
             self.assertTrue(st[i]["recorded_against_current_definition"])
             self.assertEqual(st[i]["value"], st[i]["recommended"])
@@ -225,7 +245,14 @@ class RealFixture(unittest.TestCase):
         self.assertTrue(st["D4"]["recorded_against_current_definition"])
         self.assertEqual(st["D4"]["value"], st["D4"]["recommended"])
         self.assertEqual(st["D4"]["value"]["confidence_threshold"], 0.75)
-        self.assertEqual(st["D7"]["state"], "PENDING")
+        self.assertEqual(st["D7"]["state"], "APPROVED")
+        self.assertEqual(st["D7"]["value"]["d_model"], 128)
+        self.assertEqual(st["D7"]["value"]["position_limit"], 1024)
+        self.assertEqual(st["D9"]["state"], "APPROVED")
+        self.assertEqual(st["D10"]["state"], "APPROVED")
+        self.assertEqual(st["D11"]["state"], "APPROVED")
+        self.assertIn("Common Corpus", st["D11"]["value"]["corpus"])
+        self.assertEqual(st["D12"]["value"], st["D12"]["recommended"])
         self.assertEqual({k for k, d in st.items() if not d["contract_complete"]}, INCOMPLETE_REAL)
         self.assertTrue(all(st[i]["state"] == "PENDING" for i in INCOMPLETE_REAL))
         hist = DecisionLog.load(copy.deepcopy(REAL), REAL_EVENTS[:1])
@@ -234,16 +261,21 @@ class RealFixture(unittest.TestCase):
         self.assertEqual(d5["value"], REAL_EVENTS[0]["value"])
 
     def test_bulk_on_real_never_approves_placeholders_or_unblocks_all(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324), copy.deepcopy(REAL325), copy.deepcopy(REAL326)], REAL_EVENTS)
         r = l.approve_all_recommended(owner=O, timestamp=T)
         self.assertEqual(set(r["skipped_incomplete"]), INCOMPLETE_REAL)
         for d in INCOMPLETE_REAL: self.assertEqual(l.state(d), "PENDING")
         rd = l.readiness()
         self.assertFalse(rd["readiness_authoritative"])
-        for m in ("B1", "B2", "B3", "B7", "B11", "INTEGRATION"): self.assertIn(m, rd["blocked"])
+        for m in ("B1", "B2", "B3"):
+            self.assertIn("CONTRACT_NOT_MODELED_IN_CONSOLE", rd["blocked"][m])
+        for m in ("B7", "B11", "INTEGRATION"):
+            self.assertNotIn(m, rd["blocked"])
+        self.assertEqual([e["decision_id"] for e in r["events"]], [])
+        self.assertNotIn("D11", [e["decision_id"] for e in r["events"]])
 
     def test_generated_outputs_match_committed(self):
-        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37)], REAL_EVENTS)
+        l = DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324), copy.deepcopy(REAL325), copy.deepcopy(REAL326)], REAL_EVENTS)
         out = ROOT / "console/out"
         self.assertEqual((out / "DECISION_REGISTER.generated.md").read_text("utf-8"), project_register_md(l))
         self.assertEqual(json.loads((out / "owner-decisions.v1.json").read_text("utf-8")), project_owner_decisions(l))
@@ -277,7 +309,7 @@ def _rec(cat, did):
 
 
 def _stack():
-    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37)], REAL_EVENTS)
+    return DecisionLog.load([copy.deepcopy(REAL), copy.deepcopy(REAL3), copy.deepcopy(REAL31), copy.deepcopy(REAL32), copy.deepcopy(REAL33), copy.deepcopy(REAL34), copy.deepcopy(REAL35), copy.deepcopy(REAL36), copy.deepcopy(REAL37), copy.deepcopy(REAL38), copy.deepcopy(REAL39), copy.deepcopy(REAL310), copy.deepcopy(REAL311), copy.deepcopy(REAL312), copy.deepcopy(REAL313), copy.deepcopy(REAL314), copy.deepcopy(REAL315), copy.deepcopy(REAL316), copy.deepcopy(REAL317), copy.deepcopy(REAL318), copy.deepcopy(REAL319), copy.deepcopy(REAL320), copy.deepcopy(REAL321), copy.deepcopy(REAL322), copy.deepcopy(REAL323), copy.deepcopy(REAL324), copy.deepcopy(REAL325), copy.deepcopy(REAL326)], REAL_EVENTS)
 
 
 def _int_field(rec, minimum=0, maximum=None, step=1):
@@ -400,22 +432,20 @@ class CrossBoundsAndD5(unittest.TestCase):
 
     def test_real_width_and_context_equalities(self):
         l = _stack()
-        wide = _rec(REAL3, "D8")
+        n = len(l.events)
+        wide = _rec(REAL38, "D8")
         wide.update(heads=8, head_width=32, model_width=256)
-        l.record("D8", "CHOOSE_OTHER", value=wide, owner=O, timestamp=T)  # D7 still pending
         with self.assertRaisesRegex(DecisionError, "cross-decision"):
-            l.record("D7", "APPROVE_RECOMMENDATION", owner=O, timestamp=T)
-        matched = _rec(REAL3, "D7")
-        matched["d_model"] = 256
-        l.record("D7", "CHOOSE_OTHER", value=matched, owner=O, timestamp=T)
+            l.record("D8", "CHOOSE_OTHER", value=wide, owner=O, timestamp=T)
+        self.assertEqual(len(l.events), n)
 
         l = _stack()
         l.record("D7", "APPROVE_RECOMMENDATION", owner=O, timestamp=T)
-        narrow = _rec(REAL3, "D8")
+        narrow = _rec(REAL38, "D8")
         narrow.update(heads=2, head_width=32, model_width=64)
         with self.assertRaisesRegex(DecisionError, "cross-decision"):
             l.record("D8", "CHOOSE_OTHER", value=narrow, owner=O, timestamp=T)
-        broken = _rec(REAL3, "D8")
+        broken = _rec(REAL38, "D8")
         broken["model_width"] = 100
         with self.assertRaises(DecisionError):
             l.record("D8", "CHOOSE_OTHER", value=broken, owner=O, timestamp=T)
@@ -423,15 +453,13 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(l.events[-1]["value"]["model_width"], 128)
 
         l = _stack()
+        n = len(l.events)
         window = _rec(REAL3, "D1-context")
         window["window_tokens"] = 2048
-        l.record("D1-context", "CHOOSE_OTHER", value=window, owner=O, timestamp=T)
         with self.assertRaisesRegex(DecisionError, "cross-decision"):
-            l.record("D7", "APPROVE_RECOMMENDATION", owner=O, timestamp=T)
-        pos = _rec(REAL3, "D7")
-        pos["position_limit"] = 2048
-        l.record("D7", "CHOOSE_OTHER", value=pos, owner=O, timestamp=T)
-        self.assertEqual(l.events[-1]["value"]["position_limit"], 2048)
+            l.record("D1-context", "CHOOSE_OTHER", value=window, owner=O, timestamp=T)
+        self.assertEqual(len(l.events), n)
+        self.assertEqual(next(e["value"]["position_limit"] for e in reversed(l.events) if e["decision_id"] == "D7"), 1024)
 
     def test_stack_bulk_keeps_recommendations_consistent(self):
         l = _stack()
@@ -444,37 +472,43 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(l.events[0]["event_id"], D5_EVENT)
         vals = {e["decision_id"]: e["value"] for e in r["events"]}
         d1 = next(e for e in reversed(l.events) if e["decision_id"] == "D1-context")
-        self.assertEqual(vals["D7"]["d_model"], vals["D8"]["model_width"])
-        self.assertEqual(d1["value"]["window_tokens"], vals["D7"]["position_limit"])
+        d7 = next(e for e in reversed(l.events) if e["decision_id"] == "D7")
+        d8 = next(e for e in reversed(l.events) if e["decision_id"] == "D8")
+        self.assertNotIn("D7", ids)
+        self.assertNotIn("D9", ids)
+        self.assertNotIn("D10", ids)
+        self.assertEqual(d7["value"]["d_model"], d8["value"]["model_width"])
+        self.assertEqual(d1["value"]["window_tokens"], d7["value"]["position_limit"])
         self.assertFalse(l.readiness()["readiness_authoritative"])
         for did in INCOMPLETE_REAL:
             self.assertEqual(l.state(did), "PENDING")
 
     def test_bulk_conflict_writes_nothing(self):
         l = _stack()
+        n = len(l.events)
         odd = _rec(REAL3, "D7")
         odd["d_model"] = 64
-        l.record("D7", "CHOOSE_OTHER", value=odd, owner=O, timestamp=T)
-        n = len(l.events)
         with self.assertRaisesRegex(DecisionError, "cross-decision"):
-            l.approve_all_recommended(owner=O, timestamp=T)
+            l.record("D7", "CHOOSE_OTHER", value=odd, owner=O, timestamp=T)
         self.assertEqual(len(l.events), n)
-        self.assertEqual(l.state("D8"), "PENDING")
-        self.assertEqual(l.state("D12"), "PENDING")
+        self.assertEqual(l.state("D7"), "APPROVED")
+        self.assertEqual(l.state("D8"), "APPROVED")
+        self.assertEqual(l.state("D12"), "APPROVED")
 
     def test_real_numeric_bounds(self):
         l = _stack()
-        d9 = _rec(REAL3, "D9")
+        d9 = _rec(REAL39, "D9")
         for bad in (1.1, -0.01):
             v = dict(d9, dropout_training=bad)
             with self.assertRaises(DecisionError):
                 l.record("D9", "CHOOSE_OTHER", value=v, owner=O, timestamp=T)
         l.record("D9", "CHOOSE_OTHER", value=dict(d9, dropout_training=0.05, dropout_inference=1), owner=O, timestamp=T)
+        d7 = next(d for d in REAL38["decisions"] if d["id"] == "D7")
+        self.assertIsNone(d7["contract"]["d_model"]["maximum"])
         huge = _rec(REAL3, "D7")
-        huge["d_model"] = 10 ** 6  # no documented architecture cap; equality is the cross-check
-        l.record("D7", "CHOOSE_OTHER", value=huge, owner=O, timestamp=T)
+        huge["d_model"] = 10 ** 6
         with self.assertRaisesRegex(DecisionError, "cross-decision"):
-            l.record("D8", "APPROVE_RECOMMENDATION", owner=O, timestamp=T)
+            l.record("D7", "CHOOSE_OTHER", value=huge, owner=O, timestamp=T)
 
         d4 = _rec(REAL35, "D4")
         self.assertEqual(d4["confidence_threshold"], 0.75)
@@ -510,16 +544,18 @@ class CrossBoundsAndD5(unittest.TestCase):
             with self.assertRaises(DecisionError):
                 fresh.record(did, "APPROVE_RECOMMENDATION", owner=O, timestamp=T)
         self.assertEqual(len(fresh.events), len(REAL_EVENTS))
-        self.assertEqual(fresh.state("D7"), "PENDING")
+        self.assertEqual(fresh.state("D7"), "APPROVED")
+        self.assertEqual(fresh.state("D11"), "APPROVED")
+        self.assertEqual(fresh.state("D12"), "APPROVED")
 
     def test_d5_expansion_keeps_historical_event(self):
         self.assertEqual(REAL_EVENTS[0]["event_id"], D5_EVENT)
         self.assertEqual(REAL_EVENTS[0]["catalog_digest"], D5_V2_DIGEST)
         self.assertEqual(sha256_hex(REAL), D5_V2_DIGEST)
         self.assertNotEqual(sha256_hex(REAL3), D5_V2_DIGEST)
-        self.assertEqual([e["decision_id"] for e in REAL_EVENTS], ["D5", "D0", "D1-context", "D5", "D4"])
+        self.assertEqual([e["decision_id"] for e in REAL_EVENTS], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11", "D15", "D12", "D13", "D14", "D16"])
         self.assertEqual([e["action"] for e in REAL_EVENTS],
-                         ["HISTORICAL_APPROVAL", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION", "APPROVE_RECOMMENDATION"])
+                         ["HISTORICAL_APPROVAL"] + ["APPROVE_RECOMMENDATION"] * 15)
         old = next(d for d in REAL["decisions"] if d["id"] == "D5")["historical_approval"]["value"]
         new = next(d for d in REAL3["decisions"] if d["id"] == "D5")
         self.assertIsNone(new["historical_approval"])
@@ -539,13 +575,13 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D5"]["recommended"], rec)
         self.assertEqual(p["D0"]["state"], "APPROVED")
         self.assertEqual(p["D1-context"]["value"]["window_tokens"], 1024)
-        for did in ("D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "D16"):
-            self.assertEqual(p[did]["state"], "PENDING", did)
-        self.assertNotIn("D5", l.readiness()["blocked"]["B5"])
+        for did in ("D12", "D13", "D14", "D15", "D16"):
+            self.assertEqual(p[did]["state"], "APPROVED", did)
+        self.assertNotIn("B5", l.readiness()["blocked"])
         self.assertFalse(l.readiness()["readiness_authoritative"])
         with self.assertRaises(DecisionError):
             l.import_historical("D5", timestamp=T, rationale="do not mint")
-        self.assertEqual(len(l.events), 5)
+        self.assertEqual(len(l.events), 16)
         with self.assertRaises(DecisionError):
             DecisionLog.load(copy.deepcopy(REAL3), REAL_EVENTS)
         with self.assertRaises(DecisionError):
@@ -598,11 +634,11 @@ class CrossBoundsAndD5(unittest.TestCase):
                        "grammatical invariants"):
             self.assertIn(phrase, text)
         l = _stack()
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11", "D15", "D12", "D13", "D14", "D16"])
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D6"]["state"], "PENDING")
+        self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertTrue(p["D6"]["contract_complete"])
-        self.assertIsNone(p["D6"]["value"])
+        self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
         self.assertEqual(p["D6"]["owner_input_required"], [])
         for did in ("D0", "D1-context", "D5"):
             self.assertEqual(p[did]["state"], "APPROVED")
@@ -611,11 +647,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         for name in ("seed_lexicon", "confidence_threshold", "tie_policy"):
             self.assertIsNone(d4["contract"][name]["recommended"])
             self.assertTrue(d4["contract"][name]["owner_input_required"])
-        self.assertEqual(len(l.events), 5)
-        self.assertNotIn("D6", [e["decision_id"] for e in l.events])
+        self.assertEqual(len(l.events), 16)
+        self.assertIn("D6", [e["decision_id"] for e in l.events])
         md = project_register_md(l)
         row = [x for x in md.splitlines() if x.startswith("| D6 ")][0]
-        self.assertIn("Recommended—awaiting owner approval", row)
+        self.assertIn("| APPROVED |", row)
+        self.assertNotIn("awaiting owner approval", row)
         self.assertIn("| complete |", row)
         self.assertNotIn("INCOMPLETE", row)
         self.assertNotIn("FbncSqnc", json.dumps(project_qson_events(l)))
@@ -652,7 +689,7 @@ class CrossBoundsAndD5(unittest.TestCase):
             self.assertIsNone(new["contract"][name]["recommended"])
             self.assertTrue(new["contract"][name]["owner_input_required"])
         l = _stack()
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11", "D15", "D12", "D13", "D14", "D16"])
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         self.assertEqual(p["D4"]["state"], "APPROVED")
         self.assertTrue(p["D4"]["contract_complete"])
@@ -662,7 +699,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         for did in ("D0", "D1-context", "D5"):
             self.assertEqual(p[did]["state"], "APPROVED")
             self.assertTrue(p[did]["recorded_against_current_definition"])
-        self.assertEqual(len(l.events), 5)
+        self.assertEqual(len(l.events), 16)
         row = [x for x in project_register_md(l).splitlines() if x.startswith("| D4 ")][0]
         self.assertIn("| APPROVED |", row)
         self.assertNotIn("awaiting owner approval", row)
@@ -695,7 +732,7 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D4"]["state"], "APPROVED")
         self.assertEqual(p["D4"]["value"]["tie_policy"], p["D4"]["recommended"]["tie_policy"])
         self.assertEqual(p["D4"]["owner_input_required"], [])
-        self.assertEqual(len(l.events), 5)
+        self.assertEqual(len(l.events), 16)
 
     def test_d4_confidence_and_d6_endpoint_not_approvals(self):
         self.assertEqual(REAL34["catalog_version"], "3.4")
@@ -726,13 +763,13 @@ class CrossBoundsAndD5(unittest.TestCase):
         l = _stack()
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
         self.assertEqual(p["D4"]["state"], "APPROVED")
-        self.assertEqual(p["D6"]["state"], "PENDING")
+        self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertEqual(p["D4"]["value"]["confidence_threshold"], 0.75)
-        self.assertIsNone(p["D6"]["value"])
+        self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
         self.assertEqual(p["D4"]["owner_input_required"], [])
         self.assertEqual(p["D6"]["owner_input_required"], [])
-        self.assertEqual(len(l.events), 5)
-        self.assertNotIn("D6", [e["decision_id"] for e in l.events])
+        self.assertEqual(len(l.events), 16)
+        self.assertIn("D6", [e["decision_id"] for e in l.events])
 
     def test_d6_write_policy_recorded_not_approved(self):
         self.assertEqual(REAL36["catalog_version"], "3.6")
@@ -755,12 +792,12 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertFalse(new["contract"]["tote_write_policy"]["owner_input_required"])
         l = _stack()
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D6"]["state"], "PENDING")
+        self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertTrue(p["D6"]["contract_complete"])
-        self.assertIsNone(p["D6"]["value"])
+        self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
         self.assertTrue(p["D6"]["recommended"]["tote_write_policy"].startswith(text + "\n\n"))
         self.assertEqual(p["D4"]["state"], "APPROVED")
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11", "D15", "D12", "D13", "D14", "D16"])
 
     def test_d6_chat_local_symbols_appended_not_approved(self):
         self.assertEqual(REAL37["catalog_version"], "3.7")
@@ -793,9 +830,9 @@ class CrossBoundsAndD5(unittest.TestCase):
             self.assertEqual(new["contract"][name]["owner_input_required"], old["contract"][name]["owner_input_required"])
         l = _stack()
         p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
-        self.assertEqual(p["D6"]["state"], "PENDING")
-        self.assertIsNone(p["D6"]["value"])
-        self.assertNotIn("D6", [e["decision_id"] for e in l.events])
+        self.assertEqual(p["D6"]["state"], "APPROVED")
+        self.assertEqual(p["D6"]["value"], p["D6"]["recommended"])
+        self.assertIn("D6", [e["decision_id"] for e in l.events])
         for did in ("D0", "D1-context", "D4", "D5"):
             self.assertEqual(p[did]["state"], "APPROVED")
             self.assertTrue(p[did]["recorded_against_current_definition"])
@@ -825,12 +862,648 @@ class CrossBoundsAndD5(unittest.TestCase):
         self.assertEqual(p["D4"]["value"]["tie_policy"], tie["recommended"])
         self.assertEqual(p["D4"]["owner_input_required"], [])
         self.assertEqual(p["D4"]["recommended"]["tie_policy"], tie["recommended"])
-        self.assertEqual(l.events[-1]["event_id"], "sha256:1d80d3eaa2a1fa41bf855be5cbd2ea3685aeeab31a6d3a4c2705daafbe9032bd")
-        self.assertEqual(l.events[-1]["catalog_digest"], sha256_hex(REAL35))
-        self.assertEqual(l.events[-1]["action"], "APPROVE_RECOMMENDATION")
-        self.assertEqual(p["D6"]["state"], "PENDING")
+        d4_event = next(e for e in l.events if e["decision_id"] == "D4")
+        self.assertEqual(d4_event["event_id"], "sha256:1d80d3eaa2a1fa41bf855be5cbd2ea3685aeeab31a6d3a4c2705daafbe9032bd")
+        self.assertEqual(d4_event["catalog_digest"], sha256_hex(REAL35))
+        self.assertEqual(d4_event["action"], "APPROVE_RECOMMENDATION")
+        self.assertEqual(p["D6"]["state"], "APPROVED")
         self.assertEqual(p["D6"]["owner_input_required"], [])
-        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4"])
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11", "D15", "D12", "D13", "D14", "D16"])
+
+    def test_d8_attention_primacy_approved(self):
+        self.assertEqual(REAL38["catalog_version"], "3.8")
+        for a, b in zip(REAL37["decisions"], REAL38["decisions"]):
+            if a["id"] != "D8":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL37["decisions"] if d["id"] == "D8")
+        new = next(d for d in REAL38["decisions"] if d["id"] == "D8")
+        for name in ("layers", "heads", "head_width", "model_width", "mask", "kv_cache"):
+            self.assertEqual(new["contract"][name], old["contract"][name])
+        self.assertEqual(new["constraints"], old["constraints"])
+        self.assertEqual(new["contract"]["layers"]["recommended"], 2)
+        self.assertEqual(new["contract"]["heads"]["recommended"], 4)
+        self.assertEqual(new["contract"]["head_width"]["recommended"], 32)
+        self.assertEqual(new["contract"]["model_width"]["recommended"], 128)
+        self.assertEqual(new["contract"]["mask"]["recommended"], "causal")
+        self.assertEqual(new["contract"]["kv_cache"]["recommended"], "none_in_reference")
+        self.assertEqual(
+            new["contract"]["primacy_tradeoff"]["recommended"],
+            "Until patterns are recognized from repetition, the abbreviated words appended on the gestalt ID string are primary. "
+            "A tradeoff rule determines when the dynamic domain lexicons have stabilized; only then may the switch to symbolic (gestalt) primary be made. "
+            "Words are not discarded; they remain appended on the ID string.",
+        )
+        self.assertEqual(
+            new["contract"]["attention_mixture"]["recommended"],
+            "Attention weights the current ID and its neighbors as follows, as a starting mix: "
+            "30% the current gestalt, 30% the current abbreviated word, 20% neighboring gestalts, and 20% neighboring abbreviated words "
+            "(the remaining 40% neighboring signal split 20/20). If that mix does not work, readjust the percentages and ratios. "
+            "Adjust until optimal percentages and ratios are obtained through testing on natural language (\"nat lang\"). "
+            "The 30% current gestalt / 30% current abbreviated word / 20% neighboring gestalts / 20% neighboring abbreviated words mix is the starting point, not a frozen optimum.",
+        )
+        self.assertEqual(
+            new["contract"]["abbreviation_to_gestalt_training"]["recommended"],
+            "Part of training this model is training from word abbreviations to stabilized gestalt dynamics. "
+            "This is unique to the NYCH language model.",
+        )
+        for name in ("primacy_tradeoff", "attention_mixture", "abbreviation_to_gestalt_training"):
+            self.assertFalse(new["contract"][name]["owner_input_required"])
+        self.assertNotIn("stabilized at", new["contract"]["primacy_tradeoff"]["recommended"])
+        l = _stack()
+        p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D8"]["state"], "APPROVED")
+        self.assertTrue(p["D8"]["recorded_against_current_definition"])
+        self.assertEqual(p["D8"]["value"], p["D8"]["recommended"])
+        self.assertEqual(p["D7"]["state"], "APPROVED")
+        self.assertEqual(p["D9"]["state"], "APPROVED")
+        self.assertEqual(p["D7"]["value"]["position_limit"], 1024)
+        event = next(e for e in l.events if e["decision_id"] == "D8")
+        self.assertEqual(event["decision_id"], "D8")
+        self.assertEqual(event["action"], "APPROVE_RECOMMENDATION")
+        self.assertEqual(event["event_id"], "sha256:2797129d115485f3c20851afdd73b17320f8ed2edd899b5f3095ebcf06105a88")
+        self.assertEqual(event["catalog_digest"], sha256_hex(REAL38))
+        self.assertEqual(event["owner"], "Nick Hartman")
+        self.assertEqual(event["timestamp"], "2026-11-09T01:13:00Z")
+        self.assertEqual([e["decision_id"] for e in l.events], ["D5", "D0", "D1-context", "D5", "D4", "D6", "D8", "D7", "D9", "D10", "D11", "D15", "D12", "D13", "D14", "D16"])
+
+    def test_d9_mixing_console_recorded_not_approved(self):
+        self.assertEqual(REAL39["catalog_version"], "3.9")
+        for a, b in zip(REAL38["decisions"], REAL39["decisions"]):
+            if a["id"] != "D9":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL38["decisions"] if d["id"] == "D9")
+        new = next(d for d in REAL39["decisions"] if d["id"] == "D9")
+        for name in ("norm", "residual", "ffn", "ffn_hidden_width", "dropout_training", "dropout_inference"):
+            self.assertEqual(new["contract"][name], old["contract"][name])
+        self.assertEqual(new["contract"]["norm"]["recommended"], "pre_rmsnorm")
+        self.assertEqual(new["contract"]["residual"]["recommended"], "yes")
+        self.assertEqual(new["contract"]["ffn"]["recommended"], "SwiGLU")
+        self.assertEqual(new["contract"]["ffn_hidden_width"]["recommended"], 512)
+        self.assertEqual(new["contract"]["dropout_training"]["recommended"], 0.1)
+        self.assertEqual(new["contract"]["dropout_inference"]["recommended"], 0.0)
+        self.assertEqual(
+            new["contract"]["mixing_console"]["recommended"],
+            "A dynamic mixing console adjusts these numbers in real time like an audio mixer and finds the intended balance. "
+            "An AI may perform the mixing under human observation. The console does not have to be used to obtain the live parameters at first. "
+            "The mix channels being balanced are the current gestalt, the current abbreviated word, neighboring gestalts, and neighboring abbreviated words, "
+            "starting from the D8 mix of 30/30/20/20, plus the D9 block numbers (especially feed-forward width and training dropout) that affect how those signals are mixed. "
+            "Inference dropout remains 0.0 and is not a mix channel.",
+        )
+        self.assertEqual(
+            new["contract"]["repeatability"]["recommended"],
+            "The console must produce repeatable outcomes. The same recipe — operator (human or AI observed), observation seed, "
+            "mix-channel values, and D9 block settings — must yield the same mix and the same digest, and the same seed plus starting mix "
+            "must replay the same observed AI moves.",
+        )
+        for name in ("mixing_console", "repeatability"):
+            self.assertFalse(new["contract"][name]["owner_input_required"])
+        l = _stack()
+        p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D9"]["state"], "APPROVED")
+        self.assertEqual(p["D9"]["value"], p["D9"]["recommended"])
+        self.assertTrue(p["D9"]["contract_complete"])
+        self.assertIn("D9", [e["decision_id"] for e in l.events])
+        self.assertEqual(p["D7"]["state"], "APPROVED")
+        self.assertEqual(p["D8"]["state"], "APPROVED")
+        self.assertEqual(next(e["decision_id"] for e in l.events if e["seq"] == 10), "D11")
+        row = [x for x in project_register_md(l).splitlines() if x.startswith("| D9 ")][0]
+        self.assertIn("| APPROVED |", row)
+
+    def test_d10_verification_sidecar_recorded_not_approved(self):
+        self.assertEqual(REAL310["catalog_version"], "3.10")
+        for a, b in zip(REAL39["decisions"], REAL310["decisions"]):
+            if a["id"] != "D10":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL39["decisions"] if d["id"] == "D10")
+        new = next(d for d in REAL310["decisions"] if d["id"] == "D10")
+        for name in ("tied_embeddings", "logits", "softmax", "loss", "hard_output_constraints"):
+            self.assertEqual(new["contract"][name], old["contract"][name])
+        self.assertEqual(new["contract"]["tied_embeddings"]["recommended"], "yes")
+        self.assertEqual(new["contract"]["logits"]["recommended"], "full_vocabulary")
+        self.assertEqual(new["contract"]["softmax"]["recommended"], "numerically_stable")
+        self.assertEqual(new["contract"]["loss"]["recommended"], "next_token_cross_entropy")
+        self.assertEqual(new["contract"]["hard_output_constraints"]["recommended"], "none_until_specified")
+        self.assertEqual(
+            new["contract"]["verification_sidecar"]["recommended"],
+            "The production D10 path still scores next NYCH tokens — gestalt IDs with the abbreviated word appended on the ID string — not full English words. "
+            "To be sure that path is working, a parallel unmodified (\"standard\") version must ride the whole process alongside the abbreviated-word and gestalt mix as a faithfulness check. "
+            "The mixed NYCH path should remain faithful if it is running alongside that proper unmodified companion. "
+            "Once the D10 step is proven, delete the standard version. "
+            "This sidecar is required verification, not an optional extra: it exists so the mixed path can be checked before it is trusted on its own.",
+        )
+        self.assertFalse(new["contract"]["verification_sidecar"]["owner_input_required"])
+        l = _stack()
+        p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D10"]["state"], "APPROVED")
+        self.assertEqual(p["D10"]["value"], p["D10"]["recommended"])
+        self.assertTrue(p["D10"]["contract_complete"])
+        self.assertIn("D10", [e["decision_id"] for e in l.events])
+        self.assertEqual(p["D7"]["state"], "APPROVED")
+        self.assertEqual(p["D9"]["state"], "APPROVED")
+        self.assertEqual(next(e["decision_id"] for e in l.events if e["seq"] == 10), "D11")
+        row = [x for x in project_register_md(l).splitlines() if x.startswith("| D10 ")][0]
+        self.assertIn("| APPROVED |", row)
+
+    def test_d11_common_corpus_approved(self):
+        self.assertEqual(REAL311["catalog_version"], "3.11")
+        for a, b in zip(REAL310["decisions"], REAL311["decisions"]):
+            if a["id"] != "D11":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL310["decisions"] if d["id"] == "D11")
+        new = next(d for d in REAL311["decisions"] if d["id"] == "D11")
+        self.assertEqual(new["contract"]["policy"], old["contract"]["policy"])
+        corpus = "Common Corpus (https://huggingface.co/datasets/PleIAs/common_corpus). English text is selected using the dataset's language field. This is the neural-training corpus and must remain distinct from the typo-statistics corpus."
+        license_review = (
+            "License review of Common Corpus as published on the dataset card: the collection contains only data that is uncopyrighted or freely licensed "
+            "(public domain, U.S. federal public domain, CC0, Creative Commons, MIT, French Licence ouverte, and similar). "
+            "Each document has a license field. The dataset is multilingual, so English documents must be filtered by that language metadata. "
+            "Licensing information is based on available metadata; the per-document license field should be preserved, and documents without a clear open license should be excluded."
+        )
+        self.assertEqual(new["contract"]["corpus"]["recommended"], corpus)
+        self.assertEqual(new["contract"]["license_review"]["recommended"], license_review)
+        self.assertFalse(new["contract"]["corpus"]["owner_input_required"])
+        self.assertFalse(new["contract"]["license_review"]["owner_input_required"])
+        l = _stack()
+        p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D11"]["state"], "APPROVED")
+        self.assertEqual(p["D11"]["value"]["corpus"], corpus)
+        self.assertEqual(p["D11"]["value"]["license_review"], license_review)
+        self.assertEqual(p["D11"]["owner_input_required"], [])
+        for did in ("D12", "D13", "D14", "D15", "D16"):
+            self.assertEqual(p[did]["state"], "APPROVED")
+            self.assertEqual(p[did]["value"], p[did]["recommended"])
+        event = next(e for e in l.events if e["decision_id"] == "D11")
+        self.assertEqual(event["decision_id"], "D11")
+        self.assertEqual(event["event_id"], "sha256:b7b4ff2f0e9d95eb399bc4ad1e36124fff66e8491e9776a24c51628d3c684aad")
+        self.assertEqual(event["catalog_digest"], sha256_hex(REAL311))
+        self.assertEqual(event["timestamp"], "2026-11-09T02:04:00Z")
+        row = [x for x in project_register_md(l).splitlines() if x.startswith("| D11 ")][0]
+        self.assertIn("| APPROVED |", row)
+        self.assertNotIn("INCOMPLETE", row)
+
+    def test_d13_runtime_recorded_and_not_approved(self):
+        self.assertEqual(REAL312["catalog_version"], "3.12")
+        for a, b in zip(REAL311["decisions"], REAL312["decisions"]):
+            if a["id"] != "D13":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL311["decisions"] if d["id"] == "D13")
+        new = next(d for d in REAL312["decisions"] if d["id"] == "D13")
+        self.assertEqual(new["question"], old["question"])
+        self.assertEqual(new["contract"]["direction"], old["contract"]["direction"])
+        self.assertEqual(new["contract"]["max_bytes_exclusive"], old["contract"]["max_bytes_exclusive"])
+        runtime = new["contract"]["schema_validator_runtime"]
+        self.assertFalse(runtime["owner_input_required"])
+        self.assertIn("schemas/gitson-boundary-declaration.v1.schema.json", runtime["recommended"])
+        self.assertIn("sha256:4761edfc48d1242ec36d768dde81633cc084877d5c94563ff6f26a28f3115a72", runtime["recommended"])
+        self.assertIn("python -m gitson_boundary <declaration.json>", runtime["recommended"])
+        self.assertIn("Offline deterministic", runtime["recommended"])
+        l = _stack()
+        self.assertEqual(len(l.events), 16)
+        self.assertEqual(sum(e["decision_id"] == "D13" for e in l.events), 1)
+        p = {d["id"]: d for d in project_owner_decisions(l)["decisions"]}
+        self.assertTrue(p["D13"]["contract_complete"])
+        self.assertEqual(p["D13"]["owner_input_required"], [])
+        self.assertEqual(p["D13"]["state"], "APPROVED")
+        self.assertEqual(p["D13"]["value"], p["D13"]["recommended"])
+        self.assertEqual(p["D13"]["recommended"]["schema_validator_runtime"], runtime["recommended"])
+        self.assertEqual(p["D13"]["recommended"]["max_bytes_exclusive"], 500000)
+        for did in ("D12", "D14", "D16"):
+            self.assertEqual(p[did]["state"], "APPROVED")
+            self.assertEqual(p[did]["value"], p[did]["recommended"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        row = [x for x in project_register_md(l).splitlines() if x.startswith("| D13 ")][0]
+        self.assertIn("| APPROVED |", row)
+        self.assertIn("| complete |", row)
+        self.assertNotIn("INCOMPLETE", row)
+        self.assertNotIn("INTEGRATION", l.readiness()["blocked"])
+
+    def test_v313_reference_fields_stay_pending(self):
+        self.assertEqual(REAL313["catalog_version"], "3.13")
+        for a, b in zip(REAL312["decisions"], REAL313["decisions"]):
+            if a["id"] not in {"D14", "D15", "D16"}:
+                self.assertEqual(a, b)
+        d = 128
+        non = 2 * (4 * d * d + 3 * d * 512 + 2 * d) + d
+        self.assertEqual(non, 524928)
+        self.assertEqual(non + d * 10000, 1804928)
+        self.assertEqual(non + d * 50257, 6957824)
+        old14 = next(x for x in REAL312["decisions"] if x["id"] == "D14")
+        new14 = next(x for x in REAL313["decisions"] if x["id"] == "D14")
+        old15 = next(x for x in REAL312["decisions"] if x["id"] == "D15")
+        new15 = next(x for x in REAL313["decisions"] if x["id"] == "D15")
+        old16 = next(x for x in REAL312["decisions"] if x["id"] == "D16")
+        new16 = next(x for x in REAL313["decisions"] if x["id"] == "D16")
+        self.assertEqual(new14["question"], old14["question"])
+        self.assertEqual(new15["contract"]["reporting"], old15["contract"]["reporting"])
+        self.assertEqual(new16["contract"]["visibility"], old16["contract"]["visibility"])
+        for dec, names in ((new14, ("parameter_band", "memory_latency_target", "training_hardware")),
+                           (new15, ("thresholds",)),
+                           (new16, ("format", "runtime_device"))):
+            for name in names:
+                field = dec["contract"][name]
+                self.assertFalse(field["owner_input_required"])
+                self.assertIn("Reference-derived", field["recommended"])
+                self.assertIn("https://arxiv.org/abs/2305.07759", field["recommended"])
+        band = new14["contract"]["parameter_band"]["recommended"]
+        self.assertIn("524928", band)
+        self.assertIn("1804928", band)
+        self.assertIn("6957824", band)
+        self.assertIn("10000", band)
+        self.assertIn("50257", band)
+        memory = new14["contract"]["memory_latency_target"]["recommended"]
+        self.assertIn("7219712", memory)
+        self.assertIn("27831296", memory)
+        self.assertIn("28878848", memory)
+        self.assertIn("111325184", memory)
+        self.assertIn("single V100", memory)
+        self.assertIn("V100", new14["contract"]["training_hardware"]["recommended"])
+        rule = new15["contract"]["thresholds"]["recommended"]
+        self.assertIn("starting value for owner review", rule)
+        self.assertIn("less than or equal to 1.05 times", rule)
+        self.assertIn("3 consecutive evaluations", rule)
+        self.assertIn("not a cutoff printed in the paper", rule)
+        self.assertIn("float32", new16["contract"]["format"]["recommended"])
+        self.assertIn("not a GPT-Neo checkpoint", new16["contract"]["format"]["recommended"])
+        self.assertIn("no KV cache", new16["contract"]["runtime_device"]["recommended"])
+        l = _stack()
+        self.assertEqual(len(l.events), len(REAL_EVENTS))
+        for did in ("D12", "D13", "D14", "D16"):
+            self.assertEqual(sum(e["decision_id"] == did for e in l.events), 1)
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        for did in ("D14", "D16"):
+            self.assertTrue(p[did]["contract_complete"])
+            self.assertEqual(p[did]["state"], "APPROVED")
+            self.assertEqual(p[did]["value"], p[did]["recommended"])
+            self.assertEqual(p[did]["owner_input_required"], [])
+            row = [line for line in project_register_md(l).splitlines() if line.startswith(f"| {did} ")][0]
+            self.assertIn("| APPROVED |", row)
+        self.assertTrue(p["D15"]["contract_complete"])
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+        d15row = [line for line in project_register_md(l).splitlines() if line.startswith("| D15 ")][0]
+        self.assertIn("| APPROVED |", d15row)
+        self.assertEqual(p["D12"]["state"], "APPROVED")
+        self.assertEqual(p["D13"]["state"], "APPROVED")
+        questions = (ROOT / "icm/MG8PK/OWNER_QUESTIONS.md").read_text("utf-8")
+        for module in ("B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B11", "INTEGRATION"):
+            self.assertIn(module, questions)
+
+    def test_v314_owner_answers_stay_pending_on_d15(self):
+        self.assertEqual(REAL314["catalog_version"], "3.14")
+        for a, b in zip(REAL313["decisions"], REAL314["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL313["decisions"] if d["id"] == "D15")
+        new = next(d for d in REAL314["decisions"] if d["id"] == "D15")
+        self.assertEqual(new["contract"]["reporting"], old["contract"]["reporting"])
+        self.assertEqual(new["contract"]["thresholds"], old["contract"]["thresholds"])
+        abbrev = new["contract"]["gestalt_id_abbreviation"]
+        inter = new["contract"]["interlinear_annotation"]
+        self.assertFalse(abbrev["owner_input_required"])
+        self.assertFalse(inter["owner_input_required"])
+        self.assertIn(
+            "drop vowels and double consonants keep y and capitalize if compound with a name like Fibonacci sequence gets FbncSqnc or compounded without name gets brick layer to brkLyr or computer programmer to cmptrPrgrmr",
+            abbrev["recommended"],
+        )
+        self.assertIn("flagged as interpretation", abbrev["recommended"])
+        self.assertIn("brkLyr", abbrev["recommended"])
+        self.assertIn("not wired into any Builder", abbrev["recommended"])
+        self.assertIn("Fibonacci alone", abbrev["recommended"])
+        self.assertIn(
+            "what I would like is a sort of info tree to exist interlinear so before gestalts are picked the nych output is still words but the info exists above in a sub-line interlinear style.",
+            inter["recommended"],
+        )
+        self.assertIn("(domain=building_subdom=carpentry)(modalityOp=kine-int)(past-t)", inter["recommended"])
+        self.assertIn("alignment unconfirmed", inter["recommended"])
+        self.assertIn("B4 would produce the domain", inter["recommended"])
+        self.assertIn("source of tense", inter["recommended"])
+        l = _stack()
+        self.assertEqual(len(l.events), len(REAL_EVENTS))
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+        self.assertTrue(p["D15"]["contract_complete"])
+        self.assertEqual(p["D6"]["state"], "APPROVED")
+        self.assertEqual(p["D8"]["state"], "APPROVED")
+        self.assertEqual(p["D10"]["state"], "APPROVED")
+        questions = (ROOT / "icm/MG8PK/OWNER_QUESTIONS.md").read_text("utf-8")
+        self.assertIn("approved at catalog v3.26", questions)
+        self.assertIn("Open questions remain unresolved", questions)
+        self.assertIn("FbncSqnc", questions)
+
+    def test_v315_q2_addendum_stays_on_same_field(self):
+        self.assertEqual(REAL315["catalog_version"], "3.15")
+        for a, b in zip(REAL314["decisions"], REAL315["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL314["decisions"] if d["id"] == "D15")
+        new = next(d for d in REAL315["decisions"] if d["id"] == "D15")
+        self.assertEqual(new["contract"]["gestalt_id_abbreviation"], old["contract"]["gestalt_id_abbreviation"])
+        self.assertEqual(new["contract"]["thresholds"], old["contract"]["thresholds"])
+        self.assertEqual(new["contract"]["reporting"], old["contract"]["reporting"])
+        text = new["contract"]["interlinear_annotation"]["recommended"]
+        self.assertFalse(new["contract"]["interlinear_annotation"]["owner_input_required"])
+        first = "(domain=building_subdom=carpentry)(modalityOp=kine-int)(past-t)"
+        second = "(pronoun)(modOp=kine-ext)(object=gestalt)(object_k=gestalt)"
+        self.assertLess(text.index(first), text.index(second))
+        self.assertIn('"he took the bump of k" also gets tags', text)
+        self.assertIn("he took the bump of k\n", text)
+        self.assertIn('"he" maps to (pronoun)', text)
+        self.assertIn("which spelling is canonical is open", text)
+        self.assertIn("whether that is the convention is open", text)
+        self.assertNotIn('whether "he took the bump of k" gets tags', text)
+        fixtures = json.loads((ROOT / "nych_preview/fixtures/interlinear_examples.json").read_text())
+        self.assertEqual(fixtures[0]["id"], "full-sentence")
+        self.assertEqual(fixtures[0]["role"], "first")
+        self.assertIn(fixtures[0]["annotation"], text)
+        self.assertIn(fixtures[0]["base"], text)
+        self.assertIn(fixtures[1]["base"], text)
+        l = _stack()
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+
+    def test_v316_keeps_c_and_normalizes_tags(self):
+        self.assertEqual(REAL316["catalog_version"], "3.16")
+        for a, b in zip(REAL315["decisions"], REAL316["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL315["decisions"] if d["id"] == "D15")
+        new = next(d for d in REAL316["decisions"] if d["id"] == "D15")
+        self.assertEqual(new["contract"]["thresholds"], old["contract"]["thresholds"])
+        self.assertEqual(new["contract"]["reporting"], old["contract"]["reporting"])
+        abbrev = new["contract"]["gestalt_id_abbreviation"]["recommended"]
+        inter = new["contract"]["interlinear_annotation"]["recommended"]
+        self.assertIn("brkLyr", abbrev)
+        self.assertIn("superseded", abbrev)
+        self.assertIn("brckLyr", abbrev)
+        self.assertIn("FbncSqnc", abbrev)
+        self.assertIn("cmptrPrgrmr", abbrev)
+        self.assertIn("just dont drop the c", abbrev)
+        self.assertIn("modalityOp=kine-int", inter)
+        self.assertIn("(modOp=kine-int)", inter)
+        self.assertIn("(obj_bmp=gst)(obj_k=gst)", inter)
+        self.assertIn("bmp is the consonant skeleton of bump", inter)
+        self.assertLess(inter.index("modalityOp=kine-int"), inter.index("(modOp=kine-int)"))
+        fixtures = json.loads((ROOT / "nych_preview/fixtures/interlinear_examples.json").read_text())
+        self.assertEqual(fixtures[0]["id"], "full-sentence")
+        self.assertIn("modalityOp=", fixtures[0]["annotation"])
+        self.assertEqual(fixtures[1]["id"], "full-sentence-normalized")
+        self.assertIn("(modOp=kine-int)", fixtures[1]["annotation"])
+        self.assertEqual(fixtures[1]["base"], fixtures[0]["base"])
+        self.assertEqual(fixtures[3]["annotation"], "(pronoun)(modOp=kine-ext)(obj_bmp=gst)(obj_k=gst)")
+        self.assertEqual(fixtures[3]["base"], "he took the bump of k")
+        l = _stack()
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+
+    def test_v317_vowel_initial_abbreviation_stays_pending(self):
+        self.assertEqual(REAL317["catalog_version"], "3.17")
+        for a, b in zip(REAL316["decisions"], REAL317["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL316["decisions"] if d["id"] == "D15")
+        new = next(d for d in REAL317["decisions"] if d["id"] == "D15")
+        self.assertEqual(new["contract"]["interlinear_annotation"], old["contract"]["interlinear_annotation"])
+        self.assertEqual(new["contract"]["thresholds"], old["contract"]["thresholds"])
+        text = new["contract"]["gestalt_id_abbreviation"]["recommended"]
+        self.assertIn("apple = 'ppl", text)
+        self.assertIn("opal = 'pl", text)
+        self.assertIn("apple is 'ppl", text)
+        self.assertIn("opal is 'pl", text)
+        self.assertIn("FbncSqnc", text)
+        self.assertIn("brckLyr", text)
+        self.assertIn("cmptrPrgrmr", text)
+        self.assertIn("only right after the initial vowel or anywhere", text)
+        self.assertIn("'ppl versus 'Ppl", text)
+        l = _stack()
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+
+    def test_v318_fried_override_stays_pending(self):
+        self.assertEqual(REAL318["catalog_version"], "3.18")
+        for a, b in zip(REAL317["decisions"], REAL318["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL317["decisions"] if d["id"] == "D15")
+        new = next(d for d in REAL318["decisions"] if d["id"] == "D15")
+        self.assertEqual(new["contract"]["interlinear_annotation"], old["contract"]["interlinear_annotation"])
+        text = new["contract"]["gestalt_id_abbreviation"]["recommended"]
+        self.assertIn('fried apple  fryd"ppl', text)
+        self.assertIn("sometimes it just makes sense to preserve the sound and not introduce vowels by using a y", text)
+        self.assertIn("not a general algorithmic rule", text)
+        self.assertIn("owner-only", text)
+        self.assertIn("fried -> fryd", text)
+        l = _stack()
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+
+    def test_v319_long_i_override_stays_pending(self):
+        self.assertEqual(REAL319["catalog_version"], "3.19")
+        for a, b in zip(REAL318["decisions"], REAL319["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL318["decisions"] if d["id"] == "D15")
+        new = next(d for d in REAL319["decisions"] if d["id"] == "D15")
+        self.assertEqual(new["contract"]["interlinear_annotation"], old["contract"]["interlinear_annotation"])
+        text = new["contract"]["gestalt_id_abbreviation"]["recommended"]
+        self.assertIn(
+            "do it when a hard vowel like capital I sound is needed and for like eye 'y' it makes it distinct to use the ' as an annotaion of vowel sound but not use the vowel",
+            text,
+        )
+        self.assertIn("eye -> 'y", text)
+        self.assertIn("not deterministic", text)
+        l = _stack()
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+
+    def test_v320_ie_to_y_stays_pending(self):
+        self.assertEqual(REAL320["catalog_version"], "3.20")
+        for a, b in zip(REAL319["decisions"], REAL320["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        text = next(d for d in REAL320["decisions"] if d["id"] == "D15")["contract"]["gestalt_id_abbreviation"]["recommended"]
+        self.assertIn("i before e except after c  fried   died usually the ie is a hard I sound", text)
+        self.assertIn("died is dyd", text)
+        self.assertIn("removed from", text)
+        self.assertIn("science", text)
+        self.assertIn("field", text)
+        l = _stack()
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+
+    def test_v321_compound_apostrophe_and_field_marker(self):
+        self.assertEqual(REAL321["catalog_version"], "3.21")
+        for a, b in zip(REAL320["decisions"], REAL321["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        text = next(d for d in REAL321["decisions"] if d["id"] == "D15")["contract"]["gestalt_id_abbreviation"]["recommended"]
+        self.assertIn("feeld peece frend scyence those are the phonetics but reallly fld p''c", text)
+        self.assertIn("fryd'Ppl", text)
+        self.assertIn("denotes that there are two vowels in a row", text)
+        self.assertIn('yes f"ld is correct', text)
+        self.assertIn('field is f"ld', text)
+        self.assertIn('piece is p"c', text)
+        self.assertIn("not a general default", text)
+        l = _stack()
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+
+    def test_v322_short_words_stay_pending(self):
+        self.assertEqual(REAL322["catalog_version"], "3.22")
+        for a, b in zip(REAL321["decisions"], REAL322["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        text = next(d for d in REAL322["decisions"] if d["id"] == "D15")["contract"]["gestalt_id_abbreviation"]["recommended"]
+        self.assertIn("no word of three letters or less is worth symbolizing or shortening", text)
+        self.assertIn("no dont shorten eye i just came back up with the no shorten at 3 or below", text)
+        self.assertIn("hot dog can be htDg", text)
+        self.assertIn("standalone words only", text)
+        self.assertIn("obj_k", text)
+        self.assertIn("if the adjective is imperative to the noun as an object it gets compounded", text)
+        self.assertIn("with out collision", text)
+        self.assertIn("hot dog  as in the dog is hot", text)
+        l = _stack()
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+
+    def test_v323_domain_switch_tag_stays_pending(self):
+        self.assertEqual(REAL323["catalog_version"], "3.23")
+        for a, b in zip(REAL322["decisions"], REAL323["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL322["decisions"] if d["id"] == "D15")
+        new = next(d for d in REAL323["decisions"] if d["id"] == "D15")
+        self.assertEqual(new["contract"]["gestalt_id_abbreviation"], old["contract"]["gestalt_id_abbreviation"])
+        text = new["contract"]["interlinear_annotation"]["recommended"]
+        self.assertIn("domains will switch globally and inter sentence structurally many times", text)
+        self.assertIn("for a  sentence", text)
+        self.assertIn("not owner-given", text)
+        self.assertIn("not a fixture", text)
+        self.assertIn("auto-reverts", text)
+        self.assertIn("htDg", text)
+        l = _stack()
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+
+    def test_v324_domain_switch_spelling_stays_pending(self):
+        self.assertEqual(REAL324["catalog_version"], "3.24")
+        for a, b in zip(REAL323["decisions"], REAL324["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL323["decisions"] if d["id"] == "D15")
+        new = next(d for d in REAL324["decisions"] if d["id"] == "D15")
+        self.assertEqual(new["contract"]["gestalt_id_abbreviation"], old["contract"]["gestalt_id_abbreviation"])
+        text = new["contract"]["interlinear_annotation"]["recommended"]
+        self.assertIn("dom><folloowed by a token number or dom><global", text)
+        self.assertIn("dom><global", text)
+        self.assertIn("dom><N versus dom>N", text)
+        self.assertIn("superseded", text)
+        self.assertIn("auto-reverts", text)
+        l = _stack()
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+
+    def test_v325_temporary_domain_duration_stays_pending(self):
+        self.assertEqual(REAL325["catalog_version"], "3.25")
+        for a, b in zip(REAL324["decisions"], REAL325["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL324["decisions"] if d["id"] == "D15")
+        new = next(d for d in REAL325["decisions"] if d["id"] == "D15")
+        self.assertEqual(new["contract"]["gestalt_id_abbreviation"], old["contract"]["gestalt_id_abbreviation"])
+        text = new["contract"]["interlinear_annotation"]["recommended"]
+        self.assertIn("temp is dom>12 and lands interlinear where it occurs", text)
+        self.assertIn("superseding dom><N", text)
+        self.assertIn("dom><global", text)
+        self.assertIn("how the target domain is named", text)
+        self.assertNotIn("dom><N versus dom>N", text)
+        l = _stack()
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+
+    def test_v326_variable_domain_switch_stays_pending(self):
+        self.assertEqual(REAL326["catalog_version"], "3.26")
+        for a, b in zip(REAL325["decisions"], REAL326["decisions"]):
+            if a["id"] != "D15":
+                self.assertEqual(a, b)
+        old = next(d for d in REAL325["decisions"] if d["id"] == "D15")
+        new = next(d for d in REAL326["decisions"] if d["id"] == "D15")
+        self.assertEqual(new["contract"]["gestalt_id_abbreviation"], old["contract"]["gestalt_id_abbreviation"])
+        text = new["contract"]["interlinear_annotation"]["recommended"]
+        self.assertIn("dom>?=food and after however many tokens", text)
+        self.assertIn("the tag ?=12  where ? is any variable", text)
+        self.assertIn("not owner-confirmed", text)
+        self.assertIn("dom>x=food", text)
+        self.assertIn("x=12", text)
+        self.assertIn("dom><global", text)
+        self.assertIn("nest or overlap", text)
+        l = _stack()
+        d15_events = [e for e in l.events if e["decision_id"] == "D15"]
+        self.assertEqual(len(d15_events), 1)
+        self.assertEqual(d15_events[0]["catalog_digest"], sha256_hex(REAL326))
+        p = {item["id"]: item for item in project_owner_decisions(l)["decisions"]}
+        self.assertEqual(p["D15"]["state"], "APPROVED")
+        self.assertEqual(p["D15"]["value"], p["D15"]["recommended"])
+        event = d15_events[0]
+        self.assertEqual(event["action"], "APPROVE_RECOMMENDATION")
+        self.assertEqual(event["owner"], "Nick Hartman")
+        self.assertEqual(event["timestamp"], "2026-11-10T04:17:00Z")
+        self.assertEqual(event["note"], "approved oets do this")
+        self.assertIn("Open questions remain unresolved", event["rationale"])
+        self.assertIn("interpreted", event["rationale"])
+        self.assertEqual(event["event_id"], "sha256:f4b8d789afc4c173c16569622257d852fe9a5fe37ee40960c68ebff1d086e952")
+        for did in ("D12", "D13", "D14", "D16"):
+            self.assertEqual(p[did]["state"], "APPROVED")
+            self.assertEqual(p[did]["value"], p[did]["recommended"])
+            self.assertEqual(sum(e["decision_id"] == did for e in l.events), 1)
+            self.assertEqual(next(e for e in l.events if e["decision_id"] == did)["note"], "all four approved we nee to merge and wire it up begining testing is the onl way to find out where we are at")
+            self.assertEqual(next(e for e in l.events if e["decision_id"] == did)["timestamp"], "2026-11-10T04:27:00Z")
 
 
 if __name__ == "__main__":
