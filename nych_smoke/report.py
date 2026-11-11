@@ -153,10 +153,11 @@ def stage_report() -> dict:
             "domain_switch": {
                 "status": "provisional",
                 "note": (
-                    "The parser accepts owner-stated dom><global and dom>N, and it accepts the interpreted "
-                    "dom>x=food / x=12 form labeled interpreted. Questions (a) closing-tag placement and count "
-                    "direction, (b) automatic reversion, (c) a domain on the global tag, (d) nesting of different "
-                    "variables, overlap, and parentheses fail closed. No domain was assigned on this sample."
+                    "Provisional. Stated, not approved: dom>?<domain> turns a variable on and ?=N closes it "
+                    "where the switch ends. N is checked against the tokens strictly between the tags. "
+                    "That boundary is an implementation choice. dom>N is still accepted, and whether the "
+                    "variable form supersedes it is open. Automatic reversion, a domain on dom><global, "
+                    "nesting, and parentheses stay unresolved. No domain was assigned on this sample."
                 ),
                 "sample_tag_count": len(domain["tags"]),
                 "unresolved": domain["unresolved"],
