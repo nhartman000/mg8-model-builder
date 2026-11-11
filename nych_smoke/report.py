@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from gitson_boundary import SCHEMA_DIGEST, validate_declaration
 from gitson_boundary.validator import canonical_json
 
+from nych_preview.domain_switch import scan_interlinear
 from nych_smoke.pipeline import artifact_digest, load_english_sample, run_text
 from nych_smoke.proper_names import classify_names
 from nych_smoke.tiny_train import train_sample
@@ -50,6 +51,43 @@ def _validator_check() -> dict:
     }
 
 
+def _inspector_stage() -> dict:
+    """Run I1 against the pinned B1 ingest. The validator is not the inspector."""
+    from nych_inspector.b1_harness import build_b1_evidence
+    from nych_inspector.review import review
+
+    try:
+        evidence = build_b1_evidence()
+    except FileNotFoundError as err:
+        return {
+            "authorizes_wiring": False,
+            "missing_evidence": ["pinned B1 source"],
+            "note": f"I1 did not review B1 because the pinned source is unavailable: {err}",
+            "status": "intermediate",
+            "validator_was_the_inspector": False,
+            "verdict": "INTERMEDIATE",
+        }
+    verdict = review(evidence["candidate_digest"], evidence["contract"], evidence["bundle"])
+    status = {"PASS": "wired and passing", "FAIL": "wired and failing", "INTERMEDIATE": "intermediate"}[verdict["verdict"]]
+    note = (
+        f"I1 reviewed the pinned ingest at {evidence['contract']['source_commit']} "
+        f"and returned {verdict['verdict']}. "
+        "Missing evidence is INTERMEDIATE. This report does not authorize wiring, "
+        "and gitson_boundary.validate_declaration was not the inspector."
+    )
+    return {
+        "authorizes_wiring": False,
+        "candidate_digest": verdict["candidate_digest"],
+        "defects": verdict["defects"],
+        "missing_evidence": verdict["missing_evidence"],
+        "note": note,
+        "pinned_commit": evidence["contract"]["source_commit"],
+        "status": status,
+        "validator_was_the_inspector": False,
+        "verdict": verdict["verdict"],
+    }
+
+
 def stage_report() -> dict:
     sample = load_english_sample()
     text_report = run_text(
@@ -61,6 +99,8 @@ def stage_report() -> dict:
     names = classify_names(sample["text"])
     training = train_sample()
     validator = _validator_check()
+    inspector = _inspector_stage()
+    domain = scan_interlinear(sample["text"])
     return {
         "sample_identifier": sample["identifier"],
         "sample_license": sample["license"],
@@ -83,7 +123,17 @@ def stage_report() -> dict:
             },
             "typo_compendium": {
                 "status": "not runnable here",
-                "note": "Needs the enwiki-20261001 dump, the n-gram compendium, and the 99% precision gate.",
+                "note": (
+                    "The streaming builder, the D2 split, the four keyboard maps, and the "
+                    "one-sided 95% Clopper-Pearson gate are implemented and covered by synthetic fixtures. "
+                    "This run did not read enwiki-20261001, did not verify its official SHA-1, and has no "
+                    "owner-chosen smoothing method, so probabilities were not computed. "
+                    f"Automatic replacements on this sample: {text_report['typo']['automatic_replacements']}. "
+                    "Original token text is unchanged. This is not the real compendium build."
+                ),
+                "automatic_replacements": text_report["typo"]["automatic_replacements"],
+                "probabilities": "refused",
+                "smoothing_method": None,
             },
             "proper_names": {
                 "status": "provisional",
@@ -101,18 +151,23 @@ def stage_report() -> dict:
                 "note": f"{len(open_gestalts)} token(s) stayed open, including hyphenated words. Unlisted pairs were not compounded.",
             },
             "domain_switch": {
-                "status": "not wired",
-                "note": "dom>x=food / x=12 remains an interpretation. Placement, reversion, global naming, and nesting are open.",
+                "status": "provisional",
+                "note": (
+                    "The parser accepts owner-stated dom><global and dom>N, and it accepts the interpreted "
+                    "dom>x=food / x=12 form labeled interpreted. Questions (a) closing-tag placement and count "
+                    "direction, (b) automatic reversion, (c) a domain on the global tag, (d) nesting of different "
+                    "variables, overlap, and parentheses fail closed. No domain was assigned on this sample."
+                ),
+                "sample_tag_count": len(domain["tags"]),
+                "unresolved": domain["unresolved"],
+                "resumes_previous_domain": domain["resumes_previous_domain"],
             },
             "domain_lexicon": {
                 "status": "not wired",
                 "note": "D4 is approved, and the full domain-decision rule module is still deferred.",
             },
             "gitson_validator": validator,
-            "inspector": {
-                "status": "not runnable here",
-                "note": "No separate inspector ran. D12 says missing evidence is INTERMEDIATE.",
-            },
+            "inspector": inspector,
             "b1_ingest": {
                 "status": "wired and passing" if text_report["ingest"]["status"] == "ACCEPTED" else "wired and failing",
                 "note": "Calls the NYCH repo's B1 implementation before tokenization. Only status and digest metadata are reported; accepted text remains in request memory.",
