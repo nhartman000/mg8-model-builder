@@ -149,6 +149,18 @@ Consumed by D6 `tote_write_policy` and the B5 GST contract, in B5 and B6.
 
 Applied as a hard closed set. Builders must not invent an operator.
 
+### TOTE loop record — owner-stated, not approved
+
+Owner statement, verbatim, 2026-11-10 at 10:01 PM ET: "tote loops in the database every tote loop requires an actor an action a modality operator and and object". Stated, not approved. No Decision Console approval event was written.
+
+The repositories already use TOTE as Test–Operate–Test–Exit. They do not give it another definition. The builder handoff says every admitted loop must carry at least one actor, one action, one object or tool, and a registered modality operator. The pinned NYCH repo repeats that invariant. Its migration `docs/migrations/002_gst_taxonomy_additive.sql` stores actor, action, object, and tool as `tote_loop_elements.element_role` values, and stores the modality operator as `tote_steps.operator_id`. The view `gst_loop_invariant_summary` marks a loop complete when it has an actor, an action, an object or a tool, and a step with an operator. `gst_context.py` names the same four invariants as `actor`, `action`, `object_or_tool`, and `registered_modality_operator`. The canonical table source named by both repos is `nhartman000/T.O.T.E-loops/schema.sql`. No new catalog snapshot was written for this statement.
+
+Interpretation, flagged as interpretation and not owner-stated: each TOTE loop record in the database has four required fields: actor, action, modality operator, and object.
+
+`nych_preview/tote_loop_record.py` is a provisional presence check for those four fields. It rejects a record when any of them is absent or None. It does not replace the NYCH schema, and it does not treat a tool as the object.
+
+Open owner questions: field types are not specified; the allowed modality-operator values are not specified; the database engine for this new statement is not specified; whether the Test and Exit conditions are part of the record is not specified; whether the object is a gestalt id is not specified; and whether the actor can be implied is not specified. Also open: whether the existing object-or-tool rule still satisfies the object field in this statement.
+
 ## Emoji inventory source — owner-stated, not approved
 
 Owner statement, recorded 2026-11-10 at 3:46 AM ET: Nick gave the emoji inventory source as https://unicode.org/emoji/charts-12.0/full-emoji-list.html (Unicode Emoji 12.0 full emoji list).
