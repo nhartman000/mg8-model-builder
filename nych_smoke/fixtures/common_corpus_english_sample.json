@@ -1,0 +1,10 @@
+{
+  "source": "https://huggingface.co/datasets/PleIAs/common_corpus",
+  "retrieved_from": "Hugging Face datasets-server first-rows, config default, split train",
+  "identifier": "uk.org.publicwhip/debate/1937-07-29a.3311.2",
+  "collection": "UK Hansard – House of Commons",
+  "license": "Open Parliament Licence v3.0",
+  "language": "English",
+  "language_field": "language",
+  "text": "asked the Chancellor of the Exchequer whether he can indicate the estimated amount co-operative societies will pay by way of National Defence Contribution?"
+}
