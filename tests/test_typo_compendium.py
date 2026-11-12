@@ -81,13 +81,17 @@ def _reference_mkn(pages, top=3):
         d1, d2, d3 = discounts(k, coc[1], coc[2], coc[3], coc[4])
         table = {1: d1, 2: d2, 3: d3}
         totals = Counter()
-        kinds = {}
-        for (context, _word), a in adjusted[k].items():
-            totals[context] += a
-            kinds.setdefault(context, [0, 0, 0])[min(a, 3) - 1] += 1
+        mass = Counter()
         for (context, word), a in adjusted[k].items():
-            n1, n2, n3 = kinds[context]
-            gamma = (d1 * n1 + d2 * n2 + d3 * n3) * 1.0 / totals[context]
+            totals[context] += a
+            mass[context] += table[min(a, 3)]
+            if k in (2, 3) and raw[k][(context, word)] == 1:
+                # Owner-chosen pruning: the row is dropped and its mass goes to the weight.
+                mass[context] += max(a - table[min(a, 3)], 0)
+        for (context, word), a in adjusted[k].items():
+            if k in (2, 3) and raw[k][(context, word)] == 1:
+                continue
+            gamma = mass[context] / totals[context]
             lower = 1.0 / vocabulary if k == 0 else probs[k - 1][(context[1:], word)]
             probs[k][(context, word)] = max(a - table[min(a, 3)], 0) * 1.0 / totals[context] + gamma * lower
     return probs
@@ -316,6 +320,12 @@ class TypoCompendium(unittest.TestCase):
             self.assertEqual(manifest["probabilities"], "computed")
             self.assertEqual(manifest["ngram_order"], [1, 2, 3])
             self.assertEqual(manifest["mkn"]["levels"], [0, 1, 2, 3])
+            self.assertEqual(manifest["pruning"]["levels"], [2, 3])
+            for level in ("2", "3"):
+                self.assertGreater(manifest["mkn"]["rows"][level]["pruned"], 0)
+                self.assertGreater(manifest["mkn"]["rows"][level]["kept"], 0)
+            for level in ("0", "1"):
+                self.assertEqual(manifest["mkn"]["rows"][level]["pruned"], 0)
             self.assertNotIn(TRAIN_TEXT, (root / "manifest.json").read_text(encoding="utf-8"))
             self.assertNotIn(TEST_TEXT, (root / "manifest.json").read_text(encoding="utf-8"))
             connection = sqlite3.connect(root / "counts.sqlite3")
@@ -324,6 +334,10 @@ class TypoCompendium(unittest.TestCase):
                 columns,
                 ["order_n", "context_key", "candidate_token", "count", "context_total", "probability", "log_probability"],
             )
+            singletons = connection.execute(
+                "SELECT COUNT(*) FROM ngram_counts WHERE order_n IN (2, 3) AND count = 1"
+            ).fetchone()
+            self.assertEqual(singletons[0], 0)
             missing = connection.execute(
                 "SELECT COUNT(*) FROM ngram_counts WHERE probability IS NULL OR log_probability IS NULL"
             ).fetchone()

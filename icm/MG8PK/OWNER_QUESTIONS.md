@@ -242,7 +242,13 @@ Interpretations, flagged as interpretations and not owner-stated:
 - The following plumbing choices are also mine: batch size 500 pages, merge fan-in 32, WITHOUT ROWID tables, and SQLite temp files kept on disk rather than in /tmp.
 
 Open owner questions:
-- No pruning or minimum count is applied. If the full build does not fit on the available disk, a minimum-count cutoff or a larger disk is the owner's decision.
+- Pruning is resolved by the owner statement below.
+
+Measured 1% stream sample, before pruning: 66,278 train pages, 38 million tokens, 70 million rows, an 8.8 GB SQLite file, and 1 h 23 min with 6 workers. Rows seen once were 62%, 76%, 88%, and 94% of the rows at context lengths 0 through 3. The full dump was estimated at 450–880 GB, which does not fit on the 363 GB free on the external SSD.
+
+Option offered: "Drop rows seen only once at the 2- and 3-word context levels ... The smoothing discounts would still be calculated from the full counts before anything is dropped." Owner reply, verbatim, 2026-11-12 at 4:56 PM EST: "ok option 1". Stated, not approved. No Decision Console approval event or catalog version was written.
+
+Implemented: rows with raw count 1 at context lengths 2 and 3 are not stored. Discounts, continuation counts, context totals, and interpolation weights are computed from the full counts by streaming passes over the sorted run files. Interpretation, flagged as interpretation: a pruned row's discounted mass is added to its context's interpolation weight, so each context still sums to 1, the same as KenLM-style pruning. Pruning on the raw count keeps every stored row's shorter-context suffix.
 - Image captions are dropped. Should they be counted instead?
 
 ## What each module does

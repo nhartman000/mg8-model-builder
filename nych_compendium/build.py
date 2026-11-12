@@ -4,7 +4,9 @@ No dump or article text is retained. Page text is hashed and discarded, and
 markup is stripped before counting (see ``wikitext.py``). Train pages are
 counted in batches: each batch becomes one sorted, gzip-compressed run file,
 runs are merged in tiers so disk use stays bounded, and the final sorted run
-is loaded into SQLite once. Probabilities use the owner-approved D2
+is loaded into SQLite once. MKN statistics are computed by streaming passes
+over the sorted runs, so rows pruned by the owner-chosen singleton rule never
+reach SQLite. Probabilities use the owner-approved D2
 smoothing, ``chen-goodman-mkn-interpolated-v1`` (see ``smoothing.py``). If it
 cannot be computed, the build stops and writes no manifest.
 
@@ -31,13 +33,20 @@ from pathlib import Path
 
 from nych_compendium.keyboards import LAYOUT_VERSION, LAYOUTS
 from nych_compendium.smoothing import (
-    CREATE_PAGE_STARTS,
+    CREATE_ADJUSTED,
+    CREATE_BACKOFF,
     LEVELS,
+    PRUNE_SINGLETON_LEVELS,
     SMOOTHING_ID,
     SMOOTHING_VERSION,
     SmoothingUnavailable,
-    apply_mkn,
     context_key,
+    context_statistics,
+    discount_table,
+    fill_probabilities,
+    is_pruned,
+    suffix_key,
+    write_discounts,
 )
 from nych_compendium.split import SNAPSHOT_ID, bucket, split_name
 from nych_compendium.wikitext import EXTRACTION_VERSION, plain_text
@@ -52,6 +61,7 @@ ORDERS = (1, 2, 3)
 BATCH_PAGES = 500
 MERGE_FAN_IN = 32
 INSERT_CHUNK = 50_000
+CONTINUATION_CHUNK = 2_000_000
 PROVENANCE_COMMIT_PAGES = 5_000
 
 CREATE_COUNTS = """
@@ -317,60 +327,124 @@ class _Runs:
         return paths[0] if len(paths) == 1 else self._merge(paths)
 
 
-def _context_totals(path: Path, target: Path) -> None:
-    """One line per context, in run order: order, context_key, total count."""
-    with gzip.open(target, "wt", encoding="utf-8", newline="\n", compresslevel=1) as out:
-        current = None
-        total = 0
-        for key, count, _start in _read_run(path):
-            context = key.rsplit("\t", 1)[0]
-            if context != current:
-                if current is not None:
-                    out.write(f"{current}\t{total}\n")
-                current = context
-                total = 0
-            total += count
-        if current is not None:
-            out.write(f"{current}\t{total}\n")
+def _continuation_run(final: Path, directory: Path, fan_in: int) -> Path | None:
+    """Sorted continuation counts for levels below the top.
 
-
-def _load(connection: sqlite3.Connection, run: Path, totals: Path) -> None:
-    """Insert the final run, joining context totals in the same sorted order."""
+    Each top-down row (v + context, word) adds one left extension to
+    (context, word); a page-start row adds one more. Equal keys are summed when
+    runs merge.
+    """
+    directory.mkdir()
+    runs = _Runs(directory, fan_in)
     top = LEVELS[-1]
-    rows = []
-    starts = []
-    with gzip.open(totals, "rt", encoding="utf-8", newline="\n") as handle:
-        context_totals = (line.rstrip("\n").rsplit("\t", 1) for line in handle)
-        current, total = None, 0
-        for key, count, start in _read_run(run):
-            order, context, candidate = key.split("\t")
-            if f"{order}\t{context}" != current:
-                current, total = next(context_totals)
-                if current != f"{order}\t{context}":
-                    raise RuntimeError("context totals are out of step with the counts")
-            rows.append((int(order), context, candidate, count, int(total)))
-            if start and int(order) < top:
-                starts.append((int(order), context, candidate))
-            if len(rows) >= INSERT_CHUNK:
-                _flush(connection, rows, starts)
-        _flush(connection, rows, starts)
+    buffer: dict[str, int] = {}
+    made = 0
+
+    def flush() -> None:
+        nonlocal made
+        if buffer:
+            path = directory / f"continuation-{made:09d}.tsv.gz"
+            made += 1
+            _write_run(path, ((key, buffer[key], 0) for key in sorted(buffer)))
+            buffer.clear()
+            runs.add(path)
+
+    for key, _raw, start in _read_run(final):
+        level = int(key[0])
+        if level >= 1:
+            _order, context, word = key.split("\t")
+            lower = f"{level - 1}\t{suffix_key(context)}\t{word}"
+            buffer[lower] = buffer.get(lower, 0) + 1
+        if start and level < top:
+            buffer[key] = buffer.get(key, 0) + 1
+        if len(buffer) >= CONTINUATION_CHUNK:
+            flush()
+    flush()
+    return runs.final()
 
 
-def _flush(connection: sqlite3.Connection, rows: list, starts: list) -> None:
+def _joined(final: Path | None, continuation: Path | None):
+    """Yield (key, level, raw count, adjusted count) for every counted row."""
+    if final is None:
+        return
+    top = LEVELS[-1]
+    lower = _read_run(continuation) if continuation is not None else iter(())
+    pending = next(lower, None)
+    for key, raw, _start in _read_run(final):
+        level = int(key[0])
+        if level == top:
+            yield key, level, raw, raw
+            continue
+        if pending is None or pending[0] != key:
+            raise SmoothingUnavailable(f"level {level}: a counted n-gram has no continuation count")
+        yield key, level, raw, pending[1]
+        pending = next(lower, None)
+    if pending is not None:
+        raise SmoothingUnavailable("a continuation count has no counted n-gram")
+
+
+def _write_stats(path: Path, stats) -> None:
+    with gzip.open(path, "wt", encoding="utf-8", newline="\n", compresslevel=1) as handle:
+        for context, raw_total, total, weight, kept in stats:
+            handle.write(f"{context}\t{raw_total}\t{total}\t{weight!r}\t{kept}\n")
+
+
+def _read_stats(path: Path):
+    with gzip.open(path, "rt", encoding="utf-8", newline="\n") as handle:
+        for line in handle:
+            context, raw_total, total, weight, kept = line.rstrip("\n").rsplit("\t", 4)
+            yield context, int(raw_total), int(total), float(weight), int(kept)
+
+
+def _load_kept(connection: sqlite3.Connection, rows, stats) -> dict:
+    """Insert kept rows, their continuation counts and their contexts' weights."""
+    counted: list = []
+    adjusted_rows: list = []
+    weights: list = []
+    report = {str(level): {"kept": 0, "pruned": 0} for level in LEVELS}
+    current = None
+    raw_total = 0
+    for key, level, raw, adjusted in rows:
+        context, word = key.rsplit("\t", 1)
+        if context != current:
+            current, raw_total, total, weight, kept = next(stats)
+            if current != context:
+                raise RuntimeError("context statistics are out of step with the counts")
+            if kept:
+                weights.append((level, context.split("\t", 1)[1], total, weight))
+        if is_pruned(level, raw):
+            report[str(level)]["pruned"] += 1
+            continue
+        report[str(level)]["kept"] += 1
+        context_json = context.split("\t", 1)[1]
+        counted.append((level, context_json, word, raw, raw_total))
+        adjusted_rows.append((level, context_json, word, adjusted))
+        if len(counted) >= INSERT_CHUNK:
+            _flush(connection, counted, adjusted_rows, weights)
+    _flush(connection, counted, adjusted_rows, weights)
+    return report
+
+
+def _flush(connection: sqlite3.Connection, counted: list, adjusted_rows: list, weights: list) -> None:
     connection.executemany(
         """
         INSERT INTO ngram_counts (
             order_n, context_key, candidate_token, count, context_total, probability, log_probability
         ) VALUES (?, ?, ?, ?, ?, NULL, NULL)
         """,
-        rows,
+        counted,
     )
     connection.executemany(
-        "INSERT INTO page_start_ngrams (order_n, context_key, candidate_token) VALUES (?, ?, ?)",
-        starts,
+        "INSERT INTO mkn_adjusted (order_n, context_key, candidate_token, adjusted) VALUES (?, ?, ?, ?)",
+        adjusted_rows,
     )
-    rows.clear()
-    starts.clear()
+    connection.executemany(
+        "INSERT INTO context_backoff (order_n, context_key, adjusted_total, backoff_weight) VALUES (?, ?, ?, ?)",
+        weights,
+    )
+    counted.clear()
+    adjusted_rows.clear()
+    weights.clear()
 
 
 def _page_fields(elem: ET.Element) -> dict:
@@ -516,7 +590,6 @@ def build_compendium(
         connection.execute("PRAGMA temp_store = FILE")
         connection.execute(CREATE_COUNTS)
         connection.execute(CREATE_PAGES)
-        connection.execute(CREATE_PAGE_STARTS)
         counts = {"train": 0, "validation": 0, "test": 0, "excluded": 0}
         runs = _Runs(runs_dir, merge_fan_in)
 
@@ -549,16 +622,32 @@ def build_compendium(
             collect(pending.popleft().get())
         connection.commit()
         final = runs.final()
-        if final is not None:
-            totals = runs_dir / "context-totals.tsv.gz"
-            _context_totals(final, totals)
-            _load(connection, final, totals)
+        continuation = (
+            _continuation_run(final, runs_dir / "continuation", merge_fan_in) if final is not None else None
+        )
+        # Pass A: counts-of-counts and discounts over the full, unpruned counts.
+        table = discount_table((level, adjusted) for _key, level, _raw, adjusted in _joined(final, continuation))
+        # Pass B: per-context totals and weights, still over the full counts.
+        stats_path = runs_dir / "context-stats.tsv.gz"
+        _write_stats(
+            stats_path,
+            context_statistics(
+                ((key.rsplit("\t", 1)[0], level, raw, adjusted) for key, level, raw, adjusted in _joined(final, continuation)),
+                table,
+            ),
+        )
+        # Pass C: load only the kept rows.
+        connection.execute(CREATE_ADJUSTED)
+        connection.execute(CREATE_BACKOFF)
+        write_discounts(connection, table)
+        stored = _load_kept(connection, _joined(final, continuation), _read_stats(stats_path))
         connection.commit()
         try:
-            mkn = apply_mkn(connection)
+            mkn = fill_probabilities(connection, table)
         except SmoothingUnavailable:
             connection.rollback()
             raise
+        mkn["rows"] = stored
         connection.commit()
         artifact = model_digest(connection)
         counted = counts_digest(connection)
@@ -587,6 +676,7 @@ def build_compendium(
             "mkn_level_0",
             "mkn_log_base_e",
             "mkn_page_start_left_extension",
+            "mkn_pruned_mass_to_interpolation_weight",
             "normalizer_version",
             "page_url_template",
             "redirect_pages_excluded",
@@ -605,6 +695,7 @@ def build_compendium(
         "page_counts": counts,
         "page_provenance_digest": pages,
         "page_provenance_table": "page_provenance",
+        "pruning": {"levels": list(PRUNE_SINGLETON_LEVELS), "rule": "drop rows with raw count 1"},
         "probabilities": "computed",
         "schema_version": SCHEMA_VERSION,
         "smoothing_method": SMOOTHING_ID,

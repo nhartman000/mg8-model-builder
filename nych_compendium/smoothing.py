@@ -9,12 +9,20 @@ Levels are context lengths. The owner stated that orders 1-3 mean context
 lengths 1-3 (stated, not approved). Level 0 is the unigram base that the
 recursion needs.
 
+Pruning, owner-chosen (stated, not approved): rows seen exactly once at
+context lengths 2 and 3 are not stored. Discounts, continuation counts,
+context totals and interpolation weights are all computed from the full,
+unpruned counts first. A pruned row's discounted mass is added to its
+context's interpolation weight, so every context still sums to 1, and a
+context whose rows were all pruned has weight 1 and is not stored.
+
 Interpreted plumbing: a page start counts as one left-extension type, so every
 lower-level n-gram has a continuation count of at least 1; the recursion ends
 in a uniform distribution over the train vocabulary (Chen and Goodman's
 0th-order model) with no unknown-word token, so an out-of-vocabulary word has
 no probability; natural log; per-context interpolation weights stored in
-``context_backoff``; per-level discounts stored in ``mkn_discounts``.
+``context_backoff``; per-level discounts stored in ``mkn_discounts``; pruning
+on the raw count, which keeps every stored row's shorter-context suffix.
 """
 from __future__ import annotations
 
@@ -25,15 +33,7 @@ import sqlite3
 SMOOTHING_ID = "chen-goodman-mkn-interpolated-v1"
 SMOOTHING_VERSION = "v1"
 LEVELS = (0, 1, 2, 3)
-
-CREATE_PAGE_STARTS = """
-CREATE TABLE page_start_ngrams (
-    order_n INTEGER NOT NULL,
-    context_key TEXT NOT NULL,
-    candidate_token TEXT NOT NULL,
-    PRIMARY KEY (order_n, context_key, candidate_token)
-) WITHOUT ROWID
-"""
+PRUNE_SINGLETON_LEVELS = (2, 3)
 
 CREATE_ADJUSTED = """
 CREATE TABLE mkn_adjusted (
@@ -77,7 +77,12 @@ def context_key(words: list[str]) -> str:
     return json.dumps(words, ensure_ascii=False, separators=(",", ":"))
 
 
-def _suffix(key: str) -> str:
+def suffix_key(key: str) -> str:
+    """Drop the first word of a context key."""
+    if "\\" not in key:
+        # Word tokens hold no quote, so the first '","' ends the first word.
+        cut = key.find('","')
+        return "[]" if cut < 0 else "[" + key[cut + 2 :]
     return context_key(json.loads(key)[1:])
 
 
@@ -96,72 +101,63 @@ def discounts(level: int, n1: int, n2: int, n3: int, n4: int) -> tuple[float, fl
     return values
 
 
-def _fill_adjusted(connection: sqlite3.Connection, top: int) -> None:
-    connection.execute(
-        """
-        INSERT INTO mkn_adjusted (order_n, context_key, candidate_token, adjusted)
-        SELECT order_n, context_key, candidate_token, count
-        FROM ngram_counts WHERE order_n = ?
-        """,
-        (top,),
-    )
-    for level in range(top - 1, -1, -1):
-        # Each level+1 row is a distinct left word, so one row is one extension.
+def discount_table(rows) -> dict[int, dict]:
+    """Pass over (level, adjusted) pairs: counts-of-counts and discounts per level."""
+    counts = {level: [0, 0, 0, 0] for level in LEVELS}
+    for level, adjusted in rows:
+        if adjusted <= 4:
+            counts[level][adjusted - 1] += 1
+    table = {}
+    for level in LEVELS:
+        n1, n2, n3, n4 = counts[level]
+        d1, d2, d3 = discounts(level, n1, n2, n3, n4)
+        table[level] = {"n": (n1, n2, n3, n4), "d": (d1, d2, d3)}
+    return table
+
+
+def _discount(d: tuple[float, float, float], adjusted: int) -> float:
+    return d[min(adjusted, 3) - 1]
+
+
+def is_pruned(level: int, raw: int) -> bool:
+    return level in PRUNE_SINGLETON_LEVELS and raw == 1
+
+
+def context_statistics(rows, table: dict[int, dict]):
+    """Group sorted (context, level, raw, adjusted) rows by context.
+
+    Yields (context, raw_total, adjusted_total, weight, kept_rows) with every
+    total taken over the full, unpruned rows.
+    """
+    current = None
+    for context, level, raw, adjusted in rows:
+        if context != current:
+            if current is not None:
+                yield current, raw_total, total, (mass + pruned) / total, kept
+            current = context
+            d = table[level]["d"]
+            raw_total = total = kept = 0
+            mass = pruned = 0.0
+        raw_total += raw
+        total += adjusted
+        mass += _discount(d, adjusted)
+        if is_pruned(level, raw):
+            pruned += max(adjusted - _discount(d, adjusted), 0)
+        else:
+            kept += 1
+    if current is not None:
+        yield current, raw_total, total, (mass + pruned) / total, kept
+
+
+def write_discounts(connection: sqlite3.Connection, table: dict[int, dict]) -> None:
+    connection.execute(CREATE_DISCOUNTS)
+    for level in LEVELS:
+        n1, n2, n3, n4 = table[level]["n"]
+        d1, d2, d3 = table[level]["d"]
         connection.execute(
-            """
-            INSERT INTO mkn_adjusted (order_n, context_key, candidate_token, adjusted)
-            SELECT ?, context_key, candidate_token, SUM(n)
-            FROM (
-                SELECT mkn_suffix(context_key) AS context_key, candidate_token, 1 AS n
-                FROM ngram_counts WHERE order_n = ?
-                UNION ALL
-                SELECT context_key, candidate_token, 1
-                FROM page_start_ngrams WHERE order_n = ?
-            )
-            GROUP BY context_key, candidate_token
-            """,
-            (level, level + 1, level),
+            "INSERT INTO mkn_discounts (order_n, n1, n2, n3, n4, d1, d2, d3_plus) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (level, n1, n2, n3, n4, d1, d2, d3),
         )
-    for level in range(top + 1):
-        counted = connection.execute("SELECT COUNT(*) FROM ngram_counts WHERE order_n = ?", (level,)).fetchone()[0]
-        adjusted = connection.execute("SELECT COUNT(*) FROM mkn_adjusted WHERE order_n = ?", (level,)).fetchone()[0]
-        if counted == 0 or counted != adjusted:
-            raise SmoothingUnavailable(
-                f"level {level}: {counted} counted n-grams but {adjusted} continuation counts"
-            )
-
-
-def _level_discounts(connection: sqlite3.Connection, level: int) -> tuple[float, float, float]:
-    rows = dict(
-        connection.execute(
-            """
-            SELECT adjusted, COUNT(*) FROM mkn_adjusted
-            WHERE order_n = ? AND adjusted <= 4
-            GROUP BY adjusted
-            """,
-            (level,),
-        ).fetchall()
-    )
-    n1, n2, n3, n4 = (rows.get(j, 0) for j in (1, 2, 3, 4))
-    d1, d2, d3 = discounts(level, n1, n2, n3, n4)
-    connection.execute(
-        "INSERT INTO mkn_discounts (order_n, n1, n2, n3, n4, d1, d2, d3_plus) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        (level, n1, n2, n3, n4, d1, d2, d3),
-    )
-    return d1, d2, d3
-
-
-def _fill_backoff(connection: sqlite3.Connection, level: int, d1: float, d2: float, d3: float) -> None:
-    connection.execute(
-        """
-        INSERT INTO context_backoff (order_n, context_key, adjusted_total, backoff_weight)
-        SELECT ?, context_key, SUM(adjusted),
-               (? * SUM(adjusted = 1) + ? * SUM(adjusted = 2) + ? * SUM(adjusted >= 3)) * 1.0 / SUM(adjusted)
-        FROM mkn_adjusted WHERE order_n = ?
-        GROUP BY context_key
-        """,
-        (level, d1, d2, d3, level),
-    )
 
 
 def _fill_probabilities(
@@ -204,28 +200,23 @@ def _fill_probabilities(
     )
 
 
-def _register(connection: sqlite3.Connection) -> None:
-    connection.create_function("mkn_suffix", 1, _suffix, deterministic=True)
+def fill_probabilities(connection: sqlite3.Connection, table: dict[int, dict]) -> dict:
+    """Fill probability and log_probability for the stored rows, level by level."""
+    connection.create_function("mkn_suffix", 1, suffix_key, deterministic=True)
     connection.create_function("mkn_ln", 1, math.log, deterministic=True)
-
-
-def apply_mkn(connection: sqlite3.Connection) -> dict:
-    """Fill probability and log_probability for every level, or raise."""
-    _register(connection)
-    top = LEVELS[-1]
-    connection.execute(CREATE_ADJUSTED)
-    connection.execute(CREATE_DISCOUNTS)
-    connection.execute(CREATE_BACKOFF)
-    _fill_adjusted(connection, top)
     vocabulary = connection.execute("SELECT COUNT(*) FROM ngram_counts WHERE order_n = 0").fetchone()[0]
     report = {}
     for level in LEVELS:
-        d1, d2, d3 = _level_discounts(connection, level)
-        _fill_backoff(connection, level, d1, d2, d3)
+        d1, d2, d3 = table[level]["d"]
         _fill_probabilities(connection, level, d1, d2, d3, vocabulary)
         report[str(level)] = {"d1": d1, "d2": d2, "d3_plus": d3}
     connection.execute("DROP TABLE mkn_adjusted")
-    return {"discounts": report, "levels": list(LEVELS), "vocabulary_size": vocabulary}
+    return {
+        "discounts": report,
+        "levels": list(LEVELS),
+        "pruned_singleton_levels": list(PRUNE_SINGLETON_LEVELS),
+        "vocabulary_size": vocabulary,
+    }
 
 
 def probability(connection: sqlite3.Connection, context: list[str], word: str) -> float | None:
