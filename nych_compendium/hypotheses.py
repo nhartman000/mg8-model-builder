@@ -3,7 +3,8 @@
 Interpreted plumbing: word tokens are the context, a longer observed context
 wins, and a right-context count breaks an equal left-context count. A tie that
 remains is unresolved. Only a single neighboring-key substitution is keyboard
-evidence. Other key errors are not guessed. No probability is read or written.
+evidence. Other key errors are not guessed. Ranking uses counts only; MKN
+probabilities are stored but not read here.
 """
 from __future__ import annotations
 
@@ -19,7 +20,7 @@ def _candidates(connection: sqlite3.Connection, order: int, key: str) -> list[tu
         """
         SELECT candidate_token, count
         FROM ngram_counts
-        WHERE order_n = ? AND context_key = ? AND probability IS NULL
+        WHERE order_n = ? AND context_key = ?
         ORDER BY count DESC, candidate_token ASC
         """,
         (order, key),
@@ -32,7 +33,7 @@ def _right_count(connection: sqlite3.Connection, candidate: str, following: str 
     row = connection.execute(
         """
         SELECT count FROM ngram_counts
-        WHERE order_n = 1 AND context_key = ? AND candidate_token = ? AND probability IS NULL
+        WHERE order_n = 1 AND context_key = ? AND candidate_token = ?
         """,
         (context_key([candidate]), following),
     ).fetchone()
@@ -96,7 +97,7 @@ def hypotheses_for_words(
                     "evidence": {
                         "keyboard_layout": layout if layout is not None else "unknown-require-agreement",
                         "order_n": used_order,
-                        "probabilities": "refused",
+                        "probabilities": "not-used-for-ranking",
                     },
                     "index": index,
                     "surface": surface,
@@ -107,5 +108,5 @@ def hypotheses_for_words(
         "automatic_replacements": 0,
         "gate": gate,
         "hypotheses": found,
-        "probabilities": "refused",
+        "probabilities": "not-used-for-ranking",
     }

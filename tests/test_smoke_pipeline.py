@@ -109,8 +109,8 @@ class SmokePipeline(unittest.TestCase):
         for name in ("typo_compendium", "b5_gst", "b6_symbol_call"):
             self.assertEqual(stages[name]["status"], "not runnable here", name)
         self.assertEqual(stages["b1_ingest"]["status"], "wired and passing")
-        self.assertEqual(stages["typo_compendium"]["probabilities"], "refused")
-        self.assertIsNone(stages["typo_compendium"]["smoothing_method"])
+        self.assertEqual(stages["typo_compendium"]["probabilities"], "not-computed-this-run")
+        self.assertEqual(stages["typo_compendium"]["smoothing_method"], "chen-goodman-mkn-interpolated-v1")
         self.assertEqual(stages["typo_compendium"]["automatic_replacements"], 0)
         self.assertNotEqual(stages["typo_compendium"]["status"], "wired and passing")
         self.assertEqual(stages["inspector"]["validator_was_the_inspector"], False)

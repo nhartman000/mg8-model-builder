@@ -126,14 +126,15 @@ def stage_report() -> dict:
                 "note": (
                     "The streaming builder, the D2 split, the four keyboard maps, and the "
                     "one-sided 95% Clopper-Pearson gate are implemented and covered by synthetic fixtures. "
-                    "This run did not read enwiki-20261001, did not verify its official SHA-1, and has no "
-                    "owner-chosen smoothing method, so probabilities were not computed. "
+                    "Interpolated Modified Kneser-Ney (chen-goodman-mkn-interpolated-v1) is implemented and "
+                    "covered by synthetic fixtures. This run did not read enwiki-20261001 or verify its "
+                    "official SHA-1, so no compendium probabilities were computed. "
                     f"Automatic replacements on this sample: {text_report['typo']['automatic_replacements']}. "
                     "Original token text is unchanged. This is not the real compendium build."
                 ),
                 "automatic_replacements": text_report["typo"]["automatic_replacements"],
-                "probabilities": "refused",
-                "smoothing_method": None,
+                "probabilities": "not-computed-this-run",
+                "smoothing_method": "chen-goodman-mkn-interpolated-v1",
             },
             "proper_names": {
                 "status": "provisional",

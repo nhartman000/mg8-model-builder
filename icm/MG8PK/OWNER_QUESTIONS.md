@@ -211,6 +211,22 @@ This is stated. It is not an approval, and no Decision Console approval event wa
 
 Interpretation, flagged as interpretation: once the NYCH language model is working, the model itself communicates only in NYCH. A human-facing encoder, English to NYCH, comes before the model, and a decoder, NYCH to English, comes after it. An AI-to-AI exchange does not use that translation. It uses a NYCH legend, a markdown reference document, and a pointer to the existing repository.
 
+## D2 MKN order meaning — owner-stated, not approved
+
+Question asked during implementation, 2026-11-12 at 6:27 AM EST: the approved D2 decision says MKN applies to "word n-gram orders 1–3", while the approved table spec defines `order_n` as context length 1–3. Owner selected, verbatim: "Context length 1–3". Stated, not approved. No Decision Console approval event or catalog version was written.
+
+Consequence, implemented in `nych_compendium/smoothing.py`: the stored levels are context lengths 0, 1, 2, and 3, so the highest level is a 4-gram. Level 0 is the unigram base that MKN's recursion needs. The manifest keeps `ngram_order` as `[1, 2, 3]` and lists the levels separately in `mkn.levels`.
+
+Interpretations, flagged as interpretations and not owner-stated:
+- A page start counts as one left-extension type when continuation counts are computed, so every lower-level n-gram has a continuation count of at least 1. Pages are not padded with boundary tokens.
+- The recursion ends in a uniform distribution over the train vocabulary, which is Chen and Goodman's 0th-order model. There is no unknown-word token, so an out-of-vocabulary word gets no probability and stays literal or unresolved.
+- `log_probability` is the natural log.
+- Per-context interpolation weights are stored in a `context_backoff` table, and per-level discounts and counts-of-counts are stored in `mkn_discounts`.
+- A discount outside `0 <= D_j <= j`, or a level missing any of n1 through n4, stops the build with no manifest. This applies "report a build error" from the approved decision.
+- Typo hypotheses still rank by counts. The probabilities are stored but not used for ranking.
+
+Open owner questions: should typo-candidate ranking switch from counts to the MKN probabilities, and if so, at which context level? Should the build add an unknown-word token? Neither is decided here.
+
 ## What each module does
 
 These lines are taken from the worker and inspector cards in this repository.

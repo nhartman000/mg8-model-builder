@@ -1,14 +1,15 @@
 """Stream one Wikipedia page at a time into private n-gram counts.
 
 No dump or article text is retained. Page text is hashed and discarded.
-Smoothing is a required argument with no default. ``None`` builds counts and
-leaves probability columns null. Any other value is refused, because the owner
-has not named a smoothing method.
+Probabilities use the owner-approved D2 smoothing,
+``chen-goodman-mkn-interpolated-v1`` (see ``smoothing.py``). If it cannot be
+computed, the build stops and writes no manifest.
 
 Interpreted plumbing: schema version, compendium id, tokenizer and normalizer
 version strings, context-key JSON, the separate SQLite file, the provenance
 table, the curid URL, and storing per-page rows in SQLite instead of inline
-in the manifest so the full dump can stay inside about 4 GB of RAM.
+in the manifest so the full dump can stay inside about 4 GB of RAM, and the
+level-0 unigram rows and page-start table that MKN needs.
 """
 from __future__ import annotations
 
@@ -20,6 +21,16 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from nych_compendium.keyboards import LAYOUT_VERSION, LAYOUTS
+from nych_compendium.smoothing import (
+    CREATE_PAGE_STARTS,
+    LEVELS,
+    SMOOTHING_ID,
+    SMOOTHING_VERSION,
+    SmoothingUnavailable,
+    apply_mkn,
+    context_key,
+    record_page_start,
+)
 from nych_compendium.split import SNAPSHOT_ID, bucket, split_name
 from nych_smoke.tokenize import tokenize
 
@@ -65,10 +76,6 @@ CREATE TABLE page_provenance (
 """
 
 
-class SmoothingRefused(RuntimeError):
-    """Raised when a smoothing method is named but not owner-chosen."""
-
-
 class DumpChecksumError(RuntimeError):
     """Raised when the official SHA-1 does not match the file."""
 
@@ -108,10 +115,6 @@ def official_sha1(path: Path) -> str:
     raise DumpChecksumError("official checksum file has no SHA-1")
 
 
-def context_key(words: list[str]) -> str:
-    return json.dumps(words, ensure_ascii=False, separators=(",", ":"))
-
-
 def counts_digest(connection: sqlite3.Connection) -> str:
     rows = connection.execute(
         """
@@ -122,6 +125,29 @@ def counts_digest(connection: sqlite3.Connection) -> str:
     ).fetchall()
     body = json.dumps(rows, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     return "sha256:" + hashlib.sha256(body).hexdigest()
+
+
+def model_digest(connection: sqlite3.Connection) -> str:
+    """Digest of counts, probabilities, interpolation weights and discounts."""
+    hasher = hashlib.sha256()
+    for query in (
+        """
+        SELECT order_n, context_key, candidate_token, count, context_total,
+               probability, log_probability
+        FROM ngram_counts
+        ORDER BY order_n, context_key, candidate_token
+        """,
+        """
+        SELECT order_n, context_key, adjusted_total, backoff_weight
+        FROM context_backoff
+        ORDER BY order_n, context_key
+        """,
+        "SELECT * FROM mkn_discounts ORDER BY order_n",
+    ):
+        rows = connection.execute(query).fetchall()
+        hasher.update(json.dumps(rows, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+        hasher.update(b"\x00")
+    return "sha256:" + hasher.hexdigest()
 
 
 def provenance_digest(connection: sqlite3.Connection) -> str:
@@ -155,10 +181,12 @@ def _words(text: str) -> list[str]:
 
 def _count_page(connection: sqlite3.Connection, words: list[str]) -> None:
     for index, candidate in enumerate(words):
-        for order in ORDERS:
+        for order in LEVELS:
             if index < order:
                 continue
             key = context_key(words[index - order : index])
+            if index == order and order < LEVELS[-1]:
+                record_page_start(connection, order, key, candidate)
             connection.execute(
                 """
                 INSERT INTO ngram_counts (
@@ -239,14 +267,9 @@ def build_compendium(
     manifest_path: Path,
     sha1_path: Path,
     *,
-    smoothing: str | None,
     snapshot_id: str = SNAPSHOT_ID,
 ) -> dict:
-    """Build counts. ``smoothing`` must be passed. Only ``None`` is accepted."""
-    if smoothing is not None:
-        raise SmoothingRefused(
-            "no owner-chosen smoothing method is recorded; refusing to compute probabilities"
-        )
+    """Build counts and MKN probabilities, or raise ``SmoothingUnavailable``."""
     dump_path = Path(dump_path)
     sqlite_path = Path(sqlite_path)
     manifest_path = Path(manifest_path)
@@ -260,6 +283,7 @@ def build_compendium(
     try:
         connection.execute(CREATE_COUNTS)
         connection.execute(CREATE_PAGES)
+        connection.execute(CREATE_PAGE_STARTS)
         counts = {"train": 0, "validation": 0, "test": 0, "excluded": 0}
         for page in iter_pages(dump_path):
             text = page["text"] if page["text"] is not None else ""
@@ -311,7 +335,14 @@ def build_compendium(
             connection.commit()
         _fill_context_totals(connection)
         connection.commit()
-        artifact = counts_digest(connection)
+        try:
+            mkn = apply_mkn(connection)
+        except SmoothingUnavailable:
+            connection.rollback()
+            raise
+        connection.commit()
+        artifact = model_digest(connection)
+        counted = counts_digest(connection)
         pages = provenance_digest(connection)
     finally:
         connection.close()
@@ -319,6 +350,7 @@ def build_compendium(
     manifest = {
         "artifact_digest": artifact,
         "build_code_version": _build_code_version(),
+        "counts_digest": counted,
         "compendium_id": COMPENDIUM_ID,
         "corpus_id": snapshot_id,
         "corpus_sha256": "sha256:" + corpus_sha256,
@@ -326,6 +358,10 @@ def build_compendium(
             "compendium_id",
             "context_key_json",
             "extraction_version",
+            "mkn_base_uniform_train_vocabulary",
+            "mkn_level_0",
+            "mkn_log_base_e",
+            "mkn_page_start_left_extension",
             "normalizer_version",
             "page_url_template",
             "schema_version",
@@ -335,6 +371,7 @@ def build_compendium(
             {"id": name, "version": LAYOUT_VERSION} for name in sorted(LAYOUTS)
         ],
         "license_reference": LICENSE_REFERENCE,
+        "mkn": mkn,
         "ngram_order": list(ORDERS),
         "normalizer_version": NORMALIZER_VERSION,
         "official_dump": official,
@@ -342,10 +379,10 @@ def build_compendium(
         "page_counts": counts,
         "page_provenance_digest": pages,
         "page_provenance_table": "page_provenance",
-        "probabilities": "refused",
+        "probabilities": "computed",
         "schema_version": SCHEMA_VERSION,
-        "smoothing_method": None,
-        "smoothing_version": None,
+        "smoothing_method": SMOOTHING_ID,
+        "smoothing_version": SMOOTHING_VERSION,
         "tokenizer_version": TOKENIZER_VERSION,
     }
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")

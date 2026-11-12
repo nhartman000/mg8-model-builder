@@ -6,11 +6,10 @@ python -m nych_compendium build \\
   --dump ~/nych-data/enwiki-20261001/enwiki-20261001-pages-articles-multistream.xml.bz2 \\
   --sha1 ~/nych-data/enwiki-20261001/enwiki-20261001-pages-articles-multistream.xml.bz2.sha1 \\
   --sqlite ~/nych-data/enwiki-20261001/ngram_counts.sqlite3 \\
-  --manifest ~/nych-data/enwiki-20261001/compendium-manifest.json \\
-  --smoothing none
+  --manifest ~/nych-data/enwiki-20261001/compendium-manifest.json
 
-``--smoothing`` is required. The token ``none`` means counts only. It is not a
-smoothing algorithm. Any other token is refused.
+Smoothing is always ``chen-goodman-mkn-interpolated-v1``. If it cannot be
+computed, the command exits 2 and writes no manifest.
 """
 from __future__ import annotations
 
@@ -18,7 +17,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from nych_compendium.build import SmoothingRefused, build_compendium
+from nych_compendium.build import build_compendium
+from nych_compendium.smoothing import SmoothingUnavailable
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -29,18 +29,10 @@ def main(argv: list[str] | None = None) -> int:
     build.add_argument("--sha1", required=True, type=Path)
     build.add_argument("--sqlite", required=True, type=Path)
     build.add_argument("--manifest", required=True, type=Path)
-    build.add_argument("--smoothing", required=True)
     args = parser.parse_args(argv)
-    smoothing = None if args.smoothing == "none" else args.smoothing
     try:
-        manifest = build_compendium(
-            args.dump,
-            args.sqlite,
-            args.manifest,
-            args.sha1,
-            smoothing=smoothing,
-        )
-    except SmoothingRefused as err:
+        manifest = build_compendium(args.dump, args.sqlite, args.manifest, args.sha1)
+    except SmoothingUnavailable as err:
         print(str(err), file=sys.stderr)
         return 2
     print(manifest["artifact_digest"])
