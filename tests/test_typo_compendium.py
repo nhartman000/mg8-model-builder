@@ -10,11 +10,13 @@ import tempfile
 import unittest
 from collections import Counter
 from pathlib import Path
+from xml.sax.saxutils import escape
 
-from nych_compendium.build import build_compendium, counts_digest
+from nych_compendium.build import DumpChecksumError, build_compendium, counts_digest, official_sha1
 from nych_compendium.gate import automatic_correction_allowed, category_report, lower_bound
 from nych_compendium.keyboards import layouts_agree
 from nych_compendium.smoothing import SMOOTHING_ID, SmoothingUnavailable, discounts, probability
+from nych_compendium.wikitext import plain_text
 from nych_compendium.split import bucket, split_name
 from nych_smoke.pipeline import run_text
 
@@ -100,6 +102,24 @@ def _page(page_id, namespace, text, title):
     )
 
 
+def _wiki_page(page_id, text, title, redirect=None):
+    marker = f'<redirect title="{escape(redirect)}" />' if redirect else ""
+    return (
+        "<page>"
+        f"<title>{escape(title)}</title><ns>0</ns><id>{page_id}</id>{marker}"
+        f"<revision><id>{page_id}0</id><text>{escape(text)}</text></revision>"
+        "</page>"
+    )
+
+
+MARKUP_PAGE = (
+    "{{Infobox settlement|name=Zorvik}}'''Zorvik''' is a [[harbour town|harbourtown]] in [[Qelland]]."
+    "<ref>{{cite web|url=http://example.org|title=Refonly}}</ref> See https://example.org/zz today.\n"
+    "[[File:Zorvik.jpg|thumb|Captiononly view]]\n== Heritage ==\n"
+    "<!-- commentonly --> E=<math>mcsquared</math> [[Category:Townsonly]] &amp; more"
+)
+
+
 def _dump(path: Path, pages: list[str]) -> str:
     raw = ("<mediawiki>" + "".join(pages) + "</mediawiki>").encode("utf-8")
     path.write_bytes(bz2.compress(raw))
@@ -109,6 +129,69 @@ def _dump(path: Path, pages: list[str]) -> str:
 
 
 class TypoCompendium(unittest.TestCase):
+    def test_markup_is_stripped_before_counting(self):
+        text = plain_text(MARKUP_PAGE)
+        for kept in ("Zorvik is a harbourtown in Qelland.", "Heritage", "today", "& more"):
+            self.assertIn(kept, text)
+        for dropped in ("Infobox", "cite", "Refonly", "http", "example", "thumb", "Captiononly",
+                        "commentonly", "mcsquared", "Category", "Townsonly", "[[", "{{", "''", "=="):
+            self.assertNotIn(dropped, text)
+        self.assertEqual(plain_text("see [[:Category:Towns]]"), "see :Category:Towns")
+
+    def test_official_sha1_picks_the_dump_line_from_a_list(self):
+        with tempfile.TemporaryDirectory() as directory:
+            listing = Path(directory) / "sha1sums.txt"
+            listing.write_text("a" * 40 + "  other.xml.bz2\n" + "b" * 40 + "  dump.xml.bz2\n", encoding="utf-8")
+            self.assertEqual(official_sha1(listing, "dump.xml.bz2"), "b" * 40)
+            with self.assertRaises(DumpChecksumError):
+                official_sha1(listing, "missing.xml.bz2")
+            single = Path(directory) / "one.sha1"
+            single.write_text("c" * 40 + "  anything\n", encoding="utf-8")
+            self.assertEqual(official_sha1(single, "dump.xml.bz2"), "c" * 40)
+
+    def test_markup_redirects_and_batched_parallel_build(self):
+        train_pages = _train_pages()
+        ids = _train_ids(len(train_pages) + 2)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            dump = root / "markup.xml.bz2"
+            _dump(
+                dump,
+                [_page(page_id, 0, " ".join(words), f"Train {page_id}") for page_id, words in zip(ids, train_pages)]
+                + [
+                    _wiki_page(ids[-2], MARKUP_PAGE, "Zorvik"),
+                    _wiki_page(ids[-1], "#REDIRECT [[Redirectonly]]", "Old Zorvik", redirect="Redirectonly"),
+                ],
+            )
+            sha1 = dump.with_suffix(dump.suffix + ".sha1")
+            single = build_compendium(dump, root / "one.sqlite3", root / "one.json", sha1)
+            batched = build_compendium(
+                dump,
+                root / "many.sqlite3",
+                root / "many.json",
+                sha1,
+                workers=2,
+                batch_pages=1,
+                merge_fan_in=2,
+            )
+            self.assertEqual(batched["artifact_digest"], single["artifact_digest"])
+            self.assertEqual(batched["counts_digest"], single["counts_digest"])
+            self.assertEqual(batched["page_provenance_digest"], single["page_provenance_digest"])
+            self.assertEqual(single["page_counts"]["train"], len(train_pages) + 1)
+            self.assertFalse((root / "many.sqlite3.runs").exists())
+            connection = sqlite3.connect(root / "many.sqlite3")
+            words = {row[0] for row in connection.execute("SELECT candidate_token FROM ngram_counts WHERE order_n = 0")}
+            self.assertTrue({"Zorvik", "harbourtown", "Qelland", "Heritage", "today"} <= words)
+            for dropped in ("Infobox", "cite", "Refonly", "https", "thumb", "Captiononly", "commentonly",
+                            "mcsquared", "Townsonly", "Redirectonly", "REDIRECT"):
+                self.assertNotIn(dropped, words)
+            reason = connection.execute(
+                "SELECT excluded_reason, included_in_compendium FROM page_provenance WHERE page_id = ?",
+                (str(ids[-1]),),
+            ).fetchone()
+            self.assertEqual(reason, ("redirect", 0))
+            connection.close()
+
     def test_buckets_are_stable_and_cover_the_approved_ranges(self):
         ids = _ids()
         self.assertEqual(bucket(ids["train"]), bucket(ids["train"]))

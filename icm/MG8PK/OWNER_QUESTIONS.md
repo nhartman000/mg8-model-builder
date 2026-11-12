@@ -227,6 +227,24 @@ Interpretations, flagged as interpretations and not owner-stated:
 
 Open owner questions: should typo-candidate ranking switch from counts to the MKN probabilities, and if so, at which context level? Should the build add an unknown-word token? Neither is decided here.
 
+## D2 compendium build method and markup — owner-stated, not approved
+
+Owner statement, verbatim, 2026-11-12 at 6:51 AM EST: "1. Keep context length 1–3. 2. Rewrite the builder to count in batches on disk and load SQLite once at the end, and strip the markup before counting. 3. It counts raw wikitext, markup included. get rid of markup". Stated, not approved. No Decision Console approval event or catalog version was written.
+
+Implemented in `nych_compendium/build.py` and `nych_compendium/wikitext.py`. Each batch of train pages is stripped, tokenized, and counted into one sorted, gzip-compressed run file. Runs are merged in tiers, and the final sorted run is loaded into SQLite once. A batched multi-worker build produces the same digests as a single-worker build.
+
+Interpretations, flagged as interpretations and not owner-stated:
+- Markup is stripped with mwparserfromhell 0.6.6 `strip_code`. Templates, comments, references, math and other invisible tags are dropped. Link text, bold and italic text, headings, and table cell text are kept, and HTML entities are decoded.
+- File, image, media, and category links are removed before stripping, and so are bare URLs. Image captions are therefore not counted.
+- A redirect page is excluded with the reason `redirect`.
+- A page whose markup cannot be parsed is excluded with the reason `markup-parse-error`.
+- The checksum lookup now reads the dump's own line from Wikimedia's `sha1sums.txt`. Before, it took the first hash in the file, which belongs to a different file.
+- The following plumbing choices are also mine: batch size 500 pages, merge fan-in 32, WITHOUT ROWID tables, and SQLite temp files kept on disk rather than in /tmp.
+
+Open owner questions:
+- No pruning or minimum count is applied. If the full build does not fit on the available disk, a minimum-count cutoff or a larger disk is the owner's decision.
+- Image captions are dropped. Should they be counted instead?
+
 ## What each module does
 
 These lines are taken from the worker and inspector cards in this repository.

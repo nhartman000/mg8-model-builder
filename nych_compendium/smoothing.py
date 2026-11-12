@@ -32,7 +32,7 @@ CREATE TABLE page_start_ngrams (
     context_key TEXT NOT NULL,
     candidate_token TEXT NOT NULL,
     PRIMARY KEY (order_n, context_key, candidate_token)
-)
+) WITHOUT ROWID
 """
 
 CREATE_ADJUSTED = """
@@ -42,7 +42,7 @@ CREATE TABLE mkn_adjusted (
     candidate_token TEXT NOT NULL,
     adjusted INTEGER NOT NULL,
     PRIMARY KEY (order_n, context_key, candidate_token)
-)
+) WITHOUT ROWID
 """
 
 CREATE_DISCOUNTS = """
@@ -65,7 +65,7 @@ CREATE TABLE context_backoff (
     adjusted_total INTEGER NOT NULL,
     backoff_weight REAL NOT NULL,
     PRIMARY KEY (order_n, context_key)
-)
+) WITHOUT ROWID
 """
 
 
@@ -94,13 +94,6 @@ def discounts(level: int, n1: int, n2: int, n3: int, n4: int) -> tuple[float, fl
         if not 0 <= value <= j:
             raise SmoothingUnavailable(f"level {level}: discount D{j} = {value!r} is outside [0, {j}]")
     return values
-
-
-def record_page_start(connection: sqlite3.Connection, order: int, key: str, candidate: str) -> None:
-    connection.execute(
-        "INSERT OR IGNORE INTO page_start_ngrams (order_n, context_key, candidate_token) VALUES (?, ?, ?)",
-        (order, key, candidate),
-    )
 
 
 def _fill_adjusted(connection: sqlite3.Connection, top: int) -> None:

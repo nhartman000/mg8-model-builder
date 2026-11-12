@@ -54,6 +54,7 @@ if ! python3 -c "import torch" >/dev/null 2>&1; then
     python3 -m pip install --upgrade torch --index-url https://download.pytorch.org/whl/cpu
   fi
 fi
+python3 -m pip install "mwparserfromhell==0.6.6"
 
 failed=0
 
