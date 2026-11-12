@@ -22,7 +22,7 @@ Before building n-grams, partition article-namespace pages in the snapshot by st
 - `compendium_id`
 - `corpus_id`, license/reference, and corpus SHA-256
 - tokenizer/normalizer version
-- n-gram order and smoothing method/version
+- n-gram order and smoothing method/version; V1 uses interpolated Modified Kneser–Ney with Chen–Goodman count-of-counts discounts, identified as `chen-goodman-mkn-interpolated-v1`
 - build code version and artifact digest
 - keyboard-layout map IDs and versions, stored as separate resources. Initial registry: US QWERTY, UK QWERTY, AZERTY, and QWERTZ. Use device/user layout when available; if unknown, keyboard corroboration requires agreement across enabled layouts.
 
@@ -40,7 +40,13 @@ Before building n-grams, partition article-namespace pages in the snapshot by st
 | `probability` | Smoothed conditional probability |
 | `log_probability` | Stable additive score used for sequence ranking |
 
-Keep integer counts as evidence and smoothed probabilities/log probabilities for comparable scoring. Use explicit backoff/interpolation for contexts with sparse counts; record its algorithm/version in the manifest.
+Keep integer counts as evidence and smoothed probabilities/log probabilities for comparable scoring.
+
+### V1 smoothing decision
+
+Use interpolated Modified Kneser–Ney (MKN), using the Chen–Goodman count-of-counts discount estimates, for the order-1 through order-3 word n-gram model. Interpolate lower-order continuation distributions recursively. Estimate all counts and discounts from train pages only; validation is for correction-cutoff calibration, and test pages remain untouched until final evaluation. Record the algorithm identifier as `chen-goodman-mkn-interpolated-v1` in the manifest. The implementation must be deterministic and must not silently substitute another smoothing method when required counts are unavailable; report a build error or an explicitly versioned fallback decision.
+
+Rationale: this is a well-established choice for sparse n-gram language models. Chen and Goodman’s empirical study motivates a modified Kneser–Ney variant and reports it consistently outperforming the alternatives they evaluated; that is a reasoned V1 default, not a guarantee of corpus-specific optimality.
 
 ### Example entry
 
