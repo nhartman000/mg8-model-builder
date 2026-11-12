@@ -50,13 +50,13 @@ For the sequence “water-shed moment”, an index row can represent:
 
 The values `N`, `T`, and `P` come from the approved corpus; this example does not assign invented counts.
 
-## Deterministic correction order
+## Keyboard-aware candidate generation and deterministic correction order
 
 1. Preserve the exact observed surface token and byte span.
-2. Query the statistical compendium first. Rank lexical candidates from the previous two or three words, with shorter-context backoff when necessary. Where available, include right-context evidence to distinguish alternatives.
-3. Check the top statistical candidates against the versioned keyboard-layout maps. Neighboring-key substitutions and other plausible key errors provide secondary evidence; they do not replace context statistics.
-4. Correct only when the statistical/context evidence is clear and keyboard evidence is compatible for a keyboard typo. If the original token is a valid term and the thought remains coherent, keep it literal. If no clear candidate emerges, keep it literal and unresolved.
-5. Preserve correction as a separate hypothesis with evidence and confidence. Never overwrite the input text or silently force an emoji.
+2. Generate candidate words only from the versioned general-English, proper-name, and technical/scientific lexicon layers. For each configured keyboard layout, candidate generation may replace a character with a key adjacent to it or remove a character. Do not add insertion, transposition, phonetic, or other edit operations without a separate owner decision.
+3. Prefer candidates requiring the fewest total replacements/removals. Among candidates at the same minimum edit count, rank using next-token probabilities conditioned on the previous two or three words, with shorter-context backoff when needed; include right-context evidence when available. Retain the counts/probabilities and keyboard layout/edit path as evidence. If layout is unknown, enabled layouts must agree on the proposed correction or the token remains unresolved.
+4. A statistical candidate that is not supported by an allowed keyboard edit is not a keyboard-based typo correction. If the original token is a valid term and the thought remains coherent, keep it literal. If candidates remain ambiguous or evidence is weak, keep the token literal and unresolved.
+5. Preserve any correction as a separate hypothesis with surface form, candidate, evidence, edit count, layout, and confidence. Never overwrite the input text or silently force an emoji.
 
 Calibrate the correction cutoff and score margin on held-out, representative typo and coherent-word cases. Enable automatic internal correction only when the one-sided 95% exact-binomial (Clopper–Pearson) lower confidence bound for held-out precision is at least 99%; otherwise preserve tokens literally and leave them unresolved. Report precision and false-correction rates separately for proper names, scientific terms, coherent rare words, ambiguous candidates, and each keyboard layout.
 
