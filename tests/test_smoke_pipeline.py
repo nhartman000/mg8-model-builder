@@ -68,9 +68,10 @@ class SmokePipeline(unittest.TestCase):
         sample = load_english_sample()
         self.assertEqual(sample["language"], "English")
         self.assertIn("Open Parliament", sample["license"])
+        import torch
         result = train_sample(device="cpu")
         self.assertEqual(result["device"], "cpu")
-        self.assertFalse(result["cuda"])
+        self.assertEqual(result["cuda"], torch.cuda.is_available())
         self.assertFalse(result["v100"])
         self.assertEqual(result["steps"], 3)
         self.assertEqual(len(result["losses"]), 3)
