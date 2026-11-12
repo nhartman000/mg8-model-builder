@@ -10,7 +10,8 @@ builder-repo implementation and does not change any owner decisions.
 | B1 ingest | Wired and passing | Calls the pinned NYCH implementation before tokenization; accepted text remains in memory. |
 | B5 GST | Not runnable for the sample | Read-only bridge calls the NYCH implementation when B4 supplies explicit keys; this smoke sample has no B4 result. |
 | B6 symbolization | Not runnable | Test-only literal stub checks channel separation; no model call is authorized. |
-| Typo compendium | Not the real build | Streaming builder, split, keyboard maps, and the 99% gate exist. No dump is loaded here and no smoothing method is chosen, so the smoke stage is not wired and passing. |
+| Typo compendium | Not the real build | Streaming builder, split, keyboard maps, the 99% gate, and approved D2 smoothing (`chen-goodman-mkn-interpolated-v1`, context lengths 0–3) exist and are checked on synthetic fixtures. No dump is loaded here, so the smoke stage is not wired and passing. |
+| Domain switch | Deferred | Approved V1 scope: one active domain per request; no switch tags emitted. The provisional parser in `nych_preview/domain_switch.py` is preview-only and is not called by the smoke path. |
 | D12 inspector | I1 PASS on pinned B1 | I1 reviewed the pinned ingest. The bundle met the D12 bar, so the verdict is PASS. Missing evidence stays INTERMEDIATE. Validator acceptance is not an inspector pass. |
 
 The build runner skips stages that are not `wired and passing` or `provisional`.

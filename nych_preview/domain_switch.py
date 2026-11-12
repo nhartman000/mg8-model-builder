@@ -1,4 +1,7 @@
-"""Provisional domain-switch parser.
+"""Provisional domain-switch parser. Preview only.
+
+Approved V1 wiring scope: one active domain per request, and no switch tags
+are emitted. Nothing in the V1 pipeline calls this module.
 
 Owner-stated, not approved: a temporary switch opens as ``dom>?<domain>``,
 where ``?`` is any variable name. Counting starts when that variable is turned

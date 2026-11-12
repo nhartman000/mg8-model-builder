@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 from gitson_boundary import SCHEMA_DIGEST, validate_declaration
 from gitson_boundary.validator import canonical_json
 
-from nych_preview.domain_switch import scan_interlinear
 from nych_smoke.pipeline import artifact_digest, load_english_sample, run_text
 from nych_smoke.proper_names import classify_names
 from nych_smoke.tiny_train import train_sample
@@ -100,7 +99,6 @@ def stage_report() -> dict:
     training = train_sample()
     validator = _validator_check()
     inspector = _inspector_stage()
-    domain = scan_interlinear(sample["text"])
     return {
         "sample_identifier": sample["identifier"],
         "sample_license": sample["license"],
@@ -152,17 +150,15 @@ def stage_report() -> dict:
                 "note": f"{len(open_gestalts)} token(s) stayed open, including hyphenated words. Unlisted pairs were not compounded.",
             },
             "domain_switch": {
-                "status": "provisional",
+                "status": "deferred",
                 "note": (
-                    "Provisional. Stated, not approved: dom>?<domain> turns a variable on and ?=N closes it "
-                    "where the switch ends. N is checked against the tokens strictly between the tags. "
-                    "That boundary is an implementation choice. dom>N is still accepted, and whether the "
-                    "variable form supersedes it is open. Automatic reversion, a domain on dom><global, "
-                    "nesting, and parentheses stay unresolved. No domain was assigned on this sample."
+                    "Approved V1 wiring scope: one active domain per request. Cross-domain switches and "
+                    "their interlinear grammar are deferred, and V1 emits no switch tags. The provisional "
+                    "parser in nych_preview/domain_switch.py is preview-only and is not called here. "
+                    "General switch semantics and tag grammar remain open owner questions."
                 ),
-                "sample_tag_count": len(domain["tags"]),
-                "unresolved": domain["unresolved"],
-                "resumes_previous_domain": domain["resumes_previous_domain"],
+                "emits_switch_tags": False,
+                "parser_in_pipeline": False,
             },
             "domain_lexicon": {
                 "status": "not wired",

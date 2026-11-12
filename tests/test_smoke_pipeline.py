@@ -119,9 +119,9 @@ class SmokePipeline(unittest.TestCase):
         self.assertEqual(stages["inspector"]["status"], "wired and passing")
         self.assertEqual(stages["inspector"]["missing_evidence"], [])
         self.assertEqual(stages["inspector"]["defects"], [])
-        self.assertEqual(stages["domain_switch"]["status"], "provisional")
-        self.assertEqual(stages["domain_switch"]["resumes_previous_domain"], "unresolved")
-        self.assertEqual(stages["domain_switch"]["sample_tag_count"], 0)
+        self.assertEqual(stages["domain_switch"]["status"], "deferred")
+        self.assertFalse(stages["domain_switch"]["emits_switch_tags"])
+        self.assertFalse(stages["domain_switch"]["parser_in_pipeline"])
         self.assertGreater(report["open_gestalt_count"], 0)
 
 
