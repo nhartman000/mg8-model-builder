@@ -3,6 +3,7 @@
 Use the Model Builder Decision Console specified in the Grokbot build handoff to review pending decisions. Owner approvals freeze each contract; then independent builders may launch concurrently, with integration still dependency-gated.
 
 ## Approved
+- Initial domain-switch wiring scope: one active domain per request; cross-domain interlinear switches and their grammar are deferred. This does not resolve the general NYCH domain-switch semantics or tag grammar.
 - D2 typo-compendium smoothing: interpolated Modified Kneser–Ney with Chen–Goodman count-of-counts discounts for word n-gram orders 1–3; manifest identifier `chen-goodman-mkn-interpolated-v1`. Estimate only from train pages; validation is for correction-cutoff calibration and test is reserved for final evaluation.
 - Ingest accepts UTF-8 bytes up to 65,536 bytes; it rejects empty, malformed, or oversized input without normalization or truncation.
 - Raw prompt text remains in request memory only. Never persist it or include it in QSON. QSON may contain digest and metadata only.
