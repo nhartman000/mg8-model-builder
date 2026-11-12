@@ -22,7 +22,7 @@ Before building n-grams, partition article-namespace pages in the snapshot by st
 - `compendium_id`
 - `corpus_id`, license/reference, and corpus SHA-256
 - tokenizer/normalizer version
-- n-gram order and smoothing method/version
+- n-gram order and smoothing method/version; V1 uses interpolated Modified Kneser–Ney with Chen–Goodman count-of-counts discounts, identified as `chen-goodman-mkn-interpolated-v1`
 - build code version and artifact digest
 - keyboard-layout map IDs and versions, stored as separate resources. Initial registry: US QWERTY, UK QWERTY, AZERTY, and QWERTZ. Use device/user layout when available; if unknown, keyboard corroboration requires agreement across enabled layouts.
 
@@ -40,7 +40,13 @@ Before building n-grams, partition article-namespace pages in the snapshot by st
 | `probability` | Smoothed conditional probability |
 | `log_probability` | Stable additive score used for sequence ranking |
 
-Keep integer counts as evidence and smoothed probabilities/log probabilities for comparable scoring. Use explicit backoff/interpolation for contexts with sparse counts; record its algorithm/version in the manifest.
+Keep integer counts as evidence and smoothed probabilities/log probabilities for comparable scoring.
+
+### V1 smoothing decision
+
+Use interpolated Modified Kneser–Ney (MKN), using the Chen–Goodman count-of-counts discount estimates, for the order-1 through order-3 word n-gram model. Interpolate lower-order continuation distributions recursively. Estimate all counts and discounts from train pages only; validation is for correction-cutoff calibration, and test pages remain untouched until final evaluation. Record the algorithm identifier as `chen-goodman-mkn-interpolated-v1` in the manifest. The implementation must be deterministic and must not silently substitute another smoothing method when required counts are unavailable; report a build error or an explicitly versioned fallback decision.
+
+Rationale: this is a well-established choice for sparse n-gram language models. Chen and Goodman’s empirical study motivates a modified Kneser–Ney variant and reports it consistently outperforming the alternatives they evaluated; that is a reasoned V1 default, not a guarantee of corpus-specific optimality.
 
 ### Example entry
 
@@ -50,13 +56,13 @@ For the sequence “water-shed moment”, an index row can represent:
 
 The values `N`, `T`, and `P` come from the approved corpus; this example does not assign invented counts.
 
-## Deterministic correction order
+## Keyboard-aware candidate generation and deterministic correction order
 
 1. Preserve the exact observed surface token and byte span.
-2. Query the statistical compendium first. Rank lexical candidates from the previous two or three words, with shorter-context backoff when necessary. Where available, include right-context evidence to distinguish alternatives.
-3. Check the top statistical candidates against the versioned keyboard-layout maps. Neighboring-key substitutions and other plausible key errors provide secondary evidence; they do not replace context statistics.
-4. Correct only when the statistical/context evidence is clear and keyboard evidence is compatible for a keyboard typo. If the original token is a valid term and the thought remains coherent, keep it literal. If no clear candidate emerges, keep it literal and unresolved.
-5. Preserve correction as a separate hypothesis with evidence and confidence. Never overwrite the input text or silently force an emoji.
+2. Generate candidate words only from the versioned general-English, proper-name, and technical/scientific lexicon layers. For each configured keyboard layout, candidate generation may replace a character with a key adjacent to it or remove a character. Do not add insertion, transposition, phonetic, or other edit operations without a separate owner decision.
+3. Prefer candidates requiring the fewest total replacements/removals. Among candidates at the same minimum edit count, rank using next-token probabilities conditioned on the previous two or three words, with shorter-context backoff when needed; include right-context evidence when available. Retain the counts/probabilities and keyboard layout/edit path as evidence. If layout is unknown, enabled layouts must agree on the proposed correction or the token remains unresolved.
+4. A statistical candidate that is not supported by an allowed keyboard edit is not a keyboard-based typo correction. If the original token is a valid term and the thought remains coherent, keep it literal. If candidates remain ambiguous or evidence is weak, keep the token literal and unresolved.
+5. Preserve any correction as a separate hypothesis with surface form, candidate, evidence, edit count, layout, and confidence. Never overwrite the input text or silently force an emoji.
 
 Calibrate the correction cutoff and score margin on held-out, representative typo and coherent-word cases. Enable automatic internal correction only when the one-sided 95% exact-binomial (Clopper–Pearson) lower confidence bound for held-out precision is at least 99%; otherwise preserve tokens literally and leave them unresolved. Report precision and false-correction rates separately for proper names, scientific terms, coherent rare words, ambiguous candidates, and each keyboard layout.
 
