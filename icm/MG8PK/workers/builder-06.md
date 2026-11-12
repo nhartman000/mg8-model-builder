@@ -6,6 +6,10 @@ Build only Module 6 (NYCH Symbolization) for NYCH Language Model V1. Write modul
 ## Responsibility
 Consume B5's request-scoped `.gst`, deterministic database matches/cache-miss markers, and token interfaces. The first symbol-selection LLM call receives GST and the separate complete natural-language prompt. Use database matches where present; dynamically resolve a missing action/domain entry during this call, constrained by invariant TOTE structure and the canonical modality inventory. Select canonical emoji gestalts only where faithful; preserve literal text otherwise. Preserve protected semantic distinctions and uncertainty. The schema, endpoint, call interface, and database write/verification policy are not frozen; until then build only interface-neutral prototypes and do not persist new entries.
 
+## V1 wiring scope
+
+The initial wired path supports one active domain per request. Cross-domain switches and their interlinear grammar are deferred. Do not invent or emit a switch-tag format in this version. If a request requires a domain switch, treat that behavior as unsupported pending a later owner decision; the general NYCH switch semantics and tag grammar remain open.
+
 ## Before implementation
 Use only the owner-approved decision and versioned interface recorded in `icm/MG8PK/DECISION_REGISTER.md`. If a required decision is unresolved, return a design question or an interface-neutral prototype; do not decide for the owner.
 
