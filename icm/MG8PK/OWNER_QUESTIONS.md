@@ -147,6 +147,52 @@ Consumed by D6 `tote_write_policy` and the B5 GST contract, in B5 and B6.
 
 Applied as a hard closed set. Builders must not invent an operator.
 
+## Emoji inventory source — owner-stated, not approved
+
+Owner statement, recorded 2026-11-10 at 3:46 AM ET: Nick gave the emoji inventory source as https://unicode.org/emoji/charts-12.0/full-emoji-list.html (Unicode Emoji 12.0 full emoji list).
+
+Later owner statement, verbatim, 2026-11-10 at 3:55 AM ET: "use most current version of emoticon library."
+
+This is a stated source change. It is not an approval, and no Decision Console approval event was written. The newest file Unicode publishes at https://unicode.org/Public/emoji/latest/emoji-test.txt is version 18.0. There is no numbered `/Public/emoji/18.0/` directory; that `latest` file is the released data, and its header says version 18.0. The chart at https://unicode.org/emoji/charts/full-emoji-list.html is titled Full Emoji List, v18.0. Both were retrieved on 2026-11-10. The inventory keeps fully-qualified code points, the CLDR short name, and the group and subgroup. Skin-tone sequences are their own fully-qualified rows and are not folded. It does not assign a NYCH gestalt. Version 18.0 is the same version already named by the approved D6 endpoint.
+
+## Proper-name rule — owner-stated, not approved
+
+Owner statement, verbatim, 2026-11-10 at 3:56 AM ET: "or easy rule instead of a list of names \"If it begins with a capital letter and isnt in the dictionary, its a name\"".
+
+This stated rule replaces the pending Wikidata names list. It is not an approval, and no Decision Console approval event was written. The earlier builder card still describes a Wikidata candidate list; that card was not rewritten, because this statement is not an approval.
+
+The repo has no English dictionary file. It has the domain taxonomy `icm/MG8PK/lexicons/nych-professional-domain-taxonomy.md` and a specified but absent Wikipedia dump. Neither is selected here as the dictionary in question (a).
+
+Owner answer, verbatim, 2026-11-10 at 4:02 AM ET: "first word of a sentence should be in the dictionary. Names that are ordinary words will be capitalized mid sentence and names that are also common words and are the first word in a sentence will be subject to gestalt translation but it will not matter as ling as the name is preserved like the case of apple  if that was someones name".
+
+This answer is owner-stated. It is not an approval, and no Decision Console approval event was written.
+
+Interpretation, flagged as interpretation: (b) a sentence-initial capitalized word that is in the dictionary is an ordinary word, not a name. If it is not in the dictionary, the base rule applies. (c) a mid-sentence capitalized word is a name even when it is also a dictionary word, such as Apple or Rose. A sentence-initial name that is also a common word goes through ordinary gestalt translation. The owner accepts that, provided the original surface form, the name itself, is preserved.
+
+Owner answer, verbatim, 2026-11-10 at 4:04 AM ET: "Acronyms are all caps and excluded from gestalting. Miriam Websters dictionary and websters Crossword dictionary".
+
+This answer is owner-stated. It is not an approval, and no Decision Console approval event was written.
+
+Interpretation, flagged as interpretation: the dictionary is Merriam-Webster's dictionary plus Merriam-Webster's crossword dictionary. The owner wrote "Miriam Websters" and "websters Crossword". A word that is all capitals and at least two letters long is an acronym. Acronyms keep their surface form and are excluded from gestalting.
+
+(a) stays provisional. A check on 2026-11-10 of https://dictionaryapi.com/ found a per-word JSON lookup, not a downloadable headword list. The published non-commercial terms allow 1,000 queries a day for each API key and reference, and at most two references, after registering an account and confirming email. Those terms forbid automated or recorded queries unless Merriam-Webster approves them in writing, and they forbid copying the service. A key and a written license would be required before any lookup is wired. Merriam-Webster's Crossword Puzzle Dictionary is sold as a print book and a Kindle book. No official machine-readable word list or API for that book was found. No dictionary text was downloaded or committed.
+
+(d) is answered by the statement above. The smoke step treats those all-caps words as interpreted acronyms.
+
+Owner-stated source substitution, verbatim, 2026-11-10 at 4:07 AM ET: "im at 75 percent usage for the week so lets get to this build on google cloud just get whatever dictionary is availble and whatever crossword dictionary you csan find". This is not an approval, and no Decision Console approval event was written.
+
+The substitutes are SCOWL American size 70, built with `mk-list american 70` from the 2020.12.07 release, and Spread the Wordlist. SCOWL's license permits redistribution with its copyright notice, so that list is committed. Spread the Wordlist is CC BY-NC-SA 4.0, so it is downloaded by `scripts/fetch_wordlists.sh` and is not committed. Peter Broda's list publishes no license and was not used. A sentence-initial word found in either substitute list is treated as an ordinary word. A sentence-initial word found in neither is a name under the base rule. These lists are not Merriam-Webster.
+
+The smoke step `nych_smoke/proper_names.py` checks sentence-initial words against those substitutes. A mid-sentence capitalized word that is not all-caps is an interpreted name. An acronym is not gestalted, and its surface form is left as written.
+
+## NYCH-only model boundary — owner-stated, not approved
+
+Owner statement, verbatim, 2026-11-10 at 4:28 PM ET: "it is important to note that once nych lang model is working the nych model will eventually ONLY communicate nych and there will be an encode decoder bookending it after and before human interaction. ai 2 ai will need no such translation simply a legend and md document and a point toward already repo".
+
+This is stated. It is not an approval, and no Decision Console approval event was written.
+
+Interpretation, flagged as interpretation: once the NYCH language model is working, the model itself communicates only in NYCH. A human-facing encoder, English to NYCH, comes before the model, and a decoder, NYCH to English, comes after it. An AI-to-AI exchange does not use that translation. It uses a NYCH legend, a markdown reference document, and a pointer to the existing repository.
+
 ## What each module does
 
 These lines are taken from the worker and inspector cards in this repository.
