@@ -9,8 +9,8 @@ A fully-qualified sequence from the owner-stated Unicode Emoji 18.0 inventory
 is one atomic token. That inventory is not approved, and it does not fold
 skin tones or assign a NYCH gestalt.
 
-Not implemented, because the approved sources are not in this environment:
-the enwiki typo compendium, keyboard maps, and the Wikidata proper-name lexicon.
+The typo compendium is a separate hypothesis layer. This tokenizer does not
+correct spellings. The Wikidata proper-name lexicon is not in this environment.
 """
 from __future__ import annotations
 

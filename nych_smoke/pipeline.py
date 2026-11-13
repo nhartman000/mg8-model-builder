@@ -1,14 +1,17 @@
 """Smoke path: exact bytes, B2 spans, B3 trace IDs, then the D15 abbreviation helper.
 
-Domain-switch tags stay unwired. Their placement, reversion, global naming,
-and nesting are still open, and the dom>x=food reading is an interpretation.
+Domain-switch placement, reversion, global naming, and nesting stay unresolved.
+Typo hypotheses are separate from the surface token. With no compendium loaded,
+no hypothesis is emitted and no token text changes.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import sqlite3
 from pathlib import Path
 
+from nych_compendium.hypotheses import hypotheses_for_words
 from nych_preview.gestalt_abbreviation import COMPOUNDS, GestaltAbbrevError, abbreviate_owner_compound, abbreviate_word
 from nych_smoke.proper_names import classify_token_rows
 from nych_smoke.tokenize import Token, tokenize
@@ -27,7 +30,15 @@ def load_english_sample(path: Path = SAMPLE_PATH) -> dict:
     return sample
 
 
-def run_text(raw: bytes, *, request_id: str, received_at: str) -> dict:
+def run_text(
+    raw: bytes,
+    *,
+    request_id: str,
+    received_at: str,
+    typo_sqlite: Path | None = None,
+    typo_layout: str | None = None,
+    typo_gate: tuple[int, int] | None = None,
+) -> dict:
     """Run B1 before B2 and B3 using the authoritative NYCH B1 implementation.
 
     The raw request is never included in the returned report. Accepted text is
@@ -75,7 +86,30 @@ def run_text(raw: bytes, *, request_id: str, received_at: str) -> dict:
         "input_sha256": "sha256:" + digest.hex(),
         "tokens": traced,
         "gestalts": _gestalts(tokens, _acronym_indexes(tokens)),
+        "typo": _typo(tokens, typo_sqlite, typo_layout, typo_gate),
     }
+
+
+def _typo(tokens: tuple[Token, ...], sqlite_path: Path | None, layout: str | None, gate: tuple[int, int] | None) -> dict:
+    """Attach hypotheses without rewriting token text or byte spans."""
+    words = [token.text for token in tokens if token.kind == "word"]
+    connection = None
+    if sqlite_path is not None:
+        connection = sqlite3.connect(Path(sqlite_path).resolve().as_uri() + "?mode=ro", uri=True)
+    try:
+        correct, evaluated = (None, None) if gate is None else gate
+        report = hypotheses_for_words(
+            words,
+            connection,
+            layout=layout,
+            gate_correct=correct,
+            gate_evaluated=evaluated,
+        )
+    finally:
+        if connection is not None:
+            connection.close()
+    report["surface_texts"] = words
+    return report
 
 
 def _acronym_indexes(tokens: tuple[Token, ...]) -> set[int]:

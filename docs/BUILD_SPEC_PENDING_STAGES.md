@@ -10,15 +10,16 @@ builder-repo implementation and does not change any owner decisions.
 | B1 ingest | Wired and passing | Calls the pinned NYCH implementation before tokenization; accepted text remains in memory. |
 | B5 GST | Not runnable for the sample | Read-only bridge calls the NYCH implementation when B4 supplies explicit keys; this smoke sample has no B4 result. |
 | B6 symbolization | Not runnable | Test-only literal stub checks channel separation; no model call is authorized. |
-| Typo compendium | Not runnable | Corpus build and the approved precision gate are not implemented. |
-| D12 inspector | Not runnable | No independent inspector or complete evidence bundle exists. |
+| Typo compendium | Not the real build | Batched on-disk builder with markup stripping (mwparserfromhell 0.6.6), split, keyboard maps, the 99% gate, and approved D2 smoothing (`chen-goodman-mkn-interpolated-v1`, context lengths 0–3) exist and are checked on synthetic fixtures. No dump is loaded here, so the smoke stage is not wired and passing. |
+| Domain switch | Deferred | Approved V1 scope: one active domain per request; no switch tags emitted. The provisional parser in `nych_preview/domain_switch.py` is preview-only and is not called by the smoke path. |
+| D12 inspector | I1 PASS on pinned B1 | I1 reviewed the pinned ingest. The bundle met the D12 bar, so the verdict is PASS. Missing evidence stays INTERMEDIATE. Validator acceptance is not an inspector pass. |
 
 The build runner skips stages that are not `wired and passing` or `provisional`.
 Do not promote a blocked stage merely because an adapter or validator exists.
 
 Standalone instructions for a builder that has not seen the decision chat. This repo is `nhartman000/mg8-model-builder`. The NYCH implementation repo is `nhartman000/nych-language-model`. Do not invent owner values. Anything marked **interpreted** is a reading of the sources, not an owner decision. Do not persist raw prompts, and do not put them in tests, logs, reports, or QSON.
 
-The smoke entry point is `python3 -m nych_smoke`. `nych_smoke/report.py` `stage_report()` currently marks these five stages not runnable: `b1_ingest`, `b5_gst`, `b6_symbol_call`, `typo_compendium`, `inspector`. Wire a stage by making that status honest. `scripts/gcp_build.sh` logs any stage whose status is not `wired and passing` or `provisional` as skipped. Do not add fake stages.
+The smoke entry point is `python3 -m nych_smoke`. `nych_smoke/report.py` `stage_report()` reports each stage from what actually ran. `b5_gst`, `b6_symbol_call`, and `typo_compendium` stay not runnable for the real build. `b1_ingest` calls the pinned implementation. `inspector` is I1's verdict on that pinned ingest. Wire a stage by making that status honest. `scripts/gcp_build.sh` logs any stage whose status is not `wired and passing` or `provisional` as skipped. Do not add fake stages.
 
 Approved decisions live in `console/fixtures/catalog.v3.26.json` and `console/fixtures/events.v2.jsonl`. The hand register is `icm/MG8PK/DECISION_REGISTER.md`.
 

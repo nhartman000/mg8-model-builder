@@ -106,12 +106,22 @@ class SmokePipeline(unittest.TestCase):
         self.assertEqual(stages["emoji_inventory"]["status"], "wired and passing")
         self.assertEqual(stages["proper_names"]["status"], "provisional")
         self.assertGreater(stages["proper_names"]["interpreted_names"], 0)
-        for name in ("typo_compendium", "inspector", "b1_ingest", "b5_gst", "b6_symbol_call"):
-            if name == "b1_ingest":
-                self.assertEqual(stages[name]["status"], "wired and passing", name)
-            else:
-                self.assertEqual(stages[name]["status"], "not runnable here", name)
-        self.assertEqual(stages["domain_switch"]["status"], "not wired")
+        for name in ("typo_compendium", "b5_gst", "b6_symbol_call"):
+            self.assertEqual(stages[name]["status"], "not runnable here", name)
+        self.assertEqual(stages["b1_ingest"]["status"], "wired and passing")
+        self.assertEqual(stages["typo_compendium"]["probabilities"], "not-computed-this-run")
+        self.assertEqual(stages["typo_compendium"]["smoothing_method"], "chen-goodman-mkn-interpolated-v1")
+        self.assertEqual(stages["typo_compendium"]["automatic_replacements"], 0)
+        self.assertNotEqual(stages["typo_compendium"]["status"], "wired and passing")
+        self.assertEqual(stages["inspector"]["validator_was_the_inspector"], False)
+        self.assertFalse(stages["inspector"]["authorizes_wiring"])
+        self.assertEqual(stages["inspector"]["verdict"], "PASS")
+        self.assertEqual(stages["inspector"]["status"], "wired and passing")
+        self.assertEqual(stages["inspector"]["missing_evidence"], [])
+        self.assertEqual(stages["inspector"]["defects"], [])
+        self.assertEqual(stages["domain_switch"]["status"], "deferred")
+        self.assertFalse(stages["domain_switch"]["emits_switch_tags"])
+        self.assertFalse(stages["domain_switch"]["parser_in_pipeline"])
         self.assertGreater(report["open_gestalt_count"], 0)
 
 

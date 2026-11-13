@@ -28,12 +28,11 @@
   },
   {
     "id": "domain-switch-interpreted",
-    "role": "interpreted",
-    "status": "interpreted-not-owner-confirmed",
-    "supersedes": "dom>N",
+    "role": "owner-stated",
+    "status": "owner-stated-not-approved",
     "open": "dom>x=food",
     "close": "x=12",
     "global": "dom><global",
-    "note": "Interpreted from the owner statement. Not owner-confirmed. Placement, reversion, how dom><global names a domain, and nesting are open."
+    "note": "Question (a) is stated, not approved. The variable form is stop-start: counting starts when the variable is turned on, and ?=N is recorded where the switch ends. Whether this supersedes dom>N is open. Reversion, how dom><global names a domain, nesting, and parentheses stay open. N's exclusion of the open and close tags is an implementation choice."
   }
 ]

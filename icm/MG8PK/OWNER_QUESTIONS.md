@@ -59,11 +59,17 @@ Owner statement, verbatim: "domains will switch globally and inter sentence stru
 
 Owner statement, verbatim: "dom>?=food and after however many tokens the domain switches back or to something else the tag ?=12  where ? is any variable like x or z". Interpretation, flagged as interpretation and not owner-confirmed: this supersedes `dom>N` for a temporary switch. It opens as `dom>x=food`. The writer picks the variable, such as x or z, and the value after `=` names the target domain. Where the switch ends, the same variable closes it as `x=12`, and that number is how many tokens the switch lasted. The global form stays `dom><global`. The preview `nych_preview/domain_switch.py` only formats these strings and is not wired into any Builder. The fixture entry `domain-switch-interpreted` is marked interpreted. Open: (a) whether the closing tag sits interlinear where the switch ends, and whether 12 counts back to the opening tag; (b) whether the domain reverts to the previous one automatically at the closing tag; (c) how `dom><global` names its domain, and whether that is `dom><global=food`; (d) whether switches nest or overlap when different variables are used.
 
-Still open: whether `obj_k`, whose k comes from a short word, is affected; whether the double-keep applies only right after the initial vowel or anywhere; a y-initial word longer than three letters; an all-vowel word longer than three letters; compounds of 3 or more parts; capitalization of a vowel-initial first part; how the `"` marker interacts with ie-to-y and the initial-vowel apostrophe beyond the stated field and piece forms; whether the domain-switch tag sits in parentheses; (a) where the closing tag sits and whether its number counts back to the opening tag; (b) whether the domain reverts automatically at the closing tag; (c) how `dom><global` names its domain; and (d) whether different variables nest or overlap. A single proper-name word and a hyphenated compound were not resolved either. friend and science still have no abbreviation.
+The open question (a) in the paragraph above is resolved by the later statement below. That resolution is stated, not approved.
+
+Owner statement, verbatim, 2026-11-10 at 9:57 PM ET: "dom>?=food where ? is any given variable like x and x=12 is to say first we turn on x then start counting the tokens until domain swiitch ends and that number = x so it can be recorded and preformed like it happens without indication of duration and the stop pouint unknown until it occcurs  its a simple stop start". Stated, not approved. No Decision Console approval event was written. This is recorded as catalog v3.27 and does not reconfirm the catalog v3.26 approval. The opening tag is `dom>?<domain>`, and `?` is any variable name. Counting starts when that variable is turned on. The closing tag `?=N` is interlinear at the point the switch ends, and N is the token count from open to close. Duration is not known at open time. This is stop-start. The `dom>x=food` form is stated for this part. It is not an interpretation. The earlier `dom>N` form is kept. Whether `dom>?<domain>` ... `?=N` supersedes `dom>N` is an open owner question, not decided. Implementation choice, not an owner value: the provisional parser counts tokens strictly between the opening tag and the closing tag, and neither tag is included, because the owner did not say whether those tag tokens themselves are part of N. A variable or domain name is one or more ASCII letters, which is also an implementation choice. Still unresolved and not guessed: (b) whether the domain reverts automatically at the close; (c) how `dom><global` names its domain; (d) whether different variables nest or overlap; and whether the tags sit in parentheses.
+
+Owner statement, verbatim, 2026-11-10 at 9:59 PM ET: "domain is made more obvious by objects discussed. objects preclude to an action that is coupled with industry. Objects not obviously related to the domain at hand assumes a domain or ssubject change". Stated, not approved. No Decision Console approval event was written. This is recorded as catalog v3.28 and does not reconfirm the catalog v3.26 approval. Interpretation, flagged as interpretation and not owner-stated: domain is inferred from the objects, or gestalts, under discussion; objects lead to an action that is tied to an industry or domain; an object that is not obviously related to the current domain implies a domain or subject change. Design note, not behavior: nothing in this repository infers a domain from objects, emits a tag from that inference, or scores relatedness. Open owner questions: how "not obviously related" is measured, including any threshold and the source of an object-to-domain mapping; whether an inferred change must emit a `dom>` tag; and how an inferred change interacts with the explicit `dom>?<domain>` ... `?=N` tags.
+
+Still open: whether `obj_k`, whose k comes from a short word, is affected; whether the double-keep applies only right after the initial vowel or anywhere; a y-initial word longer than three letters; an all-vowel word longer than three letters; compounds of 3 or more parts; capitalization of a vowel-initial first part; how the `"` marker interacts with ie-to-y and the initial-vowel apostrophe beyond the stated field and piece forms; whether the domain-switch tag sits in parentheses; (b) whether the domain reverts automatically at the closing tag; (c) how `dom><global` names its domain; (d) whether different variables nest or overlap; whether `dom>N` is superseded by `dom>?<domain>` ... `?=N`; how "not obviously related" is measured, including any threshold and the source of an object-to-domain mapping; whether an inferred domain change must emit a `dom>` tag; and how an inferred change interacts with the explicit `dom>?<domain>` ... `?=N` tags. Question (a) is stated above and is not approved. Domain inference from objects is stated as a direction and is not implemented. A single proper-name word and a hyphenated compound were not resolved either. friend and science still have no abbreviation.
 
 ### 2. What must a NYCH output get right before the sidecar can go? — Answered. D15 is approved at catalog v3.26. Open questions remain unresolved.
 
-Recorded on D15 `interlinear_annotation` and included in the catalog v3.26 approval. Catalog v3.15 includes the tag addendum in that same field. D10 `verification_sidecar` was not changed. The D15 loss rule remains in place. The `dom>x=food` / `x=12` reading stays interpreted, and the open questions below stay open.
+Recorded on D15 `interlinear_annotation` and included in the catalog v3.26 approval. Catalog v3.15 includes the tag addendum in that same field. D10 `verification_sidecar` was not changed. The D15 loss rule remains in place. Catalog v3.27 records a later owner statement that resolves question (a) for `dom>x=food` / `x=12`. That statement is stated, not approved. Questions (b), (c), (d), parentheses, and the relationship of `dom>N` to the variable form stay open.
 
 Verbatim: "what I would like is a sort of info tree to exist interlinear so before gestalts are picked the nych output is still words but the info exists above in a sub-line interlinear style."
 
@@ -147,6 +153,18 @@ Consumed by D6 `tote_write_policy` and the B5 GST contract, in B5 and B6.
 
 Applied as a hard closed set. Builders must not invent an operator.
 
+### TOTE loop record — owner-stated, not approved
+
+Owner statement, verbatim, 2026-11-10 at 10:01 PM ET: "tote loops in the database every tote loop requires an actor an action a modality operator and and object". Stated, not approved. No Decision Console approval event was written.
+
+The repositories already use TOTE as Test–Operate–Test–Exit. They do not give it another definition. The builder handoff says every admitted loop must carry at least one actor, one action, one object or tool, and a registered modality operator. The pinned NYCH repo repeats that invariant. Its migration `docs/migrations/002_gst_taxonomy_additive.sql` stores actor, action, object, and tool as `tote_loop_elements.element_role` values, and stores the modality operator as `tote_steps.operator_id`. The view `gst_loop_invariant_summary` marks a loop complete when it has an actor, an action, an object or a tool, and a step with an operator. `gst_context.py` names the same four invariants as `actor`, `action`, `object_or_tool`, and `registered_modality_operator`. The canonical table source named by both repos is `nhartman000/T.O.T.E-loops/schema.sql`. No new catalog snapshot was written for this statement.
+
+Interpretation, flagged as interpretation and not owner-stated: each TOTE loop record in the database has four required fields: actor, action, modality operator, and object.
+
+`nych_preview/tote_loop_record.py` is a provisional presence check for those four fields. It rejects a record when any of them is absent or None. It does not replace the NYCH schema, and it does not treat a tool as the object.
+
+Open owner questions: field types are not specified; the allowed modality-operator values are not specified; the database engine for this new statement is not specified; whether the Test and Exit conditions are part of the record is not specified; whether the object is a gestalt id is not specified; and whether the actor can be implied is not specified. Also open: whether the existing object-or-tool rule still satisfies the object field in this statement.
+
 ## Emoji inventory source — owner-stated, not approved
 
 Owner statement, recorded 2026-11-10 at 3:46 AM ET: Nick gave the emoji inventory source as https://unicode.org/emoji/charts-12.0/full-emoji-list.html (Unicode Emoji 12.0 full emoji list).
@@ -192,6 +210,46 @@ Owner statement, verbatim, 2026-11-10 at 4:28 PM ET: "it is important to note th
 This is stated. It is not an approval, and no Decision Console approval event was written.
 
 Interpretation, flagged as interpretation: once the NYCH language model is working, the model itself communicates only in NYCH. A human-facing encoder, English to NYCH, comes before the model, and a decoder, NYCH to English, comes after it. An AI-to-AI exchange does not use that translation. It uses a NYCH legend, a markdown reference document, and a pointer to the existing repository.
+
+## D2 MKN order meaning — owner-stated, not approved
+
+Question asked during implementation, 2026-11-12 at 6:27 AM EST: the approved D2 decision says MKN applies to "word n-gram orders 1–3", while the approved table spec defines `order_n` as context length 1–3. Owner selected, verbatim: "Context length 1–3". Stated, not approved. No Decision Console approval event or catalog version was written.
+
+Consequence, implemented in `nych_compendium/smoothing.py`: the stored levels are context lengths 0, 1, 2, and 3, so the highest level is a 4-gram. Level 0 is the unigram base that MKN's recursion needs. The manifest keeps `ngram_order` as `[1, 2, 3]` and lists the levels separately in `mkn.levels`.
+
+Interpretations, flagged as interpretations and not owner-stated:
+- A page start counts as one left-extension type when continuation counts are computed, so every lower-level n-gram has a continuation count of at least 1. Pages are not padded with boundary tokens.
+- The recursion ends in a uniform distribution over the train vocabulary, which is Chen and Goodman's 0th-order model. There is no unknown-word token, so an out-of-vocabulary word gets no probability and stays literal or unresolved.
+- `log_probability` is the natural log.
+- Per-context interpolation weights are stored in a `context_backoff` table, and per-level discounts and counts-of-counts are stored in `mkn_discounts`.
+- A discount outside `0 <= D_j <= j`, or a level missing any of n1 through n4, stops the build with no manifest. This applies "report a build error" from the approved decision.
+- Typo hypotheses still rank by counts. The probabilities are stored but not used for ranking.
+
+Open owner questions: should typo-candidate ranking switch from counts to the MKN probabilities, and if so, at which context level? Should the build add an unknown-word token? Neither is decided here.
+
+## D2 compendium build method and markup — owner-stated, not approved
+
+Owner statement, verbatim, 2026-11-12 at 6:51 AM EST: "1. Keep context length 1–3. 2. Rewrite the builder to count in batches on disk and load SQLite once at the end, and strip the markup before counting. 3. It counts raw wikitext, markup included. get rid of markup". Stated, not approved. No Decision Console approval event or catalog version was written.
+
+Implemented in `nych_compendium/build.py` and `nych_compendium/wikitext.py`. Each batch of train pages is stripped, tokenized, and counted into one sorted, gzip-compressed run file. Runs are merged in tiers, and the final sorted run is loaded into SQLite once. A batched multi-worker build produces the same digests as a single-worker build.
+
+Interpretations, flagged as interpretations and not owner-stated:
+- Markup is stripped with mwparserfromhell 0.6.6 `strip_code`. Templates, comments, references, math and other invisible tags are dropped. Link text, bold and italic text, headings, and table cell text are kept, and HTML entities are decoded.
+- File, image, media, and category links are removed before stripping, and so are bare URLs. Image captions are therefore not counted.
+- A redirect page is excluded with the reason `redirect`.
+- A page whose markup cannot be parsed is excluded with the reason `markup-parse-error`.
+- The checksum lookup now reads the dump's own line from Wikimedia's `sha1sums.txt`. Before, it took the first hash in the file, which belongs to a different file.
+- The following plumbing choices are also mine: batch size 500 pages, merge fan-in 32, WITHOUT ROWID tables, and SQLite temp files kept on disk rather than in /tmp.
+
+Open owner questions:
+- Pruning is resolved by the owner statement below.
+
+Measured 1% stream sample, before pruning: 66,278 train pages, 38 million tokens, 70 million rows, an 8.8 GB SQLite file, and 1 h 23 min with 6 workers. Rows seen once were 62%, 76%, 88%, and 94% of the rows at context lengths 0 through 3. The full dump was estimated at 450–880 GB, which does not fit on the 363 GB free on the external SSD.
+
+Option offered: "Drop rows seen only once at the 2- and 3-word context levels ... The smoothing discounts would still be calculated from the full counts before anything is dropped." Owner reply, verbatim, 2026-11-12 at 4:56 PM EST: "ok option 1". Stated, not approved. No Decision Console approval event or catalog version was written.
+
+Implemented: rows with raw count 1 at context lengths 2 and 3 are not stored. Discounts, continuation counts, context totals, and interpolation weights are computed from the full counts by streaming passes over the sorted run files. Interpretation, flagged as interpretation: a pruned row's discounted mass is added to its context's interpolation weight, so each context still sums to 1, the same as KenLM-style pruning. Pruning on the raw count keeps every stored row's shorter-context suffix.
+- Image captions are dropped. Should they be counted instead?
 
 ## What each module does
 
